@@ -10,8 +10,8 @@ import {
   Put,
   ParseUUIDPipe,
   HttpCode,
-  HttpException,
 } from '@nestjs/common';
+import { TwoFactorAuthenticationDto } from './dto/twoFactorAuthentication.dto';
 
 @Controller('user')
 export class UserController {
@@ -31,41 +31,56 @@ export class UserController {
   @HttpCode(204)
   @Delete('/:id')
   deleteUserById(@Param('id', ParseUUIDPipe) id: string) {
-    this.userService.deleteById(id);
+    // 반환값이 없더라도 return이 없으면 예외가 콘솔로 나오면서 서버 죽음
+    return this.userService.deleteById(id);
   }
 
   @Get('/:id/nickname')
-  getNicknameById() {
-    return 'get nickname by id';
+  getNicknameById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.userService.getNicknameById(id);
   }
 
   @Put(':id/nickname')
-  updateNicknameById() {
-    return 'update nickname by id';
+  updateNicknameById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('nickname') nickname: string,
+  ) {
+    return this.userService.updateNicknameById(id, nickname);
   }
 
   @Get('/:id/prof-img')
-  getProfileImgById() {
-    return 'get profile img by id';
+  getProfileImgById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.userService.getProfImgById(id);
   }
 
   @Put('/:id/prof-img')
-  updateProfileImgById() {
-    return 'update profile img by id';
+  updateProfileImgById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('profImg') profileImage: string,
+  ) {
+    return this.userService.updateProfImgById(id, profileImage);
   }
 
   @Get('/:id/2FA')
-  getTwoFactorAuthenticationById() {
-    return ' get two-factor authentication by id';
+  getTwoFactorAuthenticationById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.userService.getTwoFactorAuthenticationById(id);
   }
 
   @Put('/:id/2FA')
-  updateTwoFactorAuthenticationById() {
-    return ' update two-factor authentication by id';
+  updateTwoFactorAuthenticationById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: TwoFactorAuthenticationDto,
+  ) {
+    return this.userService.updateTwoFactorAuthenticationById(
+      id,
+      body.info,
+      body.key,
+    );
   }
 
+  @HttpCode(204)
   @Delete('/:id/2FA')
-  deleteTwoFactorAuthenticationById() {
-    return ' delete two-factor authentication by id';
+  deleteTwoFactorAuthenticationById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.userService.deleteTwoFactorAuthenticationById(id);
   }
 }

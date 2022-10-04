@@ -11,13 +11,13 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ unique: true })
   nickname: string;
 
-  @Column()
+  @Column({ unique: true })
   thirdPartyId: string;
 
-  @Column({ nullable: true })
+  @Column({ unique: true, nullable: true })
   twoFactorAuthenticationKey: string;
 
   @Column({ nullable: true })
