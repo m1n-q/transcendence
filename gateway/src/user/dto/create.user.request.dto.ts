@@ -17,7 +17,7 @@ export class CreateUserRequestDto {
 
   @ValidateNested({ each: true })
   @Type(() => TwoFactorAuthenticationDto)
-  towFactorAuthentication: TwoFactorAuthenticationDto;
+  '2FA': TwoFactorAuthenticationDto;
 
   @IsNotEmpty()
   @IsString()

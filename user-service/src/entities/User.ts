@@ -14,6 +14,9 @@ export class User {
   @Column({ unique: true })
   nickname: string;
 
+  @Column()
+  provider: string;
+
   @Column({ unique: true })
   thirdPartyId: string;
 

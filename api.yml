@@ -1,0 +1,934 @@
+openapi: 3.0.0
+info:
+  title: transcendence
+  version: '0.0.1'
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: user
+    description: user
+    # externalDocs:
+    #   description: Find out more
+    #   url: https://naver.com
+
+  - name: friends
+    description: friends
+
+  - name: friend-request
+    description: friend-request
+
+  - name: blacklist
+    description: blacklist (block)
+
+  - name: auth
+    description: authentication and authorization
+
+  - name: matches
+    description: match-results and details
+
+paths:
+
+#%=================================== user ===================================%#
+  /user:
+    post:
+      tags:
+        - user
+      summary: user creation
+      description: create a user
+      operationId: createUser
+      requestBody:
+        description: user info needed for creation
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequestDto'
+        required: true
+
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserResponseDto'
+
+  /user/{userId}:
+    get:
+      tags:
+        - user
+      summary: user info
+      description: get user information by userId
+      operationId: getUserInfo
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: information about {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoDto'
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+    delete:
+      tags:
+        - user
+      summary: delete user
+      description: delete {userId}
+      operationId: deleteUser
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '204':
+          description: delete success
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+  /user/{userId}/nickname:
+    get:
+      tags:
+        - user
+      summary: get nickname
+      description: get nickname of {userId}
+      operationId: getNickname
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: nickname of {userId}
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nickname:
+                    type: string
+                    example: ping-pong-boy
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+    put:
+      tags:
+        - user
+      summary: update nickname
+      description: update nickname of {userId}
+      operationId: updateNickname
+      requestBody:
+        description: new nickname
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+                  example: 'new_nickname'
+        required: true
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: update success. return updated nickname
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nickname:
+                    type: string
+                    example: 'new_nickname'
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+        '409':
+          description: update fail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/409_User'
+
+  /user/{userId}/prof-img:
+    get:
+      tags:
+        - user
+      summary: get profImg
+      description: get profImg of {userId}
+      operationId: getNickname
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: profImg of {userId}
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profImg:
+                    type: string
+                    example: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png'
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+    put:
+      tags:
+        - user
+      summary: update profImg
+      description: update profImg of {userId}
+      operationId: updateProfImg
+      requestBody:
+        description: new profImg
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                profImg:
+                  type: string
+                  example: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png'
+        required: true
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: update success. return updated profImg
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profImg:
+                    type: string
+                    example: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png'
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+        '409':
+          description: update fail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/409_User'
+
+  /user/{userId}/2FA:
+    get:
+      tags:
+        - user
+      summary: get 2FA info
+      description: get 2FA information of {userId}
+      operationId: get2FA
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: 2FA information of {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/2FA'
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+    put:
+      tags:
+        - user
+      summary: update 2FA info
+      description: update 2FA info of {userId}
+      operationId: update2FA
+      requestBody:
+        description: new 2FA information
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: '#/components/schemas/2FA'
+        required: true
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: update success. return updated 2FA
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/2FA'
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+        '409':
+          description: update fail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/409_User'
+    delete:
+      tags:
+        - user
+      summary: disable 2FA
+      description: disable 2FA of {userId}
+      operationId: delete2FA
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '204':
+          description: delete success
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+#%================================== friends ==================================%#
+  /user/{userId}/friends:
+    get:
+      tags:
+        - friends
+      summary: get friends list
+      description: get friends list of {userId}
+      operationId: getFriends
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: online friends list of {userId}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Friend'
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+  /user/{userId}/friends/{friendId}:
+    delete:
+      tags:
+        - friends
+      summary: delete friend of user
+      description: delete {friendId} from friends list of {userId}
+      operationId: deleteFriend
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      - name: friendId
+        in: path
+        description: friend who will be removed from list
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '204':
+          description: delete success
+        '404':
+          description: cannot find {userId} or {freindId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+
+  /user/{userId}/friends/online:
+    get:
+      tags:
+        - friends
+      summary: get online friends list
+      description: get online friends list of {userId}
+      operationId: getFriendOnline
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: online friends list of {userId}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Friend'
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+#%============================== friend-request ==============================%#
+  /user/{userId}/friend-request:
+    get:
+      tags:
+        - friend-request
+      summary: get list of freind-request sent
+      description: get list of freind-request sent by {userId}
+      operationId: readFriendRequest
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: list of freind-request sent
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FriendRequest'
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+
+  /user/{userId}/friend-request/{friendId}:
+    post:
+      tags:
+        - friend-request
+      summary: make friend-request
+      description: make friend-request to {friendId}
+      operationId: createFriendRequest
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      - name: friendId
+        in: path
+        description: user who will be received friend-request
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '201':
+          description: freind-request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendRequest'
+        '404':
+          description: cannot find {userId} or {freindId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+    delete:
+      tags:
+        - friend-request
+      summary: cancel friend-request
+      description: cancel friend-request to {friendId}
+      operationId: deleteFriendRequest
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      - name: friendId
+        in: path
+        description: user who was received friend-request
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '204':
+          description: freind-request canceled
+
+        '404':
+          description: cannot find {userId} or {freindId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+#%================================ blacklist ================================%#
+  /user/{userId}/blacklist:
+    get:
+      tags:
+        - blacklist
+      summary: get blacklist
+      description: get blacklist of {userId}
+      operationId: getBlacklist
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '200':
+          description: blacklist of {userId}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Blacklist'
+        '404':
+          description: cannot find {userId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+
+  /user/{userId}/blacklist/{blockedId}:
+    post:
+      tags:
+        - blacklist
+      summary: block user
+      description: block {blockedId}
+      operationId: addToBlacklist
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      - name: blockedId
+        in: path
+        description: user who will be blocked by {userId}
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '201':
+          description: block success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blacklist'
+        '404':
+          description: cannot find {userId} or {blockedId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+    delete:
+      tags:
+        - blacklist
+      summary: cancel blocking user
+      description: cancel blocking {blockedId}
+      operationId: deleteFromBlacklist
+      parameters:
+      - name: userId
+        in: path
+        description: userId
+        required: true
+        schema:
+          type: string
+          format: string
+      - name: friendId
+        in: path
+        description: user who was blocked by friend-request
+        required: true
+        schema:
+          type: string
+          format: string
+      responses:
+        '204':
+          description: blocking canceled
+        '404':
+          description: cannot find {userId} or {freindId}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404_User'
+
+#%================================== auth ==================================%#
+  /auth/oauth2/42:
+    get:
+      tags:
+        - auth
+      summary: login with 42
+      description: oauth2 provided by 42
+      responses:
+        '302':
+          description: redirection to 42 login page
+
+  /auth/oauth2/google:
+    get:
+      tags:
+        - auth
+      summary: login with google
+      description: oauth2 provided by google
+      responses:
+        '302':
+          description: redirection to google login page
+
+  /auth/oauth2/kakao:
+    get:
+      tags:
+        - auth
+      summary: login with kakao
+      description: oauth2 provided by kakao
+      responses:
+        '302':
+          description: redirection to kakao login page
+
+#%================================== matches ==================================%#
+
+  /matches/{matchId}:
+    get:
+      tags:
+        - matches
+      summary: match detail
+      description: get match detail by {matchId}
+      operationId: getMatch
+      responses:
+        '200':
+          description: match detail of {matchId}.
+                       more properties like "matchStats" maybe appended
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matchInfo:
+                    $ref: '#/components/schemas/MatchInfo'
+                  matchResult:
+                    $ref: '#/components/schemas/MatchResult'
+
+  /user/{userId}/matches?amount:
+    get:
+      tags:
+        - matches
+      summary: recent match-results
+      description: get recent match-results of {userId}
+      operationId: getRecentMatches
+      parameters:
+      - name: amount
+        in: query
+        description: request results of recent {amount} matches
+        required: true
+        schema:
+          type: integer
+
+      responses:
+        '200':
+          description: results of recent {amount} matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchResult'
+
+
+
+#.=================================================================.#
+#.                            Components                            #
+#.=================================================================.#
+
+components:
+  schemas:
+    2FA:
+      type: object
+      properties:
+        info:
+          type: string
+        key:
+          type: string
+
+    CreateUserRequestDto:
+      type: object
+      properties:
+        thirdPartyId:
+          type: string
+          example: 42_mishin
+        nickname:
+          type: string
+          example: ping-pong-boy
+        2FA:
+          type: object
+          $ref: '#/components/schemas/2FA'
+        profImg:
+          type: string
+          example: "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png"
+      required:
+        - "thirdPartyId"
+        - "nickname"
+
+    CreateUserResponseDto:
+      properties:
+        userId:
+          type: string
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        nickname:
+          type: string
+          example: ping-pong-boy
+        createdDate:
+          type: string
+          example: 'Wed Sep 21 2022 20:45:42 GMT+0900 (Korean Standard Time)'
+
+    UserInfoDto:
+      properties:
+        userId:
+          type: string
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        nickname:
+          type: string
+          example: ping-pong-boy
+        profImg:
+          type: string
+          example: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png'
+        mmr:
+          type: integer
+          example: 1000
+
+    Friend:
+      type: object
+      properties:
+        requester:
+          type: string
+          description: userId of requester
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        receiver:
+          type: string
+          description: userId of receiver
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        createdDate:
+          type: string
+          description: date request accepted
+          example: 'Wed Sep 21 2022 20:45:42 GMT+0900 (Korean Standard Time)'
+
+    FriendRequest:
+      type: object
+      properties:
+        requester:
+          type: string
+          description: userId of requester
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        receiver:
+          type: string
+          description: userId of receiver
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        createdDate:
+          type: string
+          description: date requested
+          example: 'Wed Sep 21 2022 20:45:42 GMT+0900 (Korean Standard Time)'
+
+    Blacklist:
+      type: object
+      properties:
+        blocker:
+          type: string
+          description: userId of blocker
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        blocked:
+          type: string
+          description: userId of blocked
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        createdDate:
+          type: string
+          description: date blocked
+          example: 'Wed Sep 21 2022 20:45:42 GMT+0900 (Korean Standard Time)'
+
+    MatchResult:
+      type: object
+      properties:
+        matchId:
+          type: string
+          example: 'match-uuid'
+
+        #NOTE: user info already exists in MatchInfo
+        leftUser:
+          type: string
+          description: userId of left side
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        rightUser:
+          type: string
+          description: userId of right side
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+
+
+        leftScore:
+          type: integer
+          description: match score of left side
+          example: 10
+        rightScore:
+          type: integer
+          description: match score of left side
+          example: 9
+        createdDate:
+          type: string
+          description: date of match
+          example: 'Wed Sep 21 2022 20:45:42 GMT+0900 (Korean Standard Time)'
+
+    MatchInfo:
+      type: object
+      properties:
+        matchType:
+          type: string
+          description: match type
+          example: 'ladder'
+        leftUser:
+          type: string
+          description: userId of left side
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        rightUser:
+          type: string
+          description: userId of right side
+          example: "7044bd97-a10e-4e81-97c0-f5e07438ab51"
+        map:
+          type: string
+          example: 'space'
+        ball:
+          type: object
+          properties:
+            size:
+              type: integer
+              example: 2
+            speed:
+              type: integer
+              example: 1
+        bar:
+          type: object
+          properties:
+            size:
+              type: integer
+              example: 2
+            speed:
+              type: integer
+              example: 1
+    404_User:
+        type: object
+        properties:
+          statusCode:
+            type: integer
+            example: 404
+          message:
+            type: string
+            example: "{userId} not found"
+
+    409_User:
+        type: object
+        properties:
+          statusCode:
+            type: integer
+            example: 409
+          message:
+            type: string
+            example: "cannot create or update User"

@@ -1,19 +1,21 @@
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
-import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { User } from 'src/entities/User';
+import { UserController } from './user.controller';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
     RabbitMQModule.forRoot(RabbitMQModule, {
+      exchanges: [
+        {
+          name: 'user.d.x',
+          type: 'direct',
+        },
+      ],
       uri: 'amqp://guest:guest@localhost:5672',
-      enableControllerDiscovery: true,
     }),
   ],
-  controllers: [UserController],
   providers: [UserService],
+  controllers: [UserController],
 })
 export class UserModule {}

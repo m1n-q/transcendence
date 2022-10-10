@@ -1,86 +1,107 @@
-import { CreateUserRequestDto } from './dto/create.user.request.dto';
 import { UserService } from './user.service';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  ParseUUIDPipe,
-  HttpCode,
-} from '@nestjs/common';
-import { TwoFactorAuthenticationDto } from './dto/twoFactorAuthentication.dto';
+import { Controller } from '@nestjs/common';
+import { RabbitRPC } from '@golevelup/nestjs-rabbitmq';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @HttpCode(201)
-  @Post()
-  async join(@Body() body: CreateUserRequestDto) {
-    return this.userService.join(body);
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.read.by.id.rk',
+    queue: 'user.read.by.id.q',
+  })
+  async readUserById(msg) {
+    return this.userService.readUserById(msg.id);
   }
 
-  @Get('/:id')
-  async getUserById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.getById(id);
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.read.by.3pId.rk',
+    queue: 'user.read.by.3pId.q',
+  })
+  async readUserBy3pId(msg) {
+    return this.userService.readUserBy3pId(msg);
   }
 
-  @HttpCode(204)
-  @Delete('/:id')
-  deleteUserById(@Param('id', ParseUUIDPipe) id: string) {
-    // 반환값이 없더라도 return이 없으면 예외가 콘솔로 나오면서 서버 죽음
-    return this.userService.deleteById(id);
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.create.rk',
+    queue: 'user.create.q',
+  })
+  async createUser(msg) {
+    return this.userService.createUser(msg);
   }
 
-  @Get('/:id/nickname')
-  getNicknameById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.getNicknameById(id);
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.delete.rk',
+    queue: 'user.delete.q',
+  })
+  async deleteUser(msg) {
+    return this.userService.deleteUserById(msg.id);
   }
 
-  @Put(':id/nickname')
-  updateNicknameById(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body('nickname') nickname: string,
-  ) {
-    return this.userService.updateNicknameById(id, nickname);
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.read.nickname.rk',
+    queue: 'user.read.nickname.q',
+  })
+  async readUserNickname(msg) {
+    return this.userService.readUserNicknameById(msg.payload);
   }
 
-  @Get('/:id/prof-img')
-  getProfileImgById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.getProfImgById(id);
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.update.nickname.rk',
+    queue: 'user.update.nickname.q',
+  })
+  async updateUserNickname(msg) {
+    return this.userService.updateUserNicknameById(msg.id, msg.nickname);
   }
 
-  @Put('/:id/prof-img')
-  updateProfileImgById(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body('profImg') profileImage: string,
-  ) {
-    return this.userService.updateProfImgById(id, profileImage);
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.read.profImg.rk',
+    queue: 'user.read.profImg.q',
+  })
+  async readUserProfImg(msg) {
+    return this.userService.readUserProfImgById(msg.id);
   }
 
-  @Get('/:id/2FA')
-  getTwoFactorAuthenticationById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.getTwoFactorAuthenticationById(id);
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.update.profImg.rk',
+    queue: 'user.update.profImg.q',
+  })
+  async updateUserProfImg(msg) {
+    return this.userService.updateUserProfImgById(msg.id, msg.profImg);
   }
 
-  @Put('/:id/2FA')
-  updateTwoFactorAuthenticationById(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: TwoFactorAuthenticationDto,
-  ) {
-    return this.userService.updateTwoFactorAuthenticationById(
-      id,
-      body.info,
-      body.key,
-    );
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.read.2FA.rk',
+    queue: 'user.read.2FA.q',
+  })
+  async readUser2FA(msg) {
+    return this.userService.readUser2FAById(msg.id);
   }
 
-  @HttpCode(204)
-  @Delete('/:id/2FA')
-  deleteTwoFactorAuthenticationById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.deleteTwoFactorAuthenticationById(id);
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.update.2FA.rk',
+    queue: 'user.update.2FA.q',
+  })
+  async updateUser2FA(msg) {
+    return this.userService.updateUser2FAById(msg.id, msg.info, msg.key);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.delete.2FA.rk',
+    queue: 'user.delete.2FA.q',
+  })
+  async deleteUser2FA(msg) {
+    return this.userService.deleteUser2FAById(msg.id);
   }
 }
