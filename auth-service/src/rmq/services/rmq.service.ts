@@ -1,8 +1,8 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { RmqResponse } from '../dto/rmq-response';
-import { ThirdPartyInfoDto } from '../dto/third-party-info.dto';
-import { UserInfoDto } from '../dto/user-info.dto';
+import { RmqResponse } from '../../dto/rmq-response';
+import { ThirdPartyInfoDto } from '../../dto/third-party-info.dto';
+import { UserInfoDto } from '../../dto/user-info.dto';
 
 @Injectable()
 export class RmqService {

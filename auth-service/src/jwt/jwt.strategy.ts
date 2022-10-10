@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserInfoDto } from '../dto/user-info.dto';
-import { RmqService } from '../rmq/rmq.service';
+import { RmqService } from '../rmq/services/rmq.service';
 
 const extractFromCookie = function (key: string) {
   return (req: Request) => {

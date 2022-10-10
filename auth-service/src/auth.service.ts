@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { RmqService } from './rmq/rmq.service';
+import { RmqService } from './rmq/services/rmq.service';
 import { RedisService } from './redis/services/redis.service';
 import { UserInfoDto } from './dto/user-info.dto';
 import { ThirdPartyInfoDto } from './dto/third-party-info.dto';

@@ -5,7 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { RmqService } from './rmq/rmq.service';
+import { RmqService } from './rmq/services/rmq.service';
 import { RedisModule } from './redis/redis.module';
 import { JwtAccessGuard, JwtRefreshGuard } from './jwt/jwt.guard';
 import { JwtAccessStrategy, JwtRefreshStrategy } from './jwt/jwt.strategy';
