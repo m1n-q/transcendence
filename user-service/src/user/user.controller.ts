@@ -1,7 +1,7 @@
 import { UserService } from './user.service';
 import { Controller, UseInterceptors } from '@nestjs/common';
 import { RabbitRPC } from '@golevelup/nestjs-rabbitmq';
-import { RmqInterceptor } from './user.rmq.success.interceptor';
+import { RmqInterceptor } from './user.rmq.response.interceptor';
 
 @UseInterceptors(new RmqInterceptor())
 @Controller('user')

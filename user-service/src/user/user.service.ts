@@ -11,32 +11,28 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
-  errorReturn(code: number, message: string) {
-    return {
-      success: 'false',
-      data: null,
-      error: {
-        code: code,
-        message: message,
-        where: 'user-service',
-      },
-    };
-  }
-
   async readUserBy3pId(payload) {
     const findId = await this.userRepository.findOne({
       where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
     });
-    if (findId) return findId;
-    return this.errorReturn(404, `${payload.thirdPartyId} not found`);
+    if (findId) return { success: 'true', data: findId };
+    return {
+      success: 'false',
+      code: 404,
+      massage: `${payload.thirdPartyId} not found`,
+    };
   }
 
   async readUserById(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
-    return user;
+    return { success: 'true', data: user };
   }
 
   async createUser(payload: CreateUserRequestDto) {
@@ -44,7 +40,11 @@ export class UserService {
       where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
     });
     if (findId) {
-      return this.errorReturn(409, 'This ID is already registered.');
+      return {
+        success: 'false',
+        code: 409,
+        massage: 'This ID is already registered.',
+      };
     }
 
     const user = new User();
@@ -61,26 +61,40 @@ export class UserService {
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      return this.errorReturn(409, 'Conflict');
+      return {
+        success: 'false',
+        code: 409,
+        massage: 'Conflict',
+      };
     }
 
     return {
-      userId: user.id,
-      nickname: user.nickname,
-      createdDate: user.createdDate,
+      success: 'true',
+      data: {
+        userId: user.id,
+        nickname: user.nickname,
+        createdDate: user.createdDate,
+      },
     };
   }
 
   async getById(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
     return {
-      userId: user.id,
-      nickname: user.nickname,
-      profImg: user.profileImage,
-      mmr: user.rankScore,
+      success: 'true',
+      data: {
+        userId: user.id,
+        nickname: user.nickname,
+        profImg: user.profileImage,
+        mmr: user.rankScore,
+      },
     };
   }
 
@@ -90,82 +104,137 @@ export class UserService {
     // 일단 먼저 찾아서 확인 후 진행
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
     const deleteResponse = await this.userRepository.softDelete(id);
     if (!deleteResponse.affected) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
-    return null;
+    return { success: 'true', data: null };
   }
 
   async readUserNicknameById(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
     return {
-      nickname: user.nickname,
+      success: 'true',
+      data: {
+        nickname: user.nickname,
+      },
     };
   }
 
   async updateUserNicknameById(id: string, newNickname: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
     user.nickname = newNickname;
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      return this.errorReturn(409, 'Conflict');
+      return {
+        success: 'false',
+        code: 409,
+        massage: 'Conflict',
+      };
     }
     return {
-      nickname: user.nickname,
+      success: 'true',
+      data: {
+        nickname: user.nickname,
+      },
     };
   }
 
   async readUserProfImgById(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
     return {
-      profImg: user.profileImage,
+      success: 'true',
+      data: {
+        profImg: user.profileImage,
+      },
     };
   }
 
   async updateUserProfImgById(id: string, newProfileImage: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
     user.profileImage = newProfileImage;
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      return this.errorReturn(409, 'Conflict');
+      return {
+        success: 'false',
+        code: 409,
+        massage: 'Conflict',
+      };
     }
     return {
-      profImg: user.profileImage,
+      success: 'true',
+      data: {
+        profImg: user.profileImage,
+      },
     };
   }
 
   async readUser2FAById(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
     return {
-      info: user.twoFactorAuthenticationInfo,
-      key: user.twoFactorAuthenticationKey,
+      success: 'true',
+      data: {
+        info: user.twoFactorAuthenticationInfo,
+        key: user.twoFactorAuthenticationKey,
+      },
     };
   }
 
   async updateUser2FAById(id: string, newInfo: string, newKey: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
     user.twoFactorAuthenticationInfo = newInfo;
     user.twoFactorAuthenticationKey = newKey;
@@ -173,27 +242,42 @@ export class UserService {
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      return this.errorReturn(409, 'Conflict');
+      return {
+        success: 'false',
+        code: 409,
+        massage: `Conflict`,
+      };
     }
 
     return {
-      info: user.twoFactorAuthenticationInfo,
-      key: user.twoFactorAuthenticationKey,
+      success: 'true',
+      data: {
+        info: user.twoFactorAuthenticationInfo,
+        key: user.twoFactorAuthenticationKey,
+      },
     };
   }
 
   async deleteUser2FAById(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return this.errorReturn(404, `${id} not found`);
+      return {
+        success: 'false',
+        code: 404,
+        massage: `${id} not found`,
+      };
     }
     user.twoFactorAuthenticationInfo = null;
     user.twoFactorAuthenticationKey = null;
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      return this.errorReturn(409, 'Conflict');
+      return {
+        success: 'false',
+        code: 409,
+        massage: 'Conflict',
+      };
     }
-    return null;
+    return { success: 'true', data: null };
   }
 }
