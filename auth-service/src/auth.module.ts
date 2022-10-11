@@ -2,10 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { RmqService } from './rmq/services/rmq.service';
 import { RedisModule } from './redis/redis.module';
 import { JwtAccessGuard, JwtRefreshGuard } from './jwt/jwt.guard';
 import { JwtAccessStrategy, JwtRefreshStrategy } from './jwt/jwt.strategy';
@@ -19,6 +17,8 @@ import {
   OauthGoogleStrategy,
   OauthKakaoStrategy,
 } from './oauth2/oauth2.strategy';
+import { RmqModule } from './rmq/rmq.module';
+import { RmqService } from './rmq/services/rmq.service';
 
 @Module({
   imports: [
@@ -27,16 +27,7 @@ import {
     }),
     PassportModule.register({}),
     JwtModule.register({}),
-    RabbitMQModule.forRoot(RabbitMQModule, {
-      uri: 'amqp://localhost:5672',
-      exchanges: [
-        {
-          name: 'user.direct.x',
-          type: 'direct',
-        },
-      ],
-      enableControllerDiscovery: true,
-    }),
+    RmqModule,
     RedisModule,
   ],
   providers: [

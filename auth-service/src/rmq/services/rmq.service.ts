@@ -13,8 +13,8 @@ export class RmqService {
 
     try {
       response = await this.amqpConnection.request<RmqResponse<UserInfoDto>>({
-        exchange: 'user.direct.x',
-        routingKey: 'user.read.by.3pId.q',
+        exchange: 'user.d.x',
+        routingKey: 'user.read.by.3pid.rk',
         payload: thirdPartyInfo,
         timeout: 2000,
       });
@@ -30,8 +30,8 @@ export class RmqService {
 
     try {
       response = await this.amqpConnection.request<RmqResponse<UserInfoDto>>({
-        exchange: 'user.direct.x',
-        routingKey: 'user.read.by.id.q',
+        exchange: 'user.d.x',
+        routingKey: 'user.read.by.id.rk',
         payload: userId,
         timeout: 2000,
       });
