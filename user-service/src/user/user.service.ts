@@ -23,22 +23,12 @@ export class UserService {
     };
   }
 
-  successReturn(data) {
-    return {
-      success: 'true',
-      data: data,
-      error: null,
-    };
-  }
-
   async readUserBy3pId(payload) {
-    const provider = payload.provider;
-    const thirdPartyId = payload.thirdPartyId;
     const findId = await this.userRepository.findOne({
-      where: { thirdPartyId: thirdPartyId, provider: provider },
+      where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
     });
-    if (findId) return this.successReturn(findId);
-    return this.errorReturn(404, `${thirdPartyId} not found`);
+    if (findId) return findId;
+    return this.errorReturn(404, `${payload.thirdPartyId} not found`);
   }
 
   async readUserById(id: string) {
@@ -46,13 +36,14 @@ export class UserService {
     if (!user || user.deletedDate != null) {
       return this.errorReturn(404, `${id} not found`);
     }
-    return this.successReturn(user);
+    return user;
   }
 
   async createUser(payload: CreateUserRequestDto) {
-    const findId = await this.readUserBy3pId(payload);
-
-    if (findId.success === 'true') {
+    const findId = await this.userRepository.findOne({
+      where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
+    });
+    if (findId) {
       return this.errorReturn(409, 'This ID is already registered.');
     }
 
@@ -73,11 +64,11 @@ export class UserService {
       return this.errorReturn(409, 'Conflict');
     }
 
-    return this.successReturn({
+    return {
       userId: user.id,
       nickname: user.nickname,
       createdDate: user.createdDate,
-    });
+    };
   }
 
   async getById(id: string) {
@@ -85,12 +76,12 @@ export class UserService {
     if (!user || user.deletedDate != null) {
       return this.errorReturn(404, `${id} not found`);
     }
-    return this.successReturn({
+    return {
       userId: user.id,
       nickname: user.nickname,
       profImg: user.profileImage,
       mmr: user.rankScore,
-    });
+    };
   }
 
   async deleteUserById(id: string) {
@@ -105,7 +96,7 @@ export class UserService {
     if (!deleteResponse.affected) {
       return this.errorReturn(404, `${id} not found`);
     }
-    return this.successReturn(null);
+    return null;
   }
 
   async readUserNicknameById(id: string) {
@@ -113,9 +104,9 @@ export class UserService {
     if (!user || user.deletedDate != null) {
       return this.errorReturn(404, `${id} not found`);
     }
-    return this.successReturn({
+    return {
       nickname: user.nickname,
-    });
+    };
   }
 
   async updateUserNicknameById(id: string, newNickname: string) {
@@ -129,9 +120,9 @@ export class UserService {
     } catch (error) {
       return this.errorReturn(409, 'Conflict');
     }
-    return this.successReturn({
+    return {
       nickname: user.nickname,
-    });
+    };
   }
 
   async readUserProfImgById(id: string) {
@@ -139,9 +130,9 @@ export class UserService {
     if (!user || user.deletedDate != null) {
       return this.errorReturn(404, `${id} not found`);
     }
-    return this.successReturn({
+    return {
       profImg: user.profileImage,
-    });
+    };
   }
 
   async updateUserProfImgById(id: string, newProfileImage: string) {
@@ -155,9 +146,9 @@ export class UserService {
     } catch (error) {
       return this.errorReturn(409, 'Conflict');
     }
-    return this.successReturn({
+    return {
       profImg: user.profileImage,
-    });
+    };
   }
 
   async readUser2FAById(id: string) {
@@ -165,10 +156,10 @@ export class UserService {
     if (!user || user.deletedDate != null) {
       return this.errorReturn(404, `${id} not found`);
     }
-    return this.successReturn({
+    return {
       info: user.twoFactorAuthenticationInfo,
       key: user.twoFactorAuthenticationKey,
-    });
+    };
   }
 
   async updateUser2FAById(id: string, newInfo: string, newKey: string) {
@@ -185,10 +176,10 @@ export class UserService {
       return this.errorReturn(409, 'Conflict');
     }
 
-    return this.successReturn({
+    return {
       info: user.twoFactorAuthenticationInfo,
       key: user.twoFactorAuthenticationKey,
-    });
+    };
   }
 
   async deleteUser2FAById(id: string) {
@@ -203,6 +194,6 @@ export class UserService {
     } catch (error) {
       return this.errorReturn(409, 'Conflict');
     }
-    return this.successReturn(null);
+    return null;
   }
 }

@@ -1,7 +1,9 @@
 import { UserService } from './user.service';
-import { Controller } from '@nestjs/common';
+import { Controller, UseInterceptors } from '@nestjs/common';
 import { RabbitRPC } from '@golevelup/nestjs-rabbitmq';
+import { RmqInterceptor } from './user.rmq.success.interceptor';
 
+@UseInterceptors(new RmqInterceptor())
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
