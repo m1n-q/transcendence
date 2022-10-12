@@ -20,7 +20,7 @@ export class UserService {
         thirdPartyId: body.thirdPartyId,
       },
     });
-    if (findId.success === 'true') {
+    if (findId.success === true) {
       throw new ConflictException('cannot create or update User');
     }
     const user: AmqpResponse = await this.amqpConnection.request({
@@ -34,7 +34,7 @@ export class UserService {
         profImg: body.profImg,
       },
     });
-    if (user.success === 'false') {
+    if (user.success === false) {
       throw new ConflictException(user.error.message);
     }
     return user;
@@ -48,7 +48,7 @@ export class UserService {
         id: id,
       },
     });
-    if (user.success === 'false') {
+    if (user.success === false) {
       throw new NotFoundException(user.error.message);
     }
     return user;
@@ -62,7 +62,7 @@ export class UserService {
         id: id,
       },
     });
-    if (user.success === 'false') {
+    if (user.success === false) {
       throw new NotFoundException(user.error.message);
     }
   }
@@ -75,7 +75,7 @@ export class UserService {
         id: id,
       },
     });
-    if (user.success === 'false') {
+    if (user.success === false) {
       throw new NotFoundException(user.error.message);
     }
     return user;
@@ -90,7 +90,7 @@ export class UserService {
         nickname: newNickname,
       },
     });
-    if (user.success === 'false') {
+    if (user.success === false) {
       throw new NotFoundException(user.error.message);
     }
   }
@@ -103,7 +103,7 @@ export class UserService {
         id: id,
       },
     });
-    if (user.success === 'false') {
+    if (user.success === false) {
       throw new NotFoundException(user.error.message);
     }
     return user;
@@ -118,7 +118,7 @@ export class UserService {
         profImg: newProfileImage,
       },
     });
-    if (user.success === 'false') {
+    if (user.success === false) {
       throw new NotFoundException(user.error.message);
     }
   }
@@ -131,7 +131,7 @@ export class UserService {
         id: id,
       },
     });
-    if (user.success === 'false') {
+    if (user.success === false) {
       throw new NotFoundException(user.error.message);
     }
     return user;
@@ -151,7 +151,7 @@ export class UserService {
         key: newKey,
       },
     });
-    if (user.success === 'false') {
+    if (user.success === false) {
       throw new NotFoundException(user.error.message);
     }
   }
@@ -164,7 +164,7 @@ export class UserService {
         id: id,
       },
     });
-    if (user.success === 'false') {
+    if (user.success === false) {
       throw new NotFoundException(user.error.message);
     }
     return user;

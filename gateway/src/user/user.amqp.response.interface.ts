@@ -1,5 +1,5 @@
 export interface AmqpResponse {
-  success: string;
+  success: boolean;
   data;
   error: AmqpResponseError;
 }
