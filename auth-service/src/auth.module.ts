@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AuthController } from './auth.controller';
+import { AuthHttpController } from './auth.http.controller';
 import { AuthService } from './auth.service';
 import { RedisModule } from './redis/redis.module';
 import { JwtAccessGuard, JwtRefreshGuard } from './jwt/jwt.guard';
@@ -62,6 +62,6 @@ import { AuthRmqController } from './auth.rmq.controller';
     RmqResponseInterceptor,
   ],
   exports: [JwtAccessGuard, JwtRefreshGuard, Oauth42Guard, OauthGoogleGuard],
-  controllers: [AuthController, AuthRmqController],
+  controllers: [AuthHttpController, AuthRmqController],
 })
 export class AuthModule {}

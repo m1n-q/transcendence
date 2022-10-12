@@ -16,7 +16,7 @@ import { UserInfoDto } from './dto/user-info.dto';
 import { UserFinderService } from './user-finder/user-finder.service';
 
 @Controller('auth')
-export class AuthController {
+export class AuthHttpController {
   constructor(
     private readonly authService: AuthService,
     private readonly userFinderService: UserFinderService,
