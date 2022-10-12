@@ -22,6 +22,7 @@ import { RmqService } from './rmq/services/rmq.service';
 import { UserFinderService } from './user-finder/user-finder.service';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { RmqResponseInterceptor } from './rmq-response.interceptor';
+import { AuthRmqController } from './auth.rmq.controller';
 
 @Module({
   imports: [
@@ -57,10 +58,10 @@ import { RmqResponseInterceptor } from './rmq-response.interceptor';
     AuthService,
     RmqService,
     UserFinderService,
-    AuthController,
+    AuthRmqController,
     RmqResponseInterceptor,
   ],
   exports: [JwtAccessGuard, JwtRefreshGuard, Oauth42Guard, OauthGoogleGuard],
-  controllers: [AuthController],
+  controllers: [AuthController, AuthRmqController],
 })
 export class AuthModule {}

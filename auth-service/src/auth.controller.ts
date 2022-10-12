@@ -14,8 +14,6 @@ import { AuthService } from './auth.service';
 import { JwtRefreshGuard } from './jwt/jwt.guard';
 import { UserInfoDto } from './dto/user-info.dto';
 import { UserFinderService } from './user-finder/user-finder.service';
-import { RabbitRPC } from '@golevelup/nestjs-rabbitmq';
-import { VerifyJwtRequestDto } from './dto/verify-jwt-request.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -86,14 +84,5 @@ export class AuthController {
   @Get('/oauth2/kakao')
   oauthKakao(): void {
     return;
-  }
-
-  @RabbitRPC({
-    exchange: 'auth.d.x',
-    queue: 'auth.verify.jwt.q',
-    routingKey: 'auth.verify.jwt.rk',
-  })
-  async verifyJwt(msg: VerifyJwtRequestDto) {
-    return this.authService.verifyJwt(msg);
   }
 }
