@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { RmqService } from './rmq/services/rmq.service';
 import { RedisService } from './redis/services/redis.service';
 import { UserInfoDto } from './dto/user-info.dto';
 import { ThirdPartyInfoDto } from './dto/third-party-info.dto';
@@ -9,16 +8,8 @@ import { ThirdPartyInfoDto } from './dto/third-party-info.dto';
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly rmqService: RmqService,
     private readonly redisService: RedisService,
   ) {}
-
-  async isMember(thirdPartyInfo: ThirdPartyInfoDto) {
-    const userInfo: UserInfoDto = await this.rmqService.requestUserInfoBy3pId(
-      thirdPartyInfo,
-    );
-    return userInfo;
-  }
 
   async signIn(userInfo: UserInfoDto) {
     return {

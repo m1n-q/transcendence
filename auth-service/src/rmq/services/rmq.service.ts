@@ -1,12 +1,14 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RmqResponse } from '../../dto/rmq-response';
 import { ThirdPartyInfoDto } from '../../dto/third-party-info.dto';
 import { UserInfoDto } from '../../dto/user-info.dto';
+import { RmqRequestFailedException } from './rmq-request-failed.exception';
 
 @Injectable()
 export class RmqService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
+
   /* after get user's info by oauth provider */
   async requestUserInfoBy3pId(thirdPartyInfo: ThirdPartyInfoDto) {
     let response: RmqResponse<UserInfoDto>;
@@ -18,11 +20,10 @@ export class RmqService {
         payload: thirdPartyInfo,
         timeout: 2000,
       });
-    } catch (e) {
-      throw new InternalServerErrorException('RMQ request failed');
+    } catch (reqFail) {
+      throw new RmqRequestFailedException();
     }
-
-    return response.success ? response.data : null; //NOTE: may use NotFoundException
+    return response;
   }
 
   async requestUserInfoById(userId: string) {
@@ -35,9 +36,9 @@ export class RmqService {
         payload: userId,
         timeout: 2000,
       });
-    } catch (e) {
-      throw new InternalServerErrorException('RMQ request failed');
+    } catch (reqFail) {
+      throw new RmqRequestFailedException();
     }
-    return response.success ? response.data : null; //NOTE: may use NotFoundException
+    return response;
   }
 }

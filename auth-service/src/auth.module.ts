@@ -19,6 +19,7 @@ import {
 } from './oauth2/oauth2.strategy';
 import { RmqModule } from './rmq/rmq.module';
 import { RmqService } from './rmq/services/rmq.service';
+import { UserFinderService } from './user-finder/user-finder.service';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { RmqService } from './rmq/services/rmq.service';
     OauthKakaoGuard,
     AuthService,
     RmqService,
+    UserFinderService,
   ],
   exports: [JwtAccessGuard, JwtRefreshGuard, Oauth42Guard, OauthGoogleGuard],
   controllers: [AuthController],

@@ -1,9 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Strategy } from 'passport-jwt';
 import { UserInfoDto } from '../dto/user-info.dto';
-import { RmqService } from '../rmq/services/rmq.service';
+import { UserFinderService } from '../user-finder/user-finder.service';
 
 const extractFromCookie = function (key: string) {
   return (req: Request) => {
@@ -18,7 +22,7 @@ export class JwtAccessStrategy extends PassportStrategy(
   Strategy,
   'jwt-access',
 ) {
-  constructor(private readonly rmqService: RmqService) {
+  constructor(private readonly userFinderService: UserFinderService) {
     super({
       jwtFromRequest: extractFromCookie('jwt-access'),
       ignoreExpiration: false,
@@ -27,10 +31,14 @@ export class JwtAccessStrategy extends PassportStrategy(
   }
 
   async validate(payload: UserInfoDto) {
-    const matches: UserInfoDto = await this.rmqService.requestUserInfoById(
-      payload.userId,
-    );
-    if (!matches)
+    let userInfo: UserInfoDto;
+    try {
+      userInfo = await this.userFinderService.findUserById(payload.userId);
+    } catch (e) {
+      throw new InternalServerErrorException();
+    }
+
+    if (!userInfo)
       throw new UnauthorizedException('access_token validate failed');
     return payload;
   }
@@ -55,14 +63,18 @@ export class JwtRefreshStrategy extends PassportStrategy(
   }
 
   async validate(req: Request, payload: UserInfoDto) {
-    const refreshToken = this.jwtExtractor(req);
     // const refreshToken = req.get('Authorization').replace('Bearer', '').trim();
+    const refreshToken = this.jwtExtractor(req);
+    let userInfo: UserInfoDto;
 
-    const matches: UserInfoDto = await this.rmqService.requestUserInfoById(
-      payload.userId,
-    );
-    if (!matches)
-      throw new UnauthorizedException('refresh_token validate failed');
+    try {
+      userInfo = await this.userFinderService.findUserById(payload.userId);
+    } catch (e) {
+      throw new InternalServerErrorException();
+    }
+
+    if (!userInfo)
+      throw new UnauthorizedException('access_token validate failed');
     return { payload, refreshToken };
   }
 }
