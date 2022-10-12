@@ -5,7 +5,7 @@ import { UserInfoDto } from './dto/user-info.dto';
 import { ThirdPartyInfoDto } from './dto/third-party-info.dto';
 import { UserFinderService } from './user-finder/user-finder.service';
 import { VerifyJwtRequestDto } from './dto/verify-jwt-request.dto';
-import { RmqErrorResponse, RmqResponse } from './dto/rmq-response';
+import { RmqError, RmqResponse } from './dto/rmq-response';
 
 const WHERE = 'auth-service';
 
@@ -75,29 +75,17 @@ export class AuthService {
         secret: process.env.JWT_ACCESS_SECRET,
       });
     } catch (e) {
-      return new RmqErrorResponse({
-        code: 401,
-        message: 'Invalid access_token',
-        where: WHERE,
-      });
+      return new RmqError(401, 'Invalid access_token', WHERE);
     }
 
     try {
       userInfo = await this.userFinderService.findUserById(payload.userId);
     } catch (reqFail) {
-      return new RmqErrorResponse({
-        code: reqFail.code,
-        message: reqFail.message,
-        where: reqFail.where,
-      });
+      return new RmqError(reqFail.code, reqFail.message, reqFail.where);
     }
 
     if (!userInfo)
-      return new RmqErrorResponse({
-        code: 401,
-        message: 'Invalid userId in jwt payload',
-        where: WHERE,
-      });
+      return new RmqError(401, 'Invalid userId in jwt payload', WHERE);
     return true;
   }
 }
