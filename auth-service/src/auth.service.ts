@@ -32,31 +32,17 @@ export class AuthService {
   }
 
   issueAccessToken(payload: UserInfoDto) {
-    const { userId, ...rest } = payload;
-    return this.jwtService.sign(
-      {
-        sub: userId,
-        ...rest,
-      },
-      {
-        secret: process.env.JWT_ACCESS_SECRET,
-        expiresIn: 60 * 15,
-      },
-    );
+    return this.jwtService.sign(payload, {
+      secret: process.env.JWT_ACCESS_SECRET,
+      expiresIn: 60 * 15,
+    });
   }
 
   issueRefreshToken(payload: UserInfoDto) {
-    const { userId, ...rest } = payload;
-    const refreshToken = this.jwtService.sign(
-      {
-        sub: userId,
-        ...rest,
-      },
-      {
-        secret: process.env.JWT_REFRESH_SECRET,
-        expiresIn: 60 * 60 * 24 * 7,
-      },
-    );
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: 60 * 60 * 24 * 7,
+    });
     this.redisService.hset(
       'user:' + payload.userId,
       'refresh_token',
