@@ -1,4 +1,6 @@
-import { CreateUserRequestDto } from './dto/create.user.request.dto';
+import { UserUpdate2FADto } from './dto/user.update.2FA.dto';
+import { User3piDDto } from './dto/user.read.3pid.dto';
+import { UserCreateRequestDto } from './dto/user.create.request.dto';
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from 'src/entities/User';
@@ -11,7 +13,7 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
-  async readUserBy3pId(payload) {
+  async readUserBy3pId(payload: User3piDDto) {
     const findId = await this.userRepository.findOne({
       where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
     });
@@ -35,7 +37,7 @@ export class UserService {
     return { success: 'true', data: user };
   }
 
-  async createUser(payload: CreateUserRequestDto) {
+  async createUser(payload: UserCreateRequestDto) {
     const findId = await this.userRepository.findOne({
       where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
     });
@@ -227,7 +229,8 @@ export class UserService {
     };
   }
 
-  async updateUser2FAById(id: string, newInfo: string, newKey: string) {
+  async updateUser2FAById(msg: UserUpdate2FADto) {
+    const id = msg.id;
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
       return {
@@ -236,8 +239,8 @@ export class UserService {
         massage: `${id} not found`,
       };
     }
-    user.twoFactorAuthenticationInfo = newInfo;
-    user.twoFactorAuthenticationKey = newKey;
+    user.twoFactorAuthenticationInfo = msg.info;
+    user.twoFactorAuthenticationKey = msg.key;
 
     try {
       await this.userRepository.save(user);

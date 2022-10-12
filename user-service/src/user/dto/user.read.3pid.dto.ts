@@ -1,11 +1,11 @@
 import { IsString, IsNotEmpty } from 'class-validator';
 
-export class TwoFactorAuthenticationDto {
+export class User3piDDto {
   @IsNotEmpty()
   @IsString()
-  info: string;
+  thirdPartyId: string;
 
   @IsNotEmpty()
   @IsString()
-  key: string;
+  provider: string;
 }

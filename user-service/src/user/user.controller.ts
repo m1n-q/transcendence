@@ -95,7 +95,7 @@ export class UserController {
     queue: 'user.update.2FA.q',
   })
   async updateUser2FA(msg) {
-    return this.userService.updateUser2FAById(msg.id, msg.info, msg.key);
+    return this.userService.updateUser2FAById(msg);
   }
 
   @RabbitRPC({
