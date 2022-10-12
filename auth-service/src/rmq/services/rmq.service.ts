@@ -14,7 +14,7 @@ export class RmqService {
     try {
       response = await this.amqpConnection.request<RmqResponse<UserInfoDto>>({
         exchange: 'user.d.x',
-        routingKey: 'user.read.by.3pid.rk',
+        routingKey: 'user.read.by.3pId.rk',
         payload: thirdPartyInfo,
         timeout: 2000,
       });
