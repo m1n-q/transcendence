@@ -17,7 +17,7 @@ export class UserCreateRequestDto {
 
   @ValidateNested({ each: true })
   @Type(() => user2FADto)
-  towFactorAuthentication: user2FADto;
+  '2FA': user2FADto;
 
   @IsNotEmpty()
   @IsString()

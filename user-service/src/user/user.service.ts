@@ -56,9 +56,9 @@ export class UserService {
     user.profileImage = payload.profImg;
     user.rankScore = 1000;
 
-    if (payload.towFactorAuthentication !== undefined) {
-      user.twoFactorAuthenticationInfo = payload.towFactorAuthentication.info;
-      user.twoFactorAuthenticationKey = payload.towFactorAuthentication.key;
+    if (payload['2FA'] !== undefined) {
+      user.twoFactorAuthenticationInfo = payload['2FA'].info;
+      user.twoFactorAuthenticationKey = payload['2FA'].key;
     }
     try {
       await this.userRepository.save(user);
