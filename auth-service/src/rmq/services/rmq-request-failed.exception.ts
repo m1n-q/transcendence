@@ -1,6 +1,6 @@
 export class RmqRequestFailedException extends Error {
-  constructor() {
+  constructor(consumer: string) {
     super();
-    this.message = 'RMQ request failed.';
+    this.message = `RMQ request to ${consumer} failed.`;
   }
 }

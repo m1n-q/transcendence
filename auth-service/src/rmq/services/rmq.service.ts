@@ -21,7 +21,7 @@ export class RmqService {
         timeout: 2000,
       });
     } catch (reqFail) {
-      throw new RmqRequestFailedException();
+      throw new RmqRequestFailedException('user-service');
     }
     return response;
   }
@@ -37,7 +37,7 @@ export class RmqService {
         timeout: 2000,
       });
     } catch (reqFail) {
-      throw new RmqRequestFailedException();
+      throw new RmqRequestFailedException('user-service');
     }
     return response;
   }

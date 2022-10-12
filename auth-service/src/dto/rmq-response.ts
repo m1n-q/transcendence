@@ -9,3 +9,12 @@ export class RmqResponse<T = object> {
   data: T | null;
   error: RmqError | null;
 }
+
+export class RmqErrorResponse extends RmqResponse {
+  constructor(rmqError: RmqError) {
+    super();
+    this.success = false;
+    this.data = null;
+    this.error = rmqError;
+  }
+}

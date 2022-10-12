@@ -20,6 +20,7 @@ import {
 import { RmqModule } from './rmq/rmq.module';
 import { RmqService } from './rmq/services/rmq.service';
 import { UserFinderService } from './user-finder/user-finder.service';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
 @Module({
   imports: [
@@ -28,8 +29,18 @@ import { UserFinderService } from './user-finder/user-finder.service';
     }),
     PassportModule.register({}),
     JwtModule.register({}),
-    RmqModule,
+    RmqModule /* producer module */,
     RedisModule,
+    RabbitMQModule.forRoot(RabbitMQModule, {
+      uri: process.env.RMQ_HOST,
+      exchanges: [
+        {
+          name: 'auth.d.x',
+          type: 'direct',
+        },
+      ],
+      enableControllerDiscovery: true,
+    }),
   ],
   providers: [
     JwtAccessStrategy,

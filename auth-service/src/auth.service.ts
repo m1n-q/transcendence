@@ -3,12 +3,18 @@ import { JwtService } from '@nestjs/jwt';
 import { RedisService } from './redis/services/redis.service';
 import { UserInfoDto } from './dto/user-info.dto';
 import { ThirdPartyInfoDto } from './dto/third-party-info.dto';
+import { UserFinderService } from './user-finder/user-finder.service';
+import { VerifyJwtRequestDto } from './dto/verify-jwt-request.dto';
+import { RmqErrorResponse, RmqResponse } from './dto/rmq-response';
+
+const WHERE = 'auth-service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
+    private readonly userFinderService: UserFinderService,
   ) {}
 
   async signIn(userInfo: UserInfoDto) {
@@ -58,5 +64,40 @@ export class AuthService {
       access_token: this.issueAccessToken(userInfo),
       refresh_token: this.issueRefreshToken(userInfo),
     };
+  }
+
+  async verifyJwt(msg: VerifyJwtRequestDto) {
+    let payload;
+    let userInfo: UserInfoDto;
+
+    try {
+      payload = this.jwtService.verify(msg.access_token, {
+        secret: process.env.JWT_ACCESS_SECRET,
+      });
+    } catch (e) {
+      return new RmqErrorResponse({
+        code: 401,
+        message: 'Invalid access_token',
+        where: WHERE,
+      });
+    }
+
+    try {
+      userInfo = await this.userFinderService.findUserById(payload.userId);
+    } catch (reqFail) {
+      return new RmqErrorResponse({
+        code: reqFail.code,
+        message: reqFail.message,
+        where: reqFail.where,
+      });
+    }
+
+    if (!userInfo)
+      return new RmqErrorResponse({
+        code: 401,
+        message: 'Invalid userId in jwt payload',
+        where: WHERE,
+      });
+    return true;
   }
 }
