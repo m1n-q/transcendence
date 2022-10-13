@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { RmqResponse } from '../dto/rmq-response';
-import { ThirdPartyInfoDto } from '../dto/third-party-info.dto';
-import { UserInfoDto } from '../dto/user-info.dto';
-import { RmqService } from '../rmq/services/rmq.service';
+import { RmqResponse } from '../../dto/rmq-response';
+import { ThirdPartyInfoDto } from '../../dto/third-party-info.dto';
+import { UserInfoDto } from '../../dto/user-info.dto';
+import { RmqService } from '../../rmq-module/services/rmq.service';
 
 @Injectable()
 export class UserFinderService {

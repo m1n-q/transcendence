@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { RmqError, RmqResponse } from './dto/rmq-response';
+import { RmqError, RmqResponse } from '../dto/rmq-response';
 
 @Injectable()
 export class RmqResponseInterceptor<T>

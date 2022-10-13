@@ -6,7 +6,7 @@ import { RmqService } from './services/rmq.service';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: './src/rmq/.env',
+      envFilePath: '.env',
     }),
     RabbitMQModule.forRoot(RabbitMQModule, {
       uri: process.env.RMQ_HOST,

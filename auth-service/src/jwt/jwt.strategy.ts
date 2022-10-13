@@ -7,7 +7,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { Strategy } from 'passport-jwt';
 import { UserInfoDto } from '../dto/user-info.dto';
-import { UserFinderService } from '../user-finder/user-finder.service';
+import { UserFinderService } from '../user-finder/services/user-finder.service';
 
 const extractFromCookie = function (key: string) {
   return (req: Request) => {
