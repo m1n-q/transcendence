@@ -5,7 +5,7 @@
 
 import { Module } from '@nestjs/common';
 import { RedisService } from './services/redis.service';
-import { createClient, RedisClientOptions } from 'redis';
+import { createClient } from 'redis';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({

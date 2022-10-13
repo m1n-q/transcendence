@@ -1,6 +1,6 @@
 import { Controller, Get, Query, UseInterceptors } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
-import { RabbitRPC } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection, RabbitRPC } from '@golevelup/nestjs-rabbitmq';
 import {
   VerifyAccessJwtRequestDto,
   VerifyRefreshJwtRequestDto,
@@ -10,8 +10,12 @@ import { RmqResponseInterceptor } from '../../interceptors/rmq-response.intercep
 @UseInterceptors(RmqResponseInterceptor)
 @Controller('auth-rmq')
 export class AuthRmqController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly a: AmqpConnection /* XXX */,
+  ) {}
 
+  // XXX: issue temp rt
   @Get('rt')
   async rt(@Query() q) {
     return this.authService.issueRefreshToken({
@@ -19,6 +23,16 @@ export class AuthRmqController {
       nickname: 'ping',
       profImg: 'abcd.com',
       mmr: 1234,
+    });
+  }
+
+  // XXX: send message to auth.refresh.jwt.q
+  @Get('rf')
+  async rf(@Query() q) {
+    return this.a.request({
+      exchange: 'auth.d.x',
+      routingKey: 'auth.refresh.jwt.rk',
+      payload: q,
     });
   }
 

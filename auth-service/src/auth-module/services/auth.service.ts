@@ -12,44 +12,57 @@ import { RmqError } from '../../dto/rmq-response';
 import { plainToInstance } from 'class-transformer';
 
 const WHERE = 'auth-service';
+const AT_EXPIRES_IN = 60 * 15;
+const RT_EXPIRES_IN = 60 * 60 * 24 * 7;
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
-    private readonly userFinderService: UserFinderService,
   ) {}
 
   async signIn(userInfo: UserInfoDto) {
-    return {
-      access_token: this.issueAccessToken(userInfo),
-      refresh_token: this.issueRefreshToken(userInfo),
-    };
+    const access_token = this.issueAccessToken(userInfo);
+    const refresh_token = this.issueRefreshToken(userInfo);
+
+    const res: any[] = await this.storeRefreshToken(
+      'user:' + userInfo.userId,
+      refresh_token,
+      RT_EXPIRES_IN,
+    );
+    // console.log(res);
+    //TODO: check redis response
+    return { access_token, refresh_token };
   }
+
   async signUp(thirdPartyInfo: ThirdPartyInfoDto) {
     return `redirect to signUp page.
     ${thirdPartyInfo.provider}, ${thirdPartyInfo.thirdPartyId}`;
   }
 
+  async storeRefreshToken(key, refreshToken, TTL) {
+    const res = await this.redisService.hsetWithTTL(
+      key,
+      'refresh_token',
+      refreshToken,
+      TTL,
+    );
+    return res;
+  }
+
   issueAccessToken(payload: UserInfoDto) {
     return this.jwtService.sign(Object.assign({}, payload), {
       secret: process.env.JWT_ACCESS_SECRET,
-      expiresIn: 60 * 15,
+      expiresIn: AT_EXPIRES_IN,
     });
   }
 
   issueRefreshToken(payload: UserInfoDto) {
     const refreshToken = this.jwtService.sign(Object.assign({}, payload), {
       secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: 60 * 60 * 24 * 7,
+      expiresIn: RT_EXPIRES_IN,
     });
-    this.redisService.hset(
-      'user:' + payload.userId,
-      'refresh_token',
-      //TODO: hash
-      refreshToken,
-    );
     return refreshToken;
   }
 
@@ -94,9 +107,6 @@ export class AuthService {
     const result = refreshToken === hashed;
     if (result == false)
       return new RmqError(401, 'Refresh token not matches', WHERE);
-    return {
-      access_token: this.issueAccessToken(userInfo),
-      refresh_token: this.issueRefreshToken(userInfo),
-    };
+    return this.signIn(userInfo);
   }
 }
