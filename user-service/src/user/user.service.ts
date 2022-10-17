@@ -1,8 +1,13 @@
-import { UserUpdate2FADto } from './dto/user.update.2FA.dto';
-import { User3piDDto } from './dto/user.read.3pid.dto';
-import { UserCreateRequestDto } from './dto/user.create.request.dto';
-import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import {
+  RmqUSer3pID,
+  RmqUserCreate,
+  RmqUserId,
+  RmqUserUpdateNickname,
+  RmqUserUpdate2FA,
+  RmqUserUpdateProfImg,
+} from './dto/rmq-request.dto';
+import { Injectable, HttpException } from '@nestjs/common';
+import { FindRelationsNotFoundError, Repository } from 'typeorm';
 import { User } from 'src/entities/User';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -13,40 +18,31 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
-  async readUserBy3pId(payload: User3piDDto) {
-    const findId = await this.userRepository.findOne({
+  async readUserBy3pId(payload: RmqUSer3pID) {
+    const user = await this.userRepository.findOne({
       where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
     });
-    if (findId) return { success: 'true', data: findId };
-    return {
-      success: 'false',
-      code: 404,
-      massage: `${payload.thirdPartyId} not found`,
-    };
+    if (!user) {
+      throw new HttpException(`${payload.thirdPartyId} not found`, 404);
+    }
+    return user;
   }
 
-  async readUserById(id: string) {
+  async readUserById(payload: RmqUserId) {
+    const id = payload.id;
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
+      throw new HttpException(`${id} not found`, 404);
     }
-    return { success: 'true', data: user };
+    return user;
   }
 
-  async createUser(payload: UserCreateRequestDto) {
-    const findId = await this.userRepository.findOne({
+  async createUser(payload: RmqUserCreate) {
+    const findUser = await this.userRepository.findOne({
       where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
     });
-    if (findId) {
-      return {
-        success: 'false',
-        code: 409,
-        massage: 'This ID is already registered.',
-      };
+    if (findUser) {
+      throw new HttpException('cannot create or update User', 409);
     }
 
     const user = new User();
@@ -60,227 +56,99 @@ export class UserService {
       user.twoFactorAuthenticationInfo = payload['2FA'].info;
       user.twoFactorAuthenticationKey = payload['2FA'].key;
     }
+
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      return {
-        success: 'false',
-        code: 409,
-        massage: 'Conflict',
-      };
+      throw new HttpException('Conflict', 409);
     }
-
-    return {
-      success: 'true',
-      data: {
-        userId: user.id,
-        nickname: user.nickname,
-        createdDate: user.createdDate,
-      },
-    };
+    // 일단 모두 리턴
+    return user;
   }
 
-  async getById(id: string) {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user || user.deletedDate != null) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
-    }
-    return {
-      success: 'true',
-      data: {
-        userId: user.id,
-        nickname: user.nickname,
-        profImg: user.profileImage,
-        mmr: user.rankScore,
-      },
-    };
-  }
+  async deleteUserById(payload: RmqUserId) {
+    // 정책에 따라 변경 예정
+    await this.readUserById(payload);
 
-  async deleteUserById(id: string) {
-    // 계속 삭제 되는 문제가 있음
-    // 해당 아이디 찾아와서 deleteData 있는지 확인 후 넘겨야 하는지??
-    // 일단 먼저 찾아서 확인 후 진행
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user || user.deletedDate != null) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
-    }
-    const deleteResponse = await this.userRepository.softDelete(id);
+    const deleteResponse = await this.userRepository.softDelete(payload.id);
     if (!deleteResponse.affected) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
+      throw new HttpException(`${payload.id} not found`, 404);
     }
-    return { success: 'true', data: null };
+    return null;
   }
 
-  async readUserNicknameById(id: string) {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user || user.deletedDate != null) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
-    }
-    return {
-      success: 'true',
-      data: {
-        nickname: user.nickname,
-      },
-    };
+  async readUserNicknameById(payload: RmqUserId) {
+    const user = await this.readUserById(payload);
+    return user.nickname;
   }
 
-  async updateUserNicknameById(id: string, newNickname: string) {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user || user.deletedDate != null) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
-    }
-    user.nickname = newNickname;
-    try {
-      await this.userRepository.save(user);
-    } catch (error) {
-      return {
-        success: 'false',
-        code: 409,
-        massage: 'Conflict',
-      };
-    }
-    return {
-      success: 'true',
-      data: {
-        nickname: user.nickname,
-      },
-    };
-  }
-
-  async readUserProfImgById(id: string) {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user || user.deletedDate != null) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
-    }
-    return {
-      success: 'true',
-      data: {
-        profImg: user.profileImage,
-      },
-    };
-  }
-
-  async updateUserProfImgById(id: string, newProfileImage: string) {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user || user.deletedDate != null) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
-    }
-    user.profileImage = newProfileImage;
-    try {
-      await this.userRepository.save(user);
-    } catch (error) {
-      return {
-        success: 'false',
-        code: 409,
-        massage: 'Conflict',
-      };
-    }
-    return {
-      success: 'true',
-      data: {
-        profImg: user.profileImage,
-      },
-    };
-  }
-
-  async readUser2FAById(id: string) {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user || user.deletedDate != null) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
-    }
-    return {
-      success: 'true',
-      data: {
-        info: user.twoFactorAuthenticationInfo,
-        key: user.twoFactorAuthenticationKey,
-      },
-    };
-  }
-
-  async updateUser2FAById(msg: UserUpdate2FADto) {
-    const id = msg.id;
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user || user.deletedDate != null) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
-    }
-    user.twoFactorAuthenticationInfo = msg.info;
-    user.twoFactorAuthenticationKey = msg.key;
+  async updateUserNicknameById(payload: RmqUserUpdateNickname) {
+    const user = await this.readUserById(payload);
+    user.nickname = payload.nickname;
 
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      return {
-        success: 'false',
-        code: 409,
-        massage: `Conflict`,
-      };
+      throw new HttpException('Conflict', 409);
     }
+    return user.nickname;
+  }
+
+  async readUserProfImgById(payload: RmqUserId) {
+    const user = await this.readUserById(payload);
+    return user.profileImage;
+  }
+
+  async updateUserProfImgById(payload: RmqUserUpdateProfImg) {
+    const user = await this.readUserById(payload);
+    user.profileImage = payload.id;
+
+    try {
+      await this.userRepository.save(user);
+    } catch (error) {
+      throw new HttpException('Conflict', 409);
+    }
+    return user.profileImage;
+  }
+
+  async readUser2FAById(payload: RmqUserId) {
+    const user = await this.readUserById(payload);
 
     return {
-      success: 'true',
-      data: {
-        info: user.twoFactorAuthenticationInfo,
-        key: user.twoFactorAuthenticationKey,
-      },
+      info: user.twoFactorAuthenticationInfo,
+      key: user.twoFactorAuthenticationKey,
     };
   }
 
-  async deleteUser2FAById(id: string) {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user || user.deletedDate != null) {
-      return {
-        success: 'false',
-        code: 404,
-        massage: `${id} not found`,
-      };
+  async updateUser2FAById(payload: RmqUserUpdate2FA) {
+    const user = await this.readUserById(payload);
+
+    user.twoFactorAuthenticationInfo = payload.info;
+    user.twoFactorAuthenticationKey = payload.key;
+
+    try {
+      await this.userRepository.save(user);
+    } catch (error) {
+      throw new HttpException('Conflict', 409);
     }
+
+    return {
+      info: user.twoFactorAuthenticationInfo,
+      key: user.twoFactorAuthenticationKey,
+    };
+  }
+
+  async deleteUser2FAById(payload: RmqUserId) {
+    const user = await this.readUserById(payload);
+
     user.twoFactorAuthenticationInfo = null;
     user.twoFactorAuthenticationKey = null;
+
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      return {
-        success: 'false',
-        code: 409,
-        massage: 'Conflict',
-      };
+      throw new HttpException('Conflict', 409);
     }
-    return { success: 'true', data: null };
+    return null;
   }
 }
