@@ -24,6 +24,6 @@ export function RmqErrorHandler(
     error = Buffer.from(JSON.stringify(errorResponse));
 
     channel.publish('', replyTo, error, { correlationId });
-    channel.ack(msg);
   }
+  channel.ack(msg);
 }

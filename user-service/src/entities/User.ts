@@ -1,3 +1,4 @@
+import { Expose } from 'class-transformer';
 import {
   Entity,
   Column,
@@ -8,15 +9,19 @@ import {
 
 @Entity('user')
 export class User {
+  @Expose()
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Expose()
   @Column({ unique: true })
   nickname: string;
 
+  @Expose()
   @Column()
   provider: string;
 
+  @Expose()
   @Column({ unique: true })
   thirdPartyId: string;
 
@@ -26,8 +31,9 @@ export class User {
   @Column({ nullable: true })
   twoFactorAuthenticationInfo: string;
 
+  @Expose()
   @Column()
-  profileImage: string;
+  profImg: string;
 
   @Column()
   rankScore: number;

@@ -24,6 +24,7 @@ import { UserModule } from './user/user.module';
       database: 'transcendence',
       entities: [User, BlackList, Friend, FriendRequest],
       synchronize: true,
+      dropSchema: true,
       namingStrategy: new SnakeNamingStrategy(),
     }),
     UserModule,

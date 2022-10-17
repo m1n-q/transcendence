@@ -1,3 +1,4 @@
+import { RmqError } from './dto/rmq-response.dto';
 import {
   RmqUSer3pID,
   RmqUserCreate,
@@ -7,10 +8,11 @@ import {
   RmqUserUpdateProfImg,
 } from './dto/rmq-request.dto';
 import { Injectable, HttpException } from '@nestjs/common';
-import { FindRelationsNotFoundError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from 'src/entities/User';
 import { InjectRepository } from '@nestjs/typeorm';
 
+const WHERE = 'user_service';
 @Injectable()
 export class UserService {
   constructor(
@@ -32,7 +34,7 @@ export class UserService {
     const id = payload.id;
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user || user.deletedDate != null) {
-      throw new HttpException(`${id} not found`, 404);
+      throw new RmqError(404, `${id} not found`, WHERE);
     }
     return user;
   }
@@ -45,11 +47,8 @@ export class UserService {
       throw new HttpException('cannot create or update User', 409);
     }
 
-    const user = new User();
-    user.nickname = payload.nickname;
-    user.thirdPartyId = payload.thirdPartyId;
-    user.provider = payload.provider;
-    user.profileImage = payload.profImg;
+    const user = this.userRepository.create(payload);
+
     user.rankScore = 1000;
 
     if (payload['2FA'] !== undefined) {
@@ -96,19 +95,19 @@ export class UserService {
 
   async readUserProfImgById(payload: RmqUserId) {
     const user = await this.readUserById(payload);
-    return user.profileImage;
+    return user.profImg;
   }
 
   async updateUserProfImgById(payload: RmqUserUpdateProfImg) {
     const user = await this.readUserById(payload);
-    user.profileImage = payload.id;
+    user.profImg = payload.id;
 
     try {
       await this.userRepository.save(user);
     } catch (error) {
       throw new HttpException('Conflict', 409);
     }
-    return user.profileImage;
+    return user.profImg;
   }
 
   async readUser2FAById(payload: RmqUserId) {
