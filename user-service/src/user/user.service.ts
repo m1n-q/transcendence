@@ -25,7 +25,7 @@ export class UserService {
       where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
     });
     if (!user) {
-      throw new HttpException(`${payload.thirdPartyId} not found`, 404);
+      throw new RmqError(404, `${payload.thirdPartyId} not found`, WHERE);
     }
     return user;
   }
@@ -44,7 +44,7 @@ export class UserService {
       where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
     });
     if (findUser) {
-      throw new HttpException('cannot create or update User', 409);
+      throw new RmqError(409, 'cannot create or update User', WHERE);
     }
 
     const user = this.userRepository.create(payload);
@@ -59,7 +59,7 @@ export class UserService {
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      throw new HttpException('Conflict', 409);
+      throw new RmqError(409, 'Conflict', WHERE);
     }
     // 일단 모두 리턴
     return user;
@@ -71,7 +71,7 @@ export class UserService {
 
     const deleteResponse = await this.userRepository.softDelete(payload.id);
     if (!deleteResponse.affected) {
-      throw new HttpException(`${payload.id} not found`, 404);
+      throw new RmqError(404, `${payload.id} not found`, WHERE);
     }
     return null;
   }
@@ -88,7 +88,7 @@ export class UserService {
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      throw new HttpException('Conflict', 409);
+      throw new RmqError(409, 'Conflict', WHERE);
     }
     return user.nickname;
   }
@@ -105,7 +105,7 @@ export class UserService {
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      throw new HttpException('Conflict', 409);
+      throw new RmqError(409, 'Conflict', WHERE);
     }
     return user.profImg;
   }
@@ -128,7 +128,7 @@ export class UserService {
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      throw new HttpException('Conflict', 409);
+      throw new RmqError(409, 'Conflict', WHERE);
     }
 
     return {
@@ -146,7 +146,7 @@ export class UserService {
     try {
       await this.userRepository.save(user);
     } catch (error) {
-      throw new HttpException('Conflict', 409);
+      throw new RmqError(409, 'Conflict', WHERE);
     }
     return null;
   }
