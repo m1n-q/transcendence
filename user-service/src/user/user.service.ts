@@ -1,4 +1,4 @@
-import { RmqError } from './dto/rmq-response.dto';
+import { RmqError } from './dto/rmq.user.response.dto';
 import {
   RmqUSer3pID,
   RmqUserCreate,
@@ -6,8 +6,8 @@ import {
   RmqUserUpdateNickname,
   RmqUserUpdate2FA,
   RmqUserUpdateProfImg,
-} from './dto/rmq-request.dto';
-import { Injectable, HttpException } from '@nestjs/common';
+} from './dto/rmq.user.request.dto';
+import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from 'src/entities/User';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -47,7 +47,7 @@ export class UserService {
       throw new RmqError(409, 'cannot create or update User', WHERE);
     }
 
-    const user = this.userRepository.create(payload);
+    const user = await this.userRepository.create(payload);
 
     user.rankScore = 1000;
 

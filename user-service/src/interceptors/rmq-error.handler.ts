@@ -1,5 +1,5 @@
 import { HttpException } from '@nestjs/common';
-import { RmqError, RmqResponse } from '../user/dto/rmq-response.dto';
+import { RmqError, RmqResponse } from '../user/dto/rmq.user.response.dto';
 import * as amqplib from 'amqplib';
 
 export function RmqErrorHandler(

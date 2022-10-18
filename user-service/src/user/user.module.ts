@@ -15,5 +15,6 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
   ],
   controllers: [UserController],
   providers: [UserService, UserController],
+  exports: [UserService],
 })
 export class UserModule {}

@@ -1,4 +1,4 @@
-import { RmqResponse, RmqError } from '../user/dto/rmq-response.dto';
+import { RmqResponse, RmqError } from '../user/dto/rmq.user.response.dto';
 import { isRabbitContext } from '@golevelup/nestjs-rabbitmq';
 import {
   CallHandler,

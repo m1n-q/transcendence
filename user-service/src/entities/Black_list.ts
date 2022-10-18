@@ -10,10 +10,10 @@ import {
 @Entity('blackList')
 export class BlackList {
   @PrimaryColumn()
-  blockerId: string;
+  blocker: string;
 
   @PrimaryColumn()
-  blockedId: string;
+  blocked: string;
 
   @CreateDateColumn()
   createdDate: Date;

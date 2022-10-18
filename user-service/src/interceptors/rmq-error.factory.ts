@@ -1,4 +1,4 @@
-import { RmqError } from '../user/dto/rmq-response.dto';
+import { RmqError } from '../user/dto/rmq.user.response.dto';
 
 export function RmqErrorFactory(where: string, status = 400) {
   return (errors) => {

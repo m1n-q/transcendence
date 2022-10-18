@@ -9,6 +9,7 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { UserModule } from './user/user.module';
+import { FriendModule } from './friend/friend.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UserModule } from './user/user.module';
       namingStrategy: new SnakeNamingStrategy(),
     }),
     UserModule,
+    FriendModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -5,7 +5,7 @@ import {
   RmqUserUpdateNickname,
   RmqUserUpdateProfImg,
   RmqUserUpdate2FA,
-} from './dto/rmq-request.dto';
+} from './dto/rmq.user.request.dto';
 import { UserService } from './user.service';
 import { Controller, UseInterceptors } from '@nestjs/common';
 import { RabbitPayload, RabbitRPC } from '@golevelup/nestjs-rabbitmq';

@@ -10,19 +10,19 @@ import {
 @Entity('friend')
 export class Friend {
   @PrimaryColumn()
-  requesterId: string;
+  requester: string;
 
   @PrimaryColumn()
-  receiverId: string;
+  receiver: string;
 
   @CreateDateColumn()
   createdDate: Date;
 
   @ManyToOne(() => User, (user) => user.id)
   @JoinColumn({ name: 'requester_id' })
-  requester: User;
+  requesters: User;
 
   @ManyToOne(() => User, (user) => user.id)
   @JoinColumn({ name: 'receiver_id' })
-  receiver: User;
+  receivers: User;
 }
