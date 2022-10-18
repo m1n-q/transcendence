@@ -1,3 +1,4 @@
+import { BlackList } from './../entities/Black_list';
 import { RmqError } from '../user/dto/rmq.user.response.dto';
 import { Friend } from './../entities/Friend';
 import { UserService } from './../user/user.service';
@@ -5,7 +6,11 @@ import { FriendRequest } from './../entities/Friend_request';
 import { User } from './/../entities/User';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RmqFriendRequest, RmqFriendRequestId } from './dto/rmq.friend.request';
+import {
+  RmqFriendRequest,
+  RmqFriendRequestId,
+  RmqBlockFriendRequest,
+} from './dto/rmq.friend.request';
 import { Repository } from 'typeorm';
 
 const WHERE = 'user_service';
@@ -19,6 +24,8 @@ export class FriendService {
     private friendRequestRepository: Repository<FriendRequest>,
     @InjectRepository(Friend)
     private friendRepository: Repository<Friend>,
+    @InjectRepository(BlackList)
+    private blackListRepository: Repository<BlackList>,
     private readonly userService: UserService,
   ) {}
 
@@ -72,6 +79,54 @@ export class FriendService {
 
     try {
       await this.friendRequestRepository.remove(findFriendRequest);
+    } catch (error) {
+      throw new RmqError(409, 'Conflict', WHERE);
+    }
+  }
+
+  async createBlockFriend(payload: RmqBlockFriendRequest) {
+    await this.userService.readUserById({ id: payload.blocked });
+
+    const blackList = await this.blackListRepository.findOne({
+      where: { blocker: payload.blocker, blocked: payload.blocked },
+    });
+    if (blackList) {
+      throw new RmqError(409, 'already request', WHERE);
+    }
+
+    const blockFriend = await this.blackListRepository.create(payload);
+
+    try {
+      await this.blackListRepository.save(blockFriend);
+    } catch (error) {
+      throw new RmqError(409, 'Conflict', WHERE);
+    }
+    return blockFriend;
+  }
+
+  async readBlockFriend(payload: RmqFriendRequestId) {
+    const blackList = await this.blackListRepository.find({
+      where: { blocker: payload.userId },
+    });
+    if (blackList.length === 0) {
+      throw new RmqError(404, 'Not found list', WHERE);
+    }
+    return blackList;
+  }
+
+  async deleteBlockFriend(payload: RmqBlockFriendRequest) {
+    await this.userService.readUserById({ id: payload.blocked });
+
+    const findBlackList = await this.blackListRepository.findOne({
+      where: { blocker: payload.blocker, blocked: payload.blocked },
+    });
+
+    if (!findBlackList) {
+      throw new RmqError(409, 'not found request', WHERE);
+    }
+
+    try {
+      await this.blackListRepository.remove(findBlackList);
     } catch (error) {
       throw new RmqError(409, 'Conflict', WHERE);
     }

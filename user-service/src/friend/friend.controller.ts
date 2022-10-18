@@ -3,7 +3,11 @@ import { RmqInterceptor } from './../interceptors/rmq.response.interceptor';
 import { RabbitPayload, RabbitRPC } from '@golevelup/nestjs-rabbitmq';
 import { Controller, UseInterceptors } from '@nestjs/common';
 import { RmqErrorHandler } from 'src/interceptors/rmq-error.handler';
-import { RmqFriendRequest, RmqFriendRequestId } from './dto/rmq.friend.request';
+import {
+  RmqFriendRequest,
+  RmqFriendRequestId,
+  RmqBlockFriendRequest,
+} from './dto/rmq.friend.request';
 
 @UseInterceptors(new RmqInterceptor())
 @Controller('friend')
@@ -38,5 +42,35 @@ export class FriendController {
   })
   async deleteFriendRequest(@RabbitPayload() msg: RmqFriendRequest) {
     return this.friendService.deleteFriendRequest(msg);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.create.block.friend.rk',
+    queue: 'user.create.block.friend.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async createBlockFriend(@RabbitPayload() msg: RmqBlockFriendRequest) {
+    return this.friendService.createBlockFriend(msg);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.read.block.friend.rk',
+    queue: 'user.read.block.friend.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async readBlockFriend(@RabbitPayload() msg: RmqFriendRequestId) {
+    return this.friendService.readBlockFriend(msg);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.delete.block.friend.rk',
+    queue: 'user.delete.block.friend.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async deleteBlockFriend(@RabbitPayload() msg: RmqBlockFriendRequest) {
+    return this.friendService.deleteBlockFriend(msg);
   }
 }

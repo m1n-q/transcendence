@@ -1,3 +1,4 @@
+import { BlackList } from './../entities/Black_list';
 import { Friend } from './../entities/Friend';
 import { UserService } from './../user/user.service';
 import { UserModule } from './../user/user.module';
@@ -11,7 +12,7 @@ import { FriendService } from './friend.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, FriendRequest, Friend]),
+    TypeOrmModule.forFeature([User, FriendRequest, Friend, BlackList]),
     UserModule,
     RabbitMQModule.forRoot(RabbitMQModule, {
       uri: 'amqp://guest:guest@localhost:5672',

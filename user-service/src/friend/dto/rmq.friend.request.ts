@@ -16,7 +16,7 @@ export class RmqFriendRequestId {
   userId: string;
 }
 
-export class RmqFriendBlockRequest {
+export class RmqBlockFriendRequest {
   @IsNotEmpty()
   @IsUUID()
   blocker: string;
