@@ -19,10 +19,10 @@ export class Friend {
   createdDate: Date;
 
   @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: 'requester_id' })
+  @JoinColumn({ name: 'requester' })
   requesters: User;
 
   @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: 'receiver_id' })
+  @JoinColumn({ name: 'receiver' })
   receivers: User;
 }

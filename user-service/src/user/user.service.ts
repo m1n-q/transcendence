@@ -47,7 +47,7 @@ export class UserService {
       throw new RmqError(409, 'cannot create or update User', WHERE);
     }
 
-    const user = await this.userRepository.create(payload);
+    const user = this.userRepository.create(payload);
 
     user.rankScore = 1000;
 

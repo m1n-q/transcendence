@@ -46,8 +46,8 @@ export class FriendController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.create.block.friend.rk',
-    queue: 'user.create.block.friend.q',
+    routingKey: 'user.create.friend.block.rk',
+    queue: 'user.create.friend.block.q',
     errorHandler: RmqErrorHandler,
   })
   async createBlockFriend(@RabbitPayload() msg: RmqBlockFriendRequest) {
@@ -56,8 +56,8 @@ export class FriendController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.read.block.friend.rk',
-    queue: 'user.read.block.friend.q',
+    routingKey: 'user.read.friend.block.rk',
+    queue: 'user.read.friend.block.q',
     errorHandler: RmqErrorHandler,
   })
   async readBlockFriend(@RabbitPayload() msg: RmqFriendRequestId) {
@@ -66,11 +66,41 @@ export class FriendController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.delete.block.friend.rk',
-    queue: 'user.delete.block.friend.q',
+    routingKey: 'user.delete.friend.block.rk',
+    queue: 'user.delete.friend.block.q',
     errorHandler: RmqErrorHandler,
   })
   async deleteBlockFriend(@RabbitPayload() msg: RmqBlockFriendRequest) {
     return this.friendService.deleteBlockFriend(msg);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.create.friend.rk',
+    queue: 'user.create.friend.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async createFriend(@RabbitPayload() msg: RmqFriendRequest) {
+    return this.friendService.createFriend(msg);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.read.friend.rk',
+    queue: 'user.read.friend.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async readFriend(@RabbitPayload() msg: RmqFriendRequestId) {
+    return this.friendService.readFriend(msg);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.delete.friend.rk',
+    queue: 'user.delete.friend.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async deleteFriend(@RabbitPayload() msg: RmqFriendRequest) {
+    return this.friendService.deleteFriend(msg);
   }
 }

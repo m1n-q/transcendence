@@ -25,7 +25,7 @@ import { FriendModule } from './friend/friend.module';
       database: 'transcendence',
       entities: [User, BlackList, Friend, FriendRequest],
       synchronize: true,
-      dropSchema: true,
+      // dropSchema: true,
       namingStrategy: new SnakeNamingStrategy(),
     }),
     UserModule,

@@ -19,10 +19,10 @@ export class BlackList {
   createdDate: Date;
 
   @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: 'blocker_id' })
+  @JoinColumn({ name: 'blocker' })
   requester: User;
 
   @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: 'blocked_id' })
+  @JoinColumn({ name: 'blocked' })
   receiver: User;
 }
