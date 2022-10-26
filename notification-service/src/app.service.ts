@@ -7,15 +7,26 @@ export class AppService {
   constructor(private readonly rmqClient: RmqService) {}
 
   //XXX: MOCK
-  handleUserEvent(msg: RmqEvent, rk: string) {
-    let payload;
-    if (rk === 'user.event.join.rk') payload = 'new user joined';
-    else if (rk === 'user.event.login.rk') payload = 'new user logged in';
-    else payload = 'unknown event';
+  handleUserEvent(ev: RmqEvent, rk: string) {
+    const re = /(?<=event.on.user.)(.*)(?=.rk)/;
+    const evType = re.exec(rk)[0];
 
-    console.log(payload);
-    this.rmqClient.sendMessage(process.env.RMQ_NOTIFICATION_EXCHANGE, rk, {
-      payload,
-    });
+    switch (evType) {
+      case 'friend-request':
+        break;
+      case 'login':
+        break;
+      default:
+        console.log('unknown event');
+        return;
+    }
+
+    for (const recvUser of ev.recvUsers) {
+      const userRk = `notification.user.${recvUser}.rk`;
+      this.rmqClient.sendMessage(process.env.RMQ_NOTIFICATION_TOPIC, userRk, {
+        userId: recvUser,
+        payload: ev.payload,
+      });
+    }
   }
 }

@@ -6,6 +6,8 @@ import { RmqErrorHandler } from './rmq-error.handler';
 import * as amqplib from 'amqplib';
 import { RmqEvent } from './events/rmq-event';
 
+//TODO: rename event / request routing key
+
 @UsePipes(
   new ValidationPipe({
     whitelist: true,
@@ -19,10 +21,11 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @RabbitSubscribe({
-    exchange: process.env.RMQ_USER_TOPIC,
+    exchange: 'user.t.x' /* process.env does not work */,
+    routingKey: 'event.on.user.join.rk',
+
     /* Competing Consumer must provide queue name*/
-    queue: 'notification.user.event.q',
-    routingKey: 'user.event.*.rk',
+    queue: 'event.user.q',
     errorHandler: RmqErrorHandler,
   })
   handleUserEvent(

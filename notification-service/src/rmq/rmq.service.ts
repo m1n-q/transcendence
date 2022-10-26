@@ -6,7 +6,6 @@ export class RmqService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
   sendMessage(exchange, rk, payload) {
-    payload['created'] = new Date();
     this.amqpConnection.publish(exchange, rk, payload);
   }
 }

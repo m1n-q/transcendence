@@ -19,8 +19,8 @@ import { TempController } from './temp.controller';
           type: 'topic',
         },
         {
-          name: process.env.RMQ_NOTIFICATION_EXCHANGE,
-          type: 'direct',
+          name: process.env.RMQ_NOTIFICATION_TOPIC,
+          type: 'topic',
         },
       ],
       enableControllerDiscovery: true,

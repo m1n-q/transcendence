@@ -9,8 +9,7 @@ export class TempController {
   @Post()
   sendMessage(@Body() b) {
     const rk = b['rk'];
-    const event = b['event'];
-    this.rmqClient.sendMessage(process.env.RMQ_USER_TOPIC, rk, event);
-    return '1';
+    const msg = b['msg'];
+    this.rmqClient.sendMessage(process.env.RMQ_USER_TOPIC, rk, msg);
   }
 }
