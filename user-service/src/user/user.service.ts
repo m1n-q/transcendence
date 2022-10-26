@@ -33,7 +33,8 @@ export class UserService {
   async readUserById(payload: RmqUserId) {
     const id = payload.id;
     const user = await this.userRepository.findOne({ where: { id } });
-    if (!user || user.deletedDate != null) {
+    // soft_delete를 하면 typeOrm이 알아서 처리함
+    if (!user) {
       throw new RmqError(404, `${id} not found`, WHERE);
     }
     return user;
@@ -44,7 +45,7 @@ export class UserService {
       where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
     });
     if (findUser) {
-      throw new RmqError(409, 'cannot create or update User', WHERE);
+      throw new RmqError(409, 'user is already joined', WHERE);
     }
 
     const user = this.userRepository.create(payload);
@@ -56,11 +57,9 @@ export class UserService {
       user.twoFactorAuthenticationKey = payload['2FA'].key;
     }
 
-    try {
-      await this.userRepository.save(user);
-    } catch (error) {
-      throw new RmqError(409, 'Conflict', WHERE);
-    }
+    await this.userRepository.save(user).catch(() => {
+      throw new RmqError(409, 'duplicate nickname or 2FA key', WHERE);
+    });
     // 일단 모두 리턴
     return user;
   }
@@ -73,7 +72,6 @@ export class UserService {
     if (!deleteResponse.affected) {
       throw new RmqError(404, `${payload.id} not found`, WHERE);
     }
-    return null;
   }
 
   async readUserNicknameById(payload: RmqUserId) {
@@ -85,11 +83,9 @@ export class UserService {
     const user = await this.readUserById(payload);
     user.nickname = payload.nickname;
 
-    try {
-      await this.userRepository.save(user);
-    } catch (error) {
-      throw new RmqError(409, 'Conflict', WHERE);
-    }
+    await this.userRepository.save(user).catch(() => {
+      throw new RmqError(409, 'duplicate nickname', WHERE);
+    });
     return user.nickname;
   }
 
@@ -102,11 +98,8 @@ export class UserService {
     const user = await this.readUserById(payload);
     user.profImg = payload.id;
 
-    try {
-      await this.userRepository.save(user);
-    } catch (error) {
-      throw new RmqError(409, 'Conflict', WHERE);
-    }
+    await this.userRepository.save(user);
+
     return user.profImg;
   }
 
@@ -125,11 +118,9 @@ export class UserService {
     user.twoFactorAuthenticationInfo = payload.info;
     user.twoFactorAuthenticationKey = payload.key;
 
-    try {
-      await this.userRepository.save(user);
-    } catch (error) {
-      throw new RmqError(409, 'Conflict', WHERE);
-    }
+    await this.userRepository.save(user).catch(() => {
+      throw new RmqError(409, 'duplicate 2FA key', WHERE);
+    });
 
     return {
       info: user.twoFactorAuthenticationInfo,
@@ -143,11 +134,6 @@ export class UserService {
     user.twoFactorAuthenticationInfo = null;
     user.twoFactorAuthenticationKey = null;
 
-    try {
-      await this.userRepository.save(user);
-    } catch (error) {
-      throw new RmqError(409, 'Conflict', WHERE);
-    }
-    return null;
+    await this.userRepository.save(user);
   }
 }
