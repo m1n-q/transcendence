@@ -1,3 +1,4 @@
+import { AuthGuard } from 'src/auth.guard';
 import { FriendService } from './friend.service';
 import {
   Body,
@@ -8,9 +9,11 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 
 @Controller('user')
+@UseGuards(AuthGuard)
 export class FriendController {
   constructor(private readonly friendService: FriendService) {}
 

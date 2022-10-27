@@ -1,3 +1,4 @@
+import { AuthGuard } from './auth.guard';
 import { Module } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
@@ -14,7 +15,7 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
     }),
   ],
   controllers: [],
-  providers: [RmqModule],
+  providers: [RmqModule, AuthGuard],
   exports: [RabbitMQModule],
 })
 export class RmqModule {}

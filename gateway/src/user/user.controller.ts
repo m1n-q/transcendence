@@ -1,3 +1,5 @@
+import { AuthGuard } from 'src/auth.guard';
+import { AuthService } from './../auth/auth.service';
 import { UserService } from './user.service';
 import {
   Body,
@@ -9,6 +11,7 @@ import {
   Put,
   ParseUUIDPipe,
   HttpCode,
+  UseGuards,
 } from '@nestjs/common';
 import {
   TwoFactorAuthenticationDto,
@@ -16,6 +19,7 @@ import {
 } from './dto/user.request.dto';
 
 @Controller('user')
+@UseGuards(AuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
