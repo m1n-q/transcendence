@@ -134,6 +134,8 @@ export class UserService {
     user.twoFactorAuthenticationInfo = null;
     user.twoFactorAuthenticationKey = null;
 
-    await this.userRepository.save(user);
+    await this.userRepository.save(user).catch(() => {
+      throw new RmqError(409, 'Conflict', WHERE);
+    });
   }
 }

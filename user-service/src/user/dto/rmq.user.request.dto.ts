@@ -1,5 +1,11 @@
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsString, IsUUID, ValidateNested } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumberString,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 
 export class RmqUserId {
   @IsNotEmpty()
@@ -21,8 +27,9 @@ export class RmqUSer3pID {
   @IsNotEmpty()
   @IsString()
   provider: string;
+
   @IsNotEmpty()
-  @IsString()
+  @IsNumberString()
   thirdPartyId: string;
 }
 

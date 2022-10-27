@@ -170,6 +170,7 @@ export class FriendService {
       requester: payload.receiver,
       receiver: payload.requester,
     });
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
