@@ -41,7 +41,7 @@ export class UserController {
   }
 
   @HttpCode(204)
-  @Put(':id/nickname')
+  @Put(':/id/nickname')
   updateNicknameById(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('nickname') nickname: string,
@@ -85,56 +85,5 @@ export class UserController {
   @Delete('/:id/2FA')
   deleteTwoFactorAuthenticationById(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.deleteTwoFactorAuthenticationById(id);
-  }
-
-  @HttpCode(201)
-  @Post('/friend/request')
-  async createFriendRequest(@Body() body) {
-    console.log(body);
-    return this.userService.createFriendRequest(body);
-  }
-
-  @Get('/friend/request/:id')
-  async readFriendRequest(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.readFriendRequest(id);
-  }
-
-  @Post('/friend/request/delete')
-  async deleteFriendRequest(@Body() body) {
-    return this.userService.deleteFriendRequest(body);
-  }
-
-  @HttpCode(201)
-  @Post('/friend/block')
-  async createFriendBlock(@Body() body) {
-    console.log(body);
-    return this.userService.createFriendBlock(body);
-  }
-
-  @Get('/friend/block/:id')
-  async readFriendBlock(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.readFriendBlock(id);
-  }
-
-  @Post('/friend/block/delete')
-  async deleteFriendBlock(@Body() body) {
-    return this.userService.deleteFriendBlock(body);
-  }
-
-  @HttpCode(201)
-  @Post('/friend/')
-  async createFriend(@Body() body) {
-    console.log(body);
-    return this.userService.createFriend(body);
-  }
-
-  @Get('/friend/:id')
-  async readFriend(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.readFriend(id);
-  }
-
-  @Post('/friend/delete')
-  async deleteFriend(@Body() body) {
-    return this.userService.deleteFriend(body);
   }
 }
