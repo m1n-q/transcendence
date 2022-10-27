@@ -1,9 +1,9 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
+import { RmqError } from '../../dto/rmq-error';
 import { RmqResponse } from '../../dto/rmq-response';
 import { ThirdPartyInfoDto } from '../../dto/third-party-info.dto';
 import { UserInfoDto } from '../../dto/user-info.dto';
-import { RmqRequestFailedException } from './rmq-request-failed.exception';
 
 @Injectable()
 export class RmqService {
@@ -21,9 +21,10 @@ export class RmqService {
         timeout: 2000,
       });
     } catch (reqFail) {
-      throw new RmqRequestFailedException('user-service');
+      throw new RmqError(408, 'Rmq Response Timeout', 'user-service');
     }
-    return response;
+    if (!response.success) throw response.error;
+    return response.data;
   }
 
   async requestUserInfoById(userId: string) {
@@ -37,8 +38,9 @@ export class RmqService {
         timeout: 2000,
       });
     } catch (reqFail) {
-      throw new RmqRequestFailedException('user-service');
+      throw new RmqError(408, 'Rmq Response Timeout', 'user-service');
     }
-    return response;
+    if (!response.success) throw response.error;
+    return response.data;
   }
 }

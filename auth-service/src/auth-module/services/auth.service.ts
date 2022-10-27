@@ -3,12 +3,11 @@ import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '../../redis-module/services/redis.service';
 import { UserInfoDto } from '../../dto/user-info.dto';
 import { ThirdPartyInfoDto } from '../../dto/third-party-info.dto';
-import { UserFinderService } from '../../user-finder/services/user-finder.service';
 import {
   VerifyAccessJwtRequestDto,
   VerifyRefreshJwtRequestDto,
 } from '../../dto/verify-jwt-request.dto';
-import { RmqError } from '../../dto/rmq-response';
+import { RmqError } from '../../dto/rmq-error';
 import { plainToInstance } from 'class-transformer';
 
 const WHERE = 'auth-service';
@@ -26,13 +25,13 @@ export class AuthService {
     const access_token = this.issueAccessToken(userInfo);
     const refresh_token = this.issueRefreshToken(userInfo);
 
+    //TODO: check redis response
     const res: any[] = await this.storeRefreshToken(
       'user:' + userInfo.userId,
       refresh_token,
       RT_EXPIRES_IN,
     );
-    // console.log(res);
-    //TODO: check redis response
+
     return { access_token, refresh_token };
   }
 
@@ -75,24 +74,25 @@ export class AuthService {
       ? msg['access_token']
       : msg['refresh_token'];
 
-    if (!token) return new RmqError(400, 'Invalid request', WHERE);
+    if (!token) throw new RmqError(400, 'Invalid request', WHERE);
 
     try {
       payload = this.jwtService.verify(token, {
         secret,
       });
     } catch (e) {
-      return new RmqError(401, 'Invalid token', WHERE);
+      throw new RmqError(401, 'Invalid token', WHERE);
     }
     return payload;
   }
 
   async refresh(refreshToken, secret) {
-    const payload = await this.verifyJwt(
-      { refresh_token: refreshToken },
-      secret,
-    );
-    if (payload instanceof RmqError) return payload;
+    let payload;
+    try {
+      payload = await this.verifyJwt({ refresh_token: refreshToken }, secret);
+    } catch (e) {
+      throw e;
+    }
 
     const userInfo = plainToInstance(UserInfoDto, payload, {
       excludeExtraneousValues: true,
@@ -106,7 +106,7 @@ export class AuthService {
     //TODO: hash
     const result = refreshToken === hashed;
     if (result == false)
-      return new RmqError(401, 'Refresh token not matches', WHERE);
+      throw new RmqError(401, 'Refresh token not matches', WHERE);
     return this.signIn(userInfo);
   }
 }

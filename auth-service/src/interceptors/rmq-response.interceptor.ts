@@ -7,7 +7,8 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { RmqError, RmqResponse } from '../dto/rmq-response';
+import { RmqError } from '../dto/rmq-error';
+import { RmqResponse } from '../dto/rmq-response';
 
 @Injectable()
 export class RmqResponseInterceptor<T>
@@ -20,7 +21,7 @@ export class RmqResponseInterceptor<T>
     if (!isRabbitContext(context)) return next.handle();
 
     return next.handle().pipe(
-      map((data: T) => {
+      map((data: T | RmqError) => {
         if (data instanceof RmqError)
           return {
             success: false,

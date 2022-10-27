@@ -15,6 +15,14 @@ import { JwtRefreshGuard } from '../../jwt/jwt.guard';
 import { UserInfoDto } from '../../dto/user-info.dto';
 import { UserFinderService } from '../../user-finder/services/user-finder.service';
 
+//@ ======================================================================== @//
+//@
+//@    If RmqError occured internally, (for example: 408 for Rmq Request Timeout)
+//@    HTTP response will be 500: Internal Server Error,
+//@    and 'code' specified in JSON indicates RmqError code.
+//@
+//@ ======================================================================== @//
+
 @Controller('auth')
 export class AuthHttpController {
   constructor(
@@ -29,7 +37,7 @@ export class AuthHttpController {
     try {
       userInfo = await this.userFinderService.findUserBy3pId(req.user);
     } catch (e) {
-      throw new InternalServerErrorException(e.message);
+      throw new InternalServerErrorException(e);
     }
 
     if (!userInfo) return this.authService.signUp(req.user);
@@ -43,7 +51,7 @@ export class AuthHttpController {
     try {
       userInfo = await this.userFinderService.findUserBy3pId(req.user);
     } catch (e) {
-      throw new InternalServerErrorException(e.message);
+      throw new InternalServerErrorException(e);
     }
 
     if (!userInfo) return this.authService.signUp(req.user);
@@ -57,7 +65,7 @@ export class AuthHttpController {
     try {
       userInfo = await this.userFinderService.findUserBy3pId(req.user);
     } catch (e) {
-      throw new InternalServerErrorException(e.message);
+      throw new InternalServerErrorException(e);
     }
 
     if (!userInfo) return this.authService.signUp(req.user);

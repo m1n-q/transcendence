@@ -1,4 +1,11 @@
-import { Controller, Get, Query, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UseInterceptors,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { AmqpConnection, RabbitRPC } from '@golevelup/nestjs-rabbitmq';
 import {
@@ -6,8 +13,19 @@ import {
   VerifyRefreshJwtRequestDto,
 } from '../../dto/verify-jwt-request.dto';
 import { RmqResponseInterceptor } from '../../interceptors/rmq-response.interceptor';
+import { RmqErrorFactory } from '../../rmq-error.factory';
+import { RmqErrorHandler } from '../../rmq-error.handler';
 
 @UseInterceptors(RmqResponseInterceptor)
+@UsePipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+
+    exceptionFactory: RmqErrorFactory('auth-service'),
+  }),
+)
 @Controller('auth-rmq')
 export class AuthRmqController {
   constructor(
@@ -40,6 +58,7 @@ export class AuthRmqController {
     exchange: 'auth.d.x',
     queue: 'auth.verify.jwt.q',
     routingKey: 'auth.verify.jwt.rk',
+    errorHandler: RmqErrorHandler,
   })
   async verifyJwt(msg: VerifyAccessJwtRequestDto) {
     return this.authService.verifyJwt(msg, process.env.JWT_ACCESS_SECRET);
@@ -49,6 +68,7 @@ export class AuthRmqController {
     exchange: 'auth.d.x',
     queue: 'auth.refresh.jwt.q',
     routingKey: 'auth.refresh.jwt.rk',
+    errorHandler: RmqErrorHandler,
   })
   async refresh(msg: VerifyRefreshJwtRequestDto) {
     return this.authService.refresh(
