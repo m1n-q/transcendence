@@ -1,13 +1,18 @@
-import { RmqModule } from './rmq.module';
-import { Global, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { FriendModule } from './friend/friend.module';
-import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [UserModule, FriendModule],
+  imports: [
+    UserModule,
+    FriendModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

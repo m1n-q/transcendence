@@ -1,5 +1,5 @@
 import { AmqpResponse } from './user.amqp.response.interface';
-import { CreateUserRequestDto } from './dto/create.user.request.dto';
+import { CreateUserRequestDto } from './dto/user.request.dto';
 import {
   ConflictException,
   Injectable,
@@ -37,7 +37,7 @@ export class UserService {
         id: id,
       },
     });
-    console.log(user);
+
     if (user.success === false) {
       throw new NotFoundException(user.error.message);
     }

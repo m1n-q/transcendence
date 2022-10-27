@@ -1,6 +1,15 @@
-import { IsString, IsNotEmpty, ValidateNested } from 'class-validator';
-import { TwoFactorAuthenticationDto } from './twoFactorAuthentication.dto';
 import { Type } from 'class-transformer';
+import { IsNotEmpty, IsString, IsUrl, ValidateNested } from 'class-validator';
+
+export class TwoFactorAuthenticationDto {
+  @IsNotEmpty()
+  @IsString()
+  info: string;
+
+  @IsNotEmpty()
+  @IsString()
+  key: string;
+}
 
 export class CreateUserRequestDto {
   @IsNotEmpty()
@@ -20,6 +29,6 @@ export class CreateUserRequestDto {
   '2FA': TwoFactorAuthenticationDto;
 
   @IsNotEmpty()
-  @IsString()
+  @IsUrl()
   profImg: string;
 }

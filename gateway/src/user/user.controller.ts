@@ -1,4 +1,3 @@
-import { CreateUserRequestDto } from './dto/create.user.request.dto';
 import { UserService } from './user.service';
 import {
   Body,
@@ -11,7 +10,10 @@ import {
   ParseUUIDPipe,
   HttpCode,
 } from '@nestjs/common';
-import { TwoFactorAuthenticationDto } from './dto/twoFactorAuthentication.dto';
+import {
+  TwoFactorAuthenticationDto,
+  CreateUserRequestDto,
+} from './dto/user.request.dto';
 
 @Controller('user')
 export class UserController {
