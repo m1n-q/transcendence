@@ -7,5 +7,6 @@ import { UserController } from './user.controller';
   imports: [RmqModule],
   providers: [UserService],
   controllers: [UserController],
+  exports: [RmqModule],
 })
 export class UserModule {}
