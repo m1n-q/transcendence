@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '../../redis-module/services/redis.service';
 import { UserInfoDto } from '../../dto/user-info.dto';
@@ -9,6 +13,8 @@ import {
 } from '../../dto/verify-jwt-request.dto';
 import { RmqError } from '../../dto/rmq-error';
 import { plainToInstance } from 'class-transformer';
+import { UserService } from '../../user/services/user.service';
+import { NotFoundError } from 'rxjs';
 
 const WHERE = 'auth-service';
 const AT_EXPIRES_IN = 60 * 15;
@@ -19,7 +25,26 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
+    private readonly userService: UserService,
   ) {}
+
+  //XXX: MOCK
+  async signUp(thirdPartyInfo: ThirdPartyInfoDto) {
+    return;
+  }
+
+  async signInIfExists(thirdPartyInfo: ThirdPartyInfoDto) {
+    let userInfo: UserInfoDto;
+
+    try {
+      userInfo = await this.userService.findUserBy3pId(thirdPartyInfo);
+    } catch (e) {
+      throw e;
+    }
+
+    if (!userInfo) throw new NotFoundException();
+    return this.signIn(userInfo);
+  }
 
   async signIn(userInfo: UserInfoDto) {
     const access_token = this.issueAccessToken(userInfo);
@@ -33,11 +58,6 @@ export class AuthService {
     );
 
     return { access_token, refresh_token };
-  }
-
-  async signUp(thirdPartyInfo: ThirdPartyInfoDto) {
-    return `redirect to signUp page.
-    ${thirdPartyInfo.provider}, ${thirdPartyInfo.thirdPartyId}`;
   }
 
   async storeRefreshToken(key, refreshToken, TTL) {

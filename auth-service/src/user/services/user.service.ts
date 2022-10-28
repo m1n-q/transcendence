@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { CreateUserDto } from '../../dto/create-user.dto';
 import { ThirdPartyInfoDto } from '../../dto/third-party-info.dto';
 import { UserInfoDto } from '../../dto/user-info.dto';
 import { RmqService } from '../../rmq-module/services/rmq.service';
 
 @Injectable()
-export class UserFinderService {
+export class UserService {
   constructor(private readonly rmqService: RmqService) {}
 
   async findUserBy3pId(thirdPartyInfo: ThirdPartyInfoDto) {
@@ -12,7 +13,7 @@ export class UserFinderService {
     try {
       userInfo = await this.rmqService.requestUserInfoBy3pId(thirdPartyInfo);
     } catch (e) {
-      if (e.status == 400) return null;
+      if (e.code == 404) return null;
       throw e;
     }
     return userInfo;
@@ -24,7 +25,18 @@ export class UserFinderService {
     try {
       userInfo = await this.rmqService.requestUserInfoById(userId);
     } catch (e) {
-      if (e.status == 400) return null;
+      if (e.code == 404) return null;
+      throw e;
+    }
+    return userInfo;
+  }
+
+  async createUser(data: CreateUserDto) {
+    let userInfo: UserInfoDto;
+
+    try {
+      userInfo = await this.rmqService.requestCreateUser(data);
+    } catch (e) {
       throw e;
     }
     return userInfo;

@@ -19,7 +19,7 @@ import {
 } from '../oauth2/oauth2.strategy';
 import { RmqModule } from '../rmq-module/rmq.module';
 import { RmqService } from '../rmq-module/services/rmq.service';
-import { UserFinderService } from '../user-finder/services/user-finder.service';
+import { UserService } from '../user/services/user.service';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { RmqResponseInterceptor } from '../interceptors/rmq-response.interceptor';
 import { AuthRmqController } from './controllers/auth.rmq.controller';
@@ -57,7 +57,7 @@ import { AuthRmqController } from './controllers/auth.rmq.controller';
     OauthKakaoGuard,
     AuthService,
     RmqService,
-    UserFinderService,
+    UserService,
     AuthRmqController,
     RmqResponseInterceptor,
   ],

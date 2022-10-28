@@ -7,7 +7,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { Strategy } from 'passport-jwt';
 import { UserInfoDto } from '../dto/user-info.dto';
-import { UserFinderService } from '../user-finder/services/user-finder.service';
+import { UserService } from '../user/services/user.service';
 
 const extractFromCookie = function (key: string) {
   return (req: Request) => {
@@ -22,7 +22,7 @@ export class JwtAccessStrategy extends PassportStrategy(
   Strategy,
   'jwt-access',
 ) {
-  constructor(private readonly userFinderService: UserFinderService) {
+  constructor(private readonly userService: UserService) {
     super({
       jwtFromRequest: extractFromCookie('jwt-access'),
       ignoreExpiration: false,
@@ -33,7 +33,7 @@ export class JwtAccessStrategy extends PassportStrategy(
   async validate(payload: UserInfoDto) {
     let userInfo: UserInfoDto;
     try {
-      userInfo = await this.userFinderService.findUserById(payload.userId);
+      userInfo = await this.userService.findUserById(payload.userId);
     } catch (e) {
       throw new InternalServerErrorException();
     }
@@ -68,7 +68,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
     let userInfo: UserInfoDto;
 
     try {
-      userInfo = await this.userFinderService.findUserById(payload.userId);
+      userInfo = await this.userService.findUserById(payload.userId);
     } catch (e) {
       throw new InternalServerErrorException();
     }

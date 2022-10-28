@@ -1,8 +1,13 @@
 import {
+  Body,
   Controller,
   Get,
-  InternalServerErrorException,
+  NotFoundException,
+  Post,
+  Query,
+  Render,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -12,8 +17,7 @@ import {
 } from '../../oauth2/oauth2.guard';
 import { AuthService } from '../services/auth.service';
 import { JwtRefreshGuard } from '../../jwt/jwt.guard';
-import { UserInfoDto } from '../../dto/user-info.dto';
-import { UserFinderService } from '../../user-finder/services/user-finder.service';
+import { UserService } from '../../user/services/user.service';
 
 //@ ======================================================================== @//
 //@
@@ -22,54 +26,102 @@ import { UserFinderService } from '../../user-finder/services/user-finder.servic
 //@    and 'code' specified in JSON indicates RmqError code.
 //@
 //@ ======================================================================== @//
+let db;
 
 @Controller('auth')
 export class AuthHttpController {
   constructor(
     private readonly authService: AuthService,
-    private readonly userFinderService: UserFinderService,
+    private readonly userService: UserService,
   ) {}
+
+  @Post('show')
+  show(@Body() body) {
+    console.log(body);
+    if (!db) db = body;
+    return db;
+  }
+  //XXX: MOCK
+  @Get('signup_view')
+  @Render('index')
+  signUpView(
+    @Query('provider') provider,
+    @Query('thirdPartyId') thirdPartyId,
+    @Query('profImg') profImg,
+  ) {
+    return { provider, thirdPartyId, profImg };
+  }
+
+  @Post('signup')
+  async signUp(@Body() body) {
+    // body['2FA'] = body['2FA'] ? true : false;
+    return this.userService.createUser(body);
+  }
 
   @UseGuards(Oauth42Guard)
   @Get('/oauth2/42/result')
-  async oauth42Result(@Req() req) {
-    let userInfo: UserInfoDto;
-    try {
-      userInfo = await this.userFinderService.findUserBy3pId(req.user);
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+  async oauth42Result(@Req() req, @Res() res) {
+    let tokens;
+    const { provider, thirdPartyId, profImg } = req.user;
 
-    if (!userInfo) return this.authService.signUp(req.user);
-    return this.authService.signIn(userInfo);
+    try {
+      tokens = await this.authService.signInIfExists({
+        provider,
+        thirdPartyId,
+      });
+    } catch (e) {
+      if (e instanceof NotFoundException)
+        /* FIXIT: return signup message to gateway or frontend */
+        res.redirect(
+          `/auth/signup_view?provider=${provider}&thirdPartyId=${thirdPartyId}&profImg=${profImg}`,
+        );
+      throw e;
+    }
+    res.send(tokens);
   }
 
   @UseGuards(OauthGoogleGuard)
   @Get('/oauth2/google/result')
-  async oauthGoogleResult(@Req() req) {
-    let userInfo: UserInfoDto;
-    try {
-      userInfo = await this.userFinderService.findUserBy3pId(req.user);
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+  async oauthGoogleResult(@Req() req, @Res() res) {
+    let tokens;
+    const { provider, thirdPartyId, profImg } = req.user;
 
-    if (!userInfo) return this.authService.signUp(req.user);
-    return this.authService.signIn(userInfo);
+    try {
+      tokens = await this.authService.signInIfExists({
+        provider,
+        thirdPartyId,
+      });
+    } catch (e) {
+      if (e instanceof NotFoundException)
+        /* FIXIT: return signup message to gateway or frontend */
+        res.redirect(
+          `/auth/signup_view?provider=${provider}&thirdPartyId=${thirdPartyId}&profImg=${profImg}`,
+        );
+      throw e;
+    }
+    res.send(tokens);
   }
 
   @UseGuards(OauthKakaoGuard)
   @Get('/oauth2/kakao/result')
-  async oauthKakaoResult(@Req() req) {
-    let userInfo: UserInfoDto;
-    try {
-      userInfo = await this.userFinderService.findUserBy3pId(req.user);
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+  async oauthKakaoResult(@Req() req, @Res() res) {
+    let tokens;
+    const { provider, thirdPartyId, profImg } = req.user;
 
-    if (!userInfo) return this.authService.signUp(req.user);
-    return this.authService.signIn(userInfo);
+    try {
+      tokens = await this.authService.signInIfExists({
+        provider,
+        thirdPartyId,
+      });
+    } catch (e) {
+      if (e instanceof NotFoundException)
+        /* FIXIT: return signup message to gateway or frontend */
+        res.redirect(
+          `/auth/signup_view?provider=${provider}&thirdPartyId=${thirdPartyId}&profImg=${profImg}`,
+        );
+      throw e;
+    }
+    res.send(tokens);
   }
 
   @UseGuards(JwtRefreshGuard)
