@@ -10,6 +10,7 @@ import { Socket, Server } from 'socket.io';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { ConsumeMessage } from 'amqplib';
 import { RmqService } from './rmq/rmq.service';
+import { RmqEvent } from './rmq/types/rmq-event';
 
 //                        TODO                          //
 //*
@@ -32,7 +33,7 @@ export class NotificationGateway
     private readonly amqpConnection: AmqpConnection,
   ) {}
 
-  async newUserHandler(msg, rawMsg: ConsumeMessage) {
+  async newUserHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
     const re = /(?<=event.on.notification.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const { 0: evType, 1: userId } = params;
