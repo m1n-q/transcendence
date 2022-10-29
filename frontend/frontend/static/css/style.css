@@ -1,6 +1,7 @@
 body {
 	background-color: rgb(136, 158, 172);
-	margin:0
+	margin:0%;
+	padding:0%;
 }
 ul li {
 	list-style-type: none;
@@ -22,7 +23,8 @@ ul li {
 	/* position:relative; */
 	/* display: inline-block; */
 	width: 100%;
-	height: 80%;
+	height: 90%;
+	padding-bottom: 0%;
 	border-style: unset;
 	background-color: rgba(0, 8, 98, 0.2);
 }
@@ -32,13 +34,8 @@ ul li {
 	display: flex;
 	width: 100%;
 	height: 10%;
-
-	border-top: 0.5em;
-	border-left: 0em;
-	border-right: 0em;
-	border-bottom: 0em;
-	border-style: dotted;
-	border-color:rgba(55, 15, 82, 0.3);
+	margin:0%;
+	padding: 0%;
 	background-color: rgba(0, 8, 98, 0.2);
 }
 
@@ -47,7 +44,7 @@ ul li {
 	display: inline-block;
 	vertical-align: auto;
 	border-style: none;
-	width: 90%;
+	width: 100%;
 	height:100%;
 	font-family: monospace;
 	font-size: large;
@@ -60,7 +57,8 @@ ul li {
 	position: relative;
 	border-style: none;
 	display: inline-block;
-	margin: 0;
+	/* margin: 0; */
+	/* margin-left: 5em; */
 	width: 10em;
 	height: 100%;
 	border-radius: 5em 5em 5em 5em;
