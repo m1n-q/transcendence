@@ -1,0 +1,22 @@
+
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>	Main </title>
+		<link rel="stylesheet" href="css/style.css">
+	</head>
+	<body>
+		<% if (user === false) {%>
+			<ul>
+				<li> <button class="img_button" type="button" onclick="location.href='auth/oauth2/42'"><img src='images/42.png' ></button> </li>
+				<li> <button class="img_button" type="button" onclick="location.href='auth/oauth2/google'"><img src='images/google.png' ></button> </li>
+				<li> <button class="img_button" type="button" onclick="location.href='auth/oauth2/kakao'"><img src='images/kakao.png' ></button> </li>
+			</ul>
+			<%} else {%>
+				<ul>
+					<li> <button class="img_button" type="button" onclick="location.href='chat'"><img src='images/chat.png' ></button> </li>
+				</ul>
+		<% } %>
+	</body>
+</html>

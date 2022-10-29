@@ -1,0 +1,106 @@
+body {
+	background-color: rgb(136, 158, 172);
+	margin:0
+}
+ul li {
+	list-style-type: none;
+	display: inline-block;
+}
+.img_button {
+	background-color: rgba(0, 8, 98, 0.0);
+	padding: 1em;
+	border-style: unset;
+	border-radius: 100% 100% 100% 100%;
+}
+
+.img_button:hover {
+	background-color: rgba(0, 8, 98, 0.2);
+}
+
+
+#chat_box {
+	/* position:relative; */
+	/* display: inline-block; */
+	width: 100%;
+	height: 80%;
+	border-style: unset;
+	background-color: rgba(0, 8, 98, 0.2);
+}
+
+#chat_form {
+	/* position: absolute; */
+	display: flex;
+	width: 100%;
+	height: 10%;
+
+	border-top: 0.5em;
+	border-left: 0em;
+	border-right: 0em;
+	border-bottom: 0em;
+	border-style: dotted;
+	border-color:rgba(55, 15, 82, 0.3);
+	background-color: rgba(0, 8, 98, 0.2);
+}
+
+#chat_form #chat_text {
+	position: relative;
+	display: inline-block;
+	vertical-align: auto;
+	border-style: none;
+	width: 90%;
+	height:100%;
+	font-family: monospace;
+	font-size: large;
+	background-color: rgba(0, 8, 0, 0.2);
+	border-radius: 5em 5em 5em 5em;
+	color:rgb(227, 228, 238)
+}
+
+#chat_form #chat_send {
+	position: relative;
+	border-style: none;
+	display: inline-block;
+	margin: 0;
+	width: 10em;
+	height: 100%;
+	border-radius: 5em 5em 5em 5em;
+	border-style: none;
+}
+
+#chat_form #chat_send:hover {
+	background-color: rgba(10, 79, 79, 0.347);
+}
+
+#notification_center {
+	display: inline-block;
+	position: fixed;
+	border-style: double;
+	background-color: rgba(0, 8, 98, 0.2);
+	top:0%;
+	right: 0%;
+}
+
+#notification:nth-child(even) {
+	background-color: rgba(51, 108, 118, 0.552);
+	border-color: rgba(0, 36, 98, 0.619);;
+}
+
+#notification {
+	font-family: 'Courier New';
+	font-size: large;
+	border: 0.1em;
+	border-style: outset;
+	border-color: rgba(95, 158, 160, 0.396);
+	color: white;
+}
+
+#notification:hover {
+	background-color: rgba(0, 255, 76, 0.377);
+
+}
+
+
+ul li button img {
+	width: 5em;
+	height: 5em;
+}
