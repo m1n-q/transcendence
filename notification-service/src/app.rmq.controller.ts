@@ -1,12 +1,12 @@
 import { RabbitPayload, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Controller, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AppService } from './app.service';
-import { RmqErrorFactory } from './rmq-error.factory';
-import { RmqErrorHandler } from './rmq-error.handler';
+import { RmqErrorFactory } from './rmq/types/rmq-error.factory';
+import { RmqErrorHandler } from './rmq/types/rmq-error.handler';
 import * as amqplib from 'amqplib';
-import { RmqEvent } from './events/rmq-event';
+import { RmqEvent } from './rmq/types/rmq-event';
 
-//TODO: rename event / request routing key
+// event.on.<service name>.<event type>[.additional.param].rk
 
 @UsePipes(
   new ValidationPipe({
@@ -22,10 +22,10 @@ export class AppController {
 
   @RabbitSubscribe({
     exchange: 'user.t.x' /* process.env does not work */,
-    routingKey: 'event.on.user.join.rk',
+    routingKey: 'event.on.user.*.rk',
 
     /* Competing Consumer must provide queue name*/
-    queue: 'event.user.q',
+    queue: 'event.on.user.q',
     errorHandler: RmqErrorHandler,
   })
   handleUserEvent(

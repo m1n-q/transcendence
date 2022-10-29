@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { RmqEvent } from './events/rmq-event';
+import { RmqEvent } from './rmq/types/rmq-event';
 import { RmqService } from './rmq/rmq.service';
 
 @Injectable()
@@ -22,11 +22,14 @@ export class AppService {
     }
 
     for (const recvUser of ev.recvUsers) {
-      const userRk = `notification.user.${recvUser}.rk`;
-      this.rmqClient.sendMessage(process.env.RMQ_NOTIFICATION_TOPIC, userRk, {
-        userId: recvUser,
-        payload: ev.payload,
-      });
+      const userRk = `event.on.notification.${evType}.${recvUser}.rk`;
+      const event = new RmqEvent(ev.payload, [recvUser]);
+
+      this.rmqClient.sendMessage(
+        process.env.RMQ_NOTIFICATION_TOPIC,
+        userRk,
+        event,
+      );
     }
   }
 }
