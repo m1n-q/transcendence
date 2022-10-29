@@ -12,11 +12,11 @@ export class RmqEvent {
   payload: any;
 
   @IsDateString()
-  created: Date;
+  created: string;
 
   constructor(payload, recvUsers: string[] = null) {
     this.payload = payload;
     this.recvUsers = recvUsers;
-    this.created = new Date();
+    this.created = Date.now().toString();
   }
 }
