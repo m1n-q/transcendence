@@ -3,7 +3,7 @@ window.getCookie = function (name) {
   if (match) return match[2];
 };
 
-const socket = io('ws://localhost:11111', {
+const socket = io('ws://localhost:9999', {
   auth: {
     access_token: getCookie('jwt-access'),
   },
@@ -12,20 +12,18 @@ const getElementById = (id) => document.getElementById(id) || null;
 
 //* get DOM element
 const chatBox = getElementById('chat_box');
-const notificationCenter = getElementById('notification_center');
 const formElement = getElementById('chat_form');
 
 socket.on('connect', async (message) => {
-  console.log('CONNECTED TO SERVER');
+  console.log('CONNECTED TO CHAT SERVER');
 });
 
 /* global socket handlers */
-socket.on('notification', (message) => {
-  console.log('NOTIFY!');
-  let note = document.createElement('div');
-  note.id = 'notification';
-  note.textContent = message;
-  notificationCenter.appendChild(note);
+socket.on('message', (message) => {
+  let message = document.createElement('div');
+  message.id = 'chat_box';
+  message.textContent = message;
+  chatBox.appendChild(message);
 });
 
 /* form event handler */
@@ -33,7 +31,7 @@ const formHandler = (event) => {
   event.preventDefault();
   const inputValue = event.target.elements[0].value;
   if (inputValue) {
-    socket.emit('new_message', { message: inputValue });
+    socket.emit('publish', { message: inputValue });
     event.target.elements[0].value = '';
   }
 };
