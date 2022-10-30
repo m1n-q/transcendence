@@ -3,22 +3,21 @@ window.getCookie = function (name) {
   if (match) return match[2];
 };
 
-const socket = io('ws://localhost:11111', {
+const notiSocket = io('ws://localhost:11111', {
   auth: {
     access_token: getCookie('jwt-access'),
   },
 });
-const getElementById = (id) => document.getElementById(id) || null;
 
 //* get DOM element
-const notificationCenter = getElementById('notification_center');
+const notificationCenter = document.getElementById('notification_center');
 
-socket.on('connect', async (message) => {
+notiSocket.on('connect', async (message) => {
   console.log('CONNECTED TO NOTIFICATION SERVER');
 });
 
-/* global socket handlers */
-socket.on('notification', (message) => {
+/* global Socket handlers */
+notiSocket.on('notification', (message) => {
   console.log('NOTIFY!');
   let note = document.createElement('div');
   note.id = 'notification';
