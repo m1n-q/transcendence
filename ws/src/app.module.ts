@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { NotificationGateway } from './notification.gateway';
 import { AppRmqController } from './app.rmq.controller';
 import { RmqService } from './rmq/rmq.service';
+import { ChatGateway } from './chat.gateway';
 
 @Module({
   imports: [
@@ -24,6 +25,6 @@ import { RmqService } from './rmq/rmq.service';
     }),
   ],
   controllers: [AppController, AppRmqController],
-  providers: [AppService, AppRmqController, NotificationGateway, RmqService],
+  providers: [AppService, AppRmqController, NotificationGateway, RmqService, ChatGateway],
 })
 export class AppModule {}
