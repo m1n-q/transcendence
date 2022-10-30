@@ -75,7 +75,13 @@ export class AuthRmqController {
 
     try {
       // TODO: return additional info: {profImg, locale} if user not exists
-      return this.authService.signInIfExists({ provider: '42', thirdPartyId });
+      // return this.authService.signInIfExists({ provider: '42', thirdPartyId });
+      const res = await this.authService.signInIfExists({
+        provider: '42',
+        thirdPartyId,
+      });
+      if (res['provider']) res['profImg'] = profImg;
+      return res;
     } catch (e) {
       throw e;
     }
@@ -110,10 +116,13 @@ export class AuthRmqController {
 
     try {
       // TODO: return additional info: {profImg, locale} if user not exists
-      return this.authService.signInIfExists({
+      // return this.authService.signInIfExists({ provider: '', thirdPartyId });
+      const res = this.authService.signInIfExists({
         provider: 'kakao',
         thirdPartyId,
       });
+      if (res['provider']) res['profImg'] = profImg;
+      return res;
     } catch (e) {
       throw e;
     }
@@ -143,10 +152,13 @@ export class AuthRmqController {
 
     try {
       // TODO: return additional info: {profImg, locale} if user not exists
-      return this.authService.signInIfExists({
+      // return this.authService.signInIfExists({ provider: 'google', thirdPartyId });
+      const res = this.authService.signInIfExists({
         provider: 'google',
         thirdPartyId,
       });
+      if (res['provider']) res['profImg'] = profImg;
+      return res;
     } catch (e) {
       throw e;
     }
