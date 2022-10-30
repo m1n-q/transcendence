@@ -1,8 +1,14 @@
-import { Controller, Get, Render, Req } from '@nestjs/common';
+import { Controller, Get, Redirect, Render, Req } from '@nestjs/common';
 import { Request } from 'express';
 
 @Controller()
 export class AppController {
+  @Get()
+  @Redirect('/main')
+  m(@Req() req: Request) {
+    return;
+  }
+
   @Get('main')
   @Render('main')
   mainPage(@Req() req: Request) {

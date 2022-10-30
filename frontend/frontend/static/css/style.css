@@ -7,9 +7,13 @@ ul li {
 	list-style-type: none;
 	display: inline-block;
 }
+
 .img_button {
+	display: inline-block;
 	background-color: rgba(0, 8, 98, 0.0);
 	padding: 1em;
+	width:fit-content;
+	height:fit-content;
 	border-style: unset;
 	border-radius: 100% 100% 100% 100%;
 }
@@ -17,6 +21,8 @@ ul li {
 .img_button:hover {
 	background-color: rgba(0, 8, 98, 0.2);
 }
+
+
 
 
 #chat_box {
@@ -27,6 +33,54 @@ ul li {
 	padding-bottom: 0%;
 	border-style: unset;
 	background-color: rgba(0, 8, 98, 0.2);
+	overflow: auto;
+}
+
+#chat_message_box {
+	display: block;
+}
+
+#chat_message_box #chat_message {
+	position:relative;
+	display: inline-block;
+	width: fit-content;
+	padding: 1%;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	border-style: outset;
+	border: 1em 1em 1em 1em;
+	border-color: black;
+	border-radius: 1em 1em 1em 1em;
+	background-color: rgba(255, 255, 255, 0.814);
+	color: black;
+	text-align: center;
+	/* vertical-align: middle; */
+	font-size: 150%;
+}
+
+#chat_message_box #prof_img_button {
+	position:relative;
+	display: inline-block;
+	background-color: rgba(0, 8, 98, 0.0);
+	top: 1em;
+	left: 1em;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	margin-right: 1em;
+	border-style: none;
+	border-radius: 100% 100% 100% 100%;
+	width:7em;
+	height:7em;
+}
+
+#chat_message_box #prof_img_button:hover {
+	cursor: pointer;
+}
+
+#chat_message_box #prof_img_button #prof_img {
+	width: 100%;
+	height: 100%;
+	border-radius: 100%;
 }
 
 #chat_form {
