@@ -1,6 +1,6 @@
 import * as amqplib from 'amqplib';
-import { RmqError } from './rmq-error';
-import { RmqResponse } from './rmq-response';
+import { RmqError } from './types/rmq-error';
+import { RmqResponse } from './types/rmq-response';
 
 export function RmqErrorHandler(
   channel: amqplib.Channel,
@@ -8,7 +8,6 @@ export function RmqErrorHandler(
   error: any,
 ) {
   console.log(error);
-  // console.log(msg);
   if (typeof error !== 'string' && !(error instanceof RmqError)) {
     error = JSON.stringify(error);
   }

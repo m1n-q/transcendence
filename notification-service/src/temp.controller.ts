@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { RmqService } from './rmq/rmq.service';
+import { RmqService } from './common/rmq/rmq.service';
 
 //XXX: testing publisher
 @Controller()

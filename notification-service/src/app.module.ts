@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.rmq.controller';
 import { AppService } from './app.service';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { RmqService } from './rmq/rmq.service';
+import { RmqService } from './common/rmq/rmq.service';
 import { TempController } from './temp.controller';
 
 @Module({

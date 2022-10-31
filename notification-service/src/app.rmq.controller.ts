@@ -1,10 +1,10 @@
 import { RabbitPayload, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Controller, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AppService } from './app.service';
-import { RmqErrorFactory } from './rmq/types/rmq-error.factory';
-import { RmqErrorHandler } from './rmq/types/rmq-error.handler';
+import { RmqErrorFactory } from './common/rmq/rmq-error.factory';
+import { RmqErrorHandler } from './common/rmq/rmq-error.handler';
+import { RmqEvent } from './common/rmq/types/rmq-event';
 import * as amqplib from 'amqplib';
-import { RmqEvent } from './rmq/types/rmq-event';
 
 // event.on.<service name>.<event type>[.additional.param].rk
 

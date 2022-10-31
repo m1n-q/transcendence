@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { RmqEvent } from './rmq/types/rmq-event';
-import { RmqService } from './rmq/rmq.service';
+import { RmqEvent } from './common/rmq/types/rmq-event';
+import { RmqService } from './common/rmq/rmq.service';
 
 @Injectable()
 export class AppService {
