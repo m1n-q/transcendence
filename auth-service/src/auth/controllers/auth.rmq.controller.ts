@@ -117,7 +117,7 @@ export class AuthRmqController {
     try {
       // TODO: return additional info: {profImg, locale} if user not exists
       // return this.authService.signInIfExists({ provider: '', thirdPartyId });
-      const res = this.authService.signInIfExists({
+      const res = await this.authService.signInIfExists({
         provider: 'kakao',
         thirdPartyId,
       });
@@ -153,7 +153,7 @@ export class AuthRmqController {
     try {
       // TODO: return additional info: {profImg, locale} if user not exists
       // return this.authService.signInIfExists({ provider: 'google', thirdPartyId });
-      const res = this.authService.signInIfExists({
+      const res = await this.authService.signInIfExists({
         provider: 'google',
         thirdPartyId,
       });
