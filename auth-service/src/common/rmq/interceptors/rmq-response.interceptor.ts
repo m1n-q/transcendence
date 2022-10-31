@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { RmqError } from '../dto/rmq-error';
-import { RmqResponse } from '../dto/rmq-response';
+import { RmqError } from '../types/rmq-error';
+import { RmqResponse } from '../types/rmq-response';
 
 @Injectable()
 export class RmqResponseInterceptor<T>
@@ -22,19 +22,8 @@ export class RmqResponseInterceptor<T>
 
     return next.handle().pipe(
       map((data: T | RmqError) => {
-        if (data instanceof RmqError)
-          return {
-            success: false,
-            data: null,
-            error: data,
-          };
-        else {
-          return {
-            success: true,
-            data: data,
-            error: null,
-          };
-        }
+        if (data instanceof RmqError) return new RmqResponse(data, false);
+        return new RmqResponse(data);
       }),
     );
   }

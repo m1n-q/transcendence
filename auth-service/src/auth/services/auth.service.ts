@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '../../redis-module/services/redis.service';
-import { UserInfoDto } from '../../dto/user-info.dto';
-import { ThirdPartyInfoDto } from '../../dto/third-party-info.dto';
+import { UserInfoDto } from '../dto/user-info.dto';
+import { ThirdPartyInfoDto } from '../dto/third-party-info.dto';
 import {
   VerifyAccessJwtRequestDto,
   VerifyRefreshJwtRequestDto,
-} from '../../dto/verify-jwt-request.dto';
-import { RmqError } from '../../dto/rmq-error';
+} from '../dto/verify-jwt-request.dto';
+import { RmqError } from '../../common/rmq/types/rmq-error';
 import { plainToInstance } from 'class-transformer';
-import { RmqService } from '../../rmq-module/services/rmq.service';
+import { RmqService } from '../../common/rmq/rmq.service';
 import { URLSearchParams } from 'url';
 
 const WHERE = 'auth-service';

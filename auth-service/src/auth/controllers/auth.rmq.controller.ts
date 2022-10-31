@@ -1,3 +1,4 @@
+import { RabbitRPC } from '@golevelup/nestjs-rabbitmq';
 import {
   Controller,
   UseInterceptors,
@@ -5,14 +6,13 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
-import { RabbitRPC } from '@golevelup/nestjs-rabbitmq';
 import {
   VerifyAccessJwtRequestDto,
   VerifyRefreshJwtRequestDto,
-} from '../../dto/verify-jwt-request.dto';
-import { RmqResponseInterceptor } from '../../interceptors/rmq-response.interceptor';
-import { RmqErrorFactory } from '../../rmq-error.factory';
-import { RmqErrorHandler } from '../../rmq-error.handler';
+} from '../dto/verify-jwt-request.dto';
+import { RmqResponseInterceptor } from '../../common/rmq/interceptors/rmq-response.interceptor';
+import { RmqErrorFactory } from '../../common/rmq/rmq-error.factory';
+import { RmqErrorHandler } from '../../common/rmq/rmq-error.handler';
 
 @UseInterceptors(RmqResponseInterceptor)
 @UsePipes(

@@ -1,6 +1,3 @@
-import { HttpException } from '@nestjs/common';
-import { rm } from 'fs';
-
 export class RmqError {
   constructor(
     private readonly code: number,
@@ -16,11 +13,5 @@ export class RmqError {
   }
   getWhere(): string {
     return this.where;
-  }
-}
-
-export class HttpExceptionAdapter extends HttpException {
-  constructor(private readonly rmqError: RmqError) {
-    super(rmqError, rmqError.getCode());
   }
 }

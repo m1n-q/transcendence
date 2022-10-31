@@ -1,12 +1,13 @@
 import * as amqplib from 'amqplib';
-import { RmqError } from './dto/rmq-error';
-import { RmqResponse } from './dto/rmq-response';
+import { RmqError } from './types/rmq-error';
+import { RmqResponse } from './types/rmq-response';
 
 export function RmqErrorHandler(
   channel: amqplib.Channel,
   msg: amqplib.ConsumeMessage,
   error: any,
 ) {
+  console.log(error);
   if (typeof error !== 'string' && !(error instanceof RmqError)) {
     error = JSON.stringify(error);
   }
@@ -15,6 +16,7 @@ export function RmqErrorHandler(
   const { replyTo, correlationId } = msg.properties;
   if (replyTo) {
     error = Buffer.from(JSON.stringify(errorResponse));
+
     channel.publish('', replyTo, error, { correlationId });
     channel.ack(msg);
   } else {

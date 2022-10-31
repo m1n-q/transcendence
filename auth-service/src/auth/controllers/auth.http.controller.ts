@@ -1,7 +1,6 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
 
 import { AuthService } from '../services/auth.service';
-import { JwtRefreshGuard } from '../../jwt/jwt.guard';
 
 //@ ======================================================================== @//
 //@
@@ -15,7 +14,7 @@ import { JwtRefreshGuard } from '../../jwt/jwt.guard';
 export class AuthHttpController {
   constructor(private readonly authService: AuthService) {}
 
-  @UseGuards(JwtRefreshGuard)
+  // @UseGuards(JwtRefreshGuard)
   @Get('refresh')
   async refresh(@Req() req) {
     return this.authService.refresh(req.user.userInfo, req.user.refreshToken);
