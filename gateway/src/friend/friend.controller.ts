@@ -1,4 +1,4 @@
-import { AuthGuard } from 'src/auth.guard';
+import { AuthGuard } from 'src/common/http/guard/auth.guard';
 import { FriendService } from './friend.service';
 import {
   Body,
@@ -9,80 +9,69 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 
-@Controller('user')
+@Controller('friend')
 @UseGuards(AuthGuard)
 export class FriendController {
   constructor(private readonly friendService: FriendService) {}
 
   @HttpCode(201)
-  @Post(':id/friend-request/:friendId')
+  @Get('/request/:id')
   async createFriendRequest(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('friendId', ParseUUIDPipe) friendId: string,
+    @Req() req,
   ) {
-    return this.friendService.createFriendRequest(id, friendId);
+    return this.friendService.createFriendRequest(req.user.data.id, id);
   }
 
-  @Get('/:id/friend-request')
-  async readFriendRequest(@Param('id', ParseUUIDPipe) id: string) {
-    return this.friendService.readFriendRequest(id);
+  @Get('/request-list')
+  async readFriendRequest(@Req() req) {
+    return this.friendService.readFriendRequest(req.user.data.id);
   }
 
   @HttpCode(204)
-  @Delete('/:id/friend-request/:friendId')
+  @Delete('/request/:id')
   async deleteFriendRequest(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('friendId', ParseUUIDPipe) friendId: string,
+    @Req() req,
   ) {
-    return this.friendService.deleteFriendRequest(id, friendId);
+    return this.friendService.deleteFriendRequest(req.user.data.id, id);
   }
 
   @HttpCode(201)
-  @Post('/:id/blacklist/:blockedId')
-  async createFriendBlock(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('blockedId', ParseUUIDPipe) blockedId: string,
-  ) {
-    return this.friendService.createFriendBlock(id, blockedId);
+  @Get('/blacklist/:id')
+  async createFriendBlock(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+    return this.friendService.createFriendBlock(req.user.data.id, id);
   }
 
-  @Get('/:id/blacklist')
-  async readFriendBlock(@Param('id', ParseUUIDPipe) id: string) {
-    return this.friendService.readFriendBlock(id);
+  @Get('/blacklist-list')
+  async readFriendBlock(@Req() req) {
+    return this.friendService.readFriendBlock(req.user.data.id);
   }
 
   @HttpCode(204)
-  @Delete('/:id/blacklist/:blockedId')
-  async deleteFriendBlock(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('blockedId', ParseUUIDPipe) blockedId: string,
-  ) {
-    return this.friendService.deleteFriendBlock(id, blockedId);
+  @Delete('/blacklist/:id')
+  async deleteFriendBlock(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+    return this.friendService.deleteFriendBlock(req.user.data.id, id);
   }
 
   @HttpCode(201)
-  @Post('/:id/friends/:friendId')
-  async createFriend(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('friendId', ParseUUIDPipe) friendId: string,
-  ) {
-    return this.friendService.createFriend(id, friendId);
+  @Get('/:id')
+  async createFriend(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+    return this.friendService.createFriend(req.user.data.id, id);
   }
 
-  @Get('/:id/friends')
-  async readFriend(@Param('id', ParseUUIDPipe) id: string) {
-    return this.friendService.readFriend(id);
+  @Get('/list')
+  async readFriend(@Req() req) {
+    return this.friendService.readFriend(req.user.data.id);
   }
 
   @HttpCode(204)
-  @Delete('/:id/friends/:friendId')
-  async deleteFriend(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('friendId', ParseUUIDPipe) friendId: string,
-  ) {
-    return this.friendService.deleteFriend(id, friendId);
+  @Delete('/:id')
+  async deleteFriend(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+    return this.friendService.deleteFriend(req.user.data.id, id);
   }
 }

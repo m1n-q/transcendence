@@ -1,4 +1,4 @@
-import { AuthGuard } from 'src/auth.guard';
+import { AuthGuard } from 'src/common/http/guard/auth.guard';
 import { AuthService } from './../auth/auth.service';
 import { UserService } from './user.service';
 import {

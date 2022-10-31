@@ -1,6 +1,6 @@
 import { RmqError } from './rmq-error';
 
-/* exception factory for NestJS ValidationPipe */
+/* exceptionFactory for ValidationPipe */
 export function RmqErrorFactory(where: string, status = 400) {
   return (errors) => {
     let messages: string[] = [];

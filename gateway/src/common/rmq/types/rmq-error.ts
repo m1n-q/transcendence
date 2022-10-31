@@ -1,3 +1,5 @@
+import { HttpException } from '@nestjs/common';
+
 export class RmqError {
   constructor(
     private readonly code: number,

@@ -1,7 +1,8 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { AmqpResponse } from './user/user.amqp.response.interface';
+import { AmqpResponse } from '../../../user/user.amqp.response.interface';
 import {
   CanActivate,
+  ConsoleLogger,
   ExecutionContext,
   HttpException,
   Injectable,
@@ -13,9 +14,9 @@ export class AuthGuard implements CanActivate {
   public async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
 
-    const { authorization } = request.headers;
+    const access_token = request.cookies['jwt-access'];
 
-    if (authorization === undefined) {
+    if (access_token === undefined) {
       throw new HttpException('Token does not exist', 401);
     }
 
@@ -23,13 +24,14 @@ export class AuthGuard implements CanActivate {
       exchange: 'auth.d.x',
       routingKey: 'auth.verify.jwt.rk',
       payload: {
-        access_token: authorization,
+        access_token,
       },
     });
     if (auth.success === false) {
-      console.log(auth);
       throw new HttpException('Token does not exist', 401);
     }
+
+    request.user = auth;
     return true;
   }
 }

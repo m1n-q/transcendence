@@ -1,7 +1,7 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
-import { RmqError } from '../rmq-error';
-import { RmqResponse } from '../rmq-response';
+import { RmqError } from '../common/rmq/types/rmq-error';
+import { RmqResponse } from '../common/rmq/types/rmq-response';
 
 @Injectable()
 export class AuthService {

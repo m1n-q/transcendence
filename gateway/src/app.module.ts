@@ -1,21 +1,33 @@
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { FriendService } from './friend/friend.service';
+import { UserService } from './user/user.service';
+import { FriendController } from './friend/friend.controller';
+import { UserController } from './user/user.controller';
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UserModule } from './user/user.module';
-import { FriendModule } from './friend/friend.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 
 @Module({
   imports: [
-    UserModule,
-    FriendModule,
+    RabbitMQModule.forRoot(RabbitMQModule, {
+      exchanges: [
+        {
+          name: 'user.d.x',
+          type: 'direct',
+        },
+        {
+          name: 'user.t.x',
+          type: 'topic',
+        },
+      ],
+      uri: 'amqp://guest:guest@localhost:5672',
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
   ],
-  controllers: [AppController, AuthController],
-  providers: [AppService, AuthService],
+  controllers: [AuthController, UserController, FriendController],
+  providers: [AuthService, UserService, FriendService],
 })
 export class AppModule {}

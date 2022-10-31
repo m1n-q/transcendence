@@ -32,7 +32,7 @@ export class FriendService {
     return friend;
   }
 
-  async readFriendRequest(id) {
+  async readFriendRequest(id: string) {
     const friend: AmqpResponse = await this.amqpConnection.request({
       exchange: 'user.d.x',
       routingKey: 'user.read.friend.request.rk',
