@@ -1,4 +1,4 @@
-import { RmqError } from './rmq-error';
+import { RmqError } from './types/rmq-error';
 
 /* exception factory for NestJS ValidationPipe */
 export function RmqErrorFactory(where: string, status = 400) {

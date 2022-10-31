@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { NotificationGateway } from './notification.gateway';
-import { AppRmqController } from './app.rmq.controller';
-import { RmqService } from './rmq/rmq.service';
-import { ChatGateway } from './chat.gateway';
+import { AuthService } from './auth/auth.service';
+import { NotificationGateway } from './notification/notification.gateway';
+import { RmqService } from './common/rmq/rmq.service';
+import { ChatGateway } from './chat/chat.gateway';
 
 @Module({
   imports: [
@@ -24,7 +22,7 @@ import { ChatGateway } from './chat.gateway';
       ],
     }),
   ],
-  controllers: [AppController, AppRmqController],
-  providers: [AppService, AppRmqController, NotificationGateway, RmqService, ChatGateway],
+  controllers: [],
+  providers: [AuthService, NotificationGateway, RmqService, ChatGateway],
 })
 export class AppModule {}
