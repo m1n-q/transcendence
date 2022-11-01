@@ -1,8 +1,8 @@
+import { access } from 'fs';
+import { RmqResponse } from './../../rmq/types/rmq-response';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { AmqpResponse } from '../../../user/user.amqp.response.interface';
 import {
   CanActivate,
-  ConsoleLogger,
   ExecutionContext,
   HttpException,
   Injectable,
@@ -13,14 +13,14 @@ export class AuthGuard implements CanActivate {
   constructor(private readonly amqpConnection: AmqpConnection) {}
   public async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-
-    const access_token = request.cookies['jwt-access'];
+    const { authorization } = request.headers;
+    const access_token = authorization;
 
     if (access_token === undefined) {
       throw new HttpException('Token does not exist', 401);
     }
 
-    const auth: AmqpResponse = await this.amqpConnection.request({
+    const auth: RmqResponse = await this.amqpConnection.request({
       exchange: 'auth.d.x',
       routingKey: 'auth.verify.jwt.rk',
       payload: {

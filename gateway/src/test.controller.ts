@@ -1,0 +1,19 @@
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { RmqResponseUser } from './user/dto/user.response.dto';
+import { RmqResponse } from './common/rmq/types/rmq-response';
+import { Body, Controller, Get, HttpException } from '@nestjs/common';
+
+@Controller('/test')
+export class TestController {
+  constructor(private readonly amqpConnection: AmqpConnection) {}
+  @Get('user-list')
+  async getAllUser() {
+    const response: RmqResponse<RmqResponseUser> =
+      await this.amqpConnection.request({
+        exchange: 'user.d.x',
+        routingKey: 'user.read.list.2FA.rk',
+      });
+    if (!response.success) throw new HttpException(response.error, 500);
+    return response;
+  }
+}

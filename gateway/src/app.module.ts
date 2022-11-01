@@ -7,6 +7,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
+import { TestController } from './test.controller';
 
 @Module({
   imports: [
@@ -27,7 +28,12 @@ import { AuthService } from './auth/auth.service';
       isGlobal: true,
     }),
   ],
-  controllers: [AuthController, UserController, FriendController],
+  controllers: [
+    AuthController,
+    UserController,
+    FriendController,
+    TestController,
+  ],
   providers: [AuthService, UserService, FriendService],
 })
 export class AppModule {}

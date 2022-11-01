@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsString, IsUrl, ValidateNested } from 'class-validator';
 
-export class TwoFactorAuthenticationDto {
+export class TwoFactorAuthentication {
   @IsNotEmpty()
   @IsString()
   info: string;
@@ -11,7 +11,7 @@ export class TwoFactorAuthenticationDto {
   key: string;
 }
 
-export class CreateUserRequestDto {
+export class CreateUserRequest {
   @IsNotEmpty()
   @IsString()
   thirdPartyId: string;
@@ -25,8 +25,8 @@ export class CreateUserRequestDto {
   nickname: string;
 
   @ValidateNested({ each: true })
-  @Type(() => TwoFactorAuthenticationDto)
-  '2FA': TwoFactorAuthenticationDto;
+  @Type(() => TwoFactorAuthentication)
+  '2FA': TwoFactorAuthentication;
 
   @IsNotEmpty()
   @IsUrl()
