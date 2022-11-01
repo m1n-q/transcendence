@@ -33,7 +33,7 @@ export class NotificationGateway
     private readonly amqpConnection: AmqpConnection,
   ) {}
 
-  async newUserHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
+  async ntfEventHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
     const re = /(?<=event.on.notification.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const { 0: evType, 1: userId } = params;
@@ -58,18 +58,18 @@ export class NotificationGateway
       // throw e;
       return;
     }
-    this.logger.debug(`< ${user.id} > connected to chat`);
+    this.logger.debug(`< ${user.id} > connected`);
 
     /* create queue per user and bind handler */
     this.amqpConnection.createSubscriber(
-      this.newUserHandler,
+      this.ntfEventHandler,
       {
         exchange: process.env.RMQ_NOTIFICATION_TOPIC,
         queue: `event.on.notification.${user.id}.q`,
         routingKey: `event.on.notification.*.${user.id}.rk`,
         errorHandler: (c, m, e) => this.logger.error(e),
       },
-      'newUserHandler',
+      'ntfEventHandler',
     );
 
     /* save connected socket per user */

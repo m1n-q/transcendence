@@ -20,20 +20,20 @@ const userDB = {};
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   private server: Server;
-  private logger = new Logger('NotificationGateway');
+  private logger = new Logger('ChatGateway');
 
   constructor(
     private readonly rmqService: RmqService,
     private readonly amqpConnection: AmqpConnection,
   ) {}
 
-  async newUserHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
+  async chatEventHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
     const re = /(?<=event.on.chat.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const { 0: evType, 1: userId } = params;
 
     const sock: Socket = userDB[userId];
-    sock.emit('notification', evType + ': ' + msg.payload);
+    sock.emit('chat', evType + ': ' + msg.payload);
   }
 
   async handleConnection(
@@ -52,18 +52,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // throw e;
       return;
     }
-    this.logger.debug(`< ${user.id} > connected to chat`);
+    this.logger.debug(`< ${user.id} > connected`);
 
     /* create queue per user and bind handler */
     this.amqpConnection.createSubscriber(
-      this.newUserHandler,
+      this.chatEventHandler,
       {
         exchange: process.env.RMQ_NOTIFICATION_TOPIC,
         queue: `event.on.chat.${user.id}.q`,
         routingKey: `event.on.chat.*.${user.id}.rk`,
         errorHandler: (c, m, e) => this.logger.error(e),
       },
-      'newUserHandler',
+      'chatEventHandler',
     );
     clientSocket['userInfo'] = user;
     /* save connected socket per user */
