@@ -2,7 +2,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { User } from 'src/entities/User';
+import { User } from 'src/common/entities/User';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
 @Module({

@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsNumberString,
   IsString,
+  IsUrl,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
@@ -11,6 +12,11 @@ export class RmqUserId {
   @IsNotEmpty()
   @IsUUID()
   id: string;
+}
+export class RmqUserNickname {
+  @IsNotEmpty()
+  @IsString()
+  nickname: string;
 }
 
 export class RmqUser2FA {
@@ -29,7 +35,7 @@ export class RmqUSer3pID {
   provider: string;
 
   @IsNotEmpty()
-  @IsNumberString()
+  // @IsNumberString()
   thirdPartyId: string;
 }
 
@@ -51,6 +57,7 @@ export class RmqUserCreate {
   '2FA': RmqUser2FA;
 
   @IsNotEmpty()
+  // @IsUrl()
   @IsString()
   profImg: string;
 }

@@ -1,11 +1,9 @@
-import { FriendRequest } from './entities/Friend_request';
-import { Friend } from './entities/Friend';
-import { BlackList } from './entities/Black_list';
-import { User } from './entities/User';
+import { FriendRequest } from './common/entities/Friend_request';
+import { Friend } from './common/entities/Friend';
+import { BlackList } from './common/entities/Black_list';
+import { User } from './common/entities/User';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { UserModule } from './user/user.module';
@@ -18,7 +16,7 @@ import { FriendModule } from './friend/friend.module';
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
+      host: process.env.HOST,
       port: 5432,
       username: 'toh',
       password: '',
@@ -31,7 +29,7 @@ import { FriendModule } from './friend/friend.module';
     UserModule,
     FriendModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

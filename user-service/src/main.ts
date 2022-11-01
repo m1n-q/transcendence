@@ -1,7 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { RmqErrorFactory } from './interceptors/rmq-error.factory';
+import { RmqErrorFactory } from './common/rmq-module/types/rmq-error.factory';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

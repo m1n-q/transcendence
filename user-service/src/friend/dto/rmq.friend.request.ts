@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsUUID } from 'class-validator';
 
-export class RmqFriendRequest {
+export class RmqRequestFriend {
   @IsNotEmpty()
   @IsUUID()
   requester: string;
@@ -10,13 +10,13 @@ export class RmqFriendRequest {
   receiver: string;
 }
 
-export class RmqFriendRequestId {
+export class RmqRequestFriendId {
   @IsNotEmpty()
   @IsUUID()
   userId: string;
 }
 
-export class RmqBlockFriendRequest {
+export class RmqRequestBlockFriend {
   @IsNotEmpty()
   @IsUUID()
   blocker: string;

@@ -1,4 +1,4 @@
-import { RmqError } from './dto/rmq.user.response.dto';
+import { RmqError } from 'src/common/rmq-module/types/rmq-error';
 import {
   RmqUSer3pID,
   RmqUserCreate,
@@ -6,11 +6,13 @@ import {
   RmqUserUpdateNickname,
   RmqUserUpdate2FA,
   RmqUserUpdateProfImg,
+  RmqUserNickname,
 } from './dto/rmq.user.request.dto';
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { User } from 'src/entities/User';
+import { User } from 'src/common/entities/User';
 import { InjectRepository } from '@nestjs/typeorm';
+import { listenerCount } from 'process';
 
 const WHERE = 'user_service';
 @Injectable()
@@ -21,9 +23,17 @@ export class UserService {
   ) {}
 
   async readUserBy3pId(payload: RmqUSer3pID) {
-    const user = await this.userRepository.findOne({
-      where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
-    });
+    let user;
+    try {
+      user = await this.userRepository.findOne({
+        where: {
+          thirdPartyId: payload.thirdPartyId,
+          provider: payload.provider,
+        },
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     if (!user) {
       throw new RmqError(404, `${payload.thirdPartyId} not found`, WHERE);
     }
@@ -32,18 +42,50 @@ export class UserService {
 
   async readUserById(payload: RmqUserId) {
     const id = payload.id;
-    const user = await this.userRepository.findOne({ where: { id } });
-    // soft_delete를 하면 typeOrm이 알아서 처리함
+    let user;
+    try {
+      user = await this.userRepository.findOne({ where: { id } });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     if (!user) {
       throw new RmqError(404, `${id} not found`, WHERE);
     }
     return user;
   }
 
+  async readUserByNickname(payload: RmqUserNickname) {
+    const nickname = payload.nickname;
+    let user;
+    try {
+      user = await this.userRepository.findOne({ where: { nickname } });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
+    if (!user) {
+      throw new RmqError(404, `${nickname} not found`, WHERE);
+    }
+
+    delete user.provider;
+    delete user.thirdPartyId;
+    delete user.twoFactorAuthenticationKey;
+    delete user.twoFactorAuthenticationInfo;
+
+    return user;
+  }
+
   async createUser(payload: RmqUserCreate) {
-    const findUser = await this.userRepository.findOne({
-      where: { thirdPartyId: payload.thirdPartyId, provider: payload.provider },
-    });
+    let findUser;
+    try {
+      findUser = await this.userRepository.findOne({
+        where: {
+          thirdPartyId: payload.thirdPartyId,
+          provider: payload.provider,
+        },
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     if (findUser) {
       throw new RmqError(409, 'user is already joined', WHERE);
     }
@@ -57,59 +99,58 @@ export class UserService {
       user.twoFactorAuthenticationKey = payload['2FA'].key;
     }
 
-    await this.userRepository.save(user).catch(() => {
-      throw new RmqError(409, 'duplicate nickname or 2FA key', WHERE);
-    });
-    // 일단 모두 리턴
+    try {
+      await this.userRepository.save(user);
+    } catch (e) {
+      if (e.code === '23505') {
+        throw new RmqError(409, 'duplicate nickname or 2FA key', WHERE);
+      } else {
+        throw new RmqError(500, `DB Error : ${e}`, WHERE);
+      }
+    }
     return user;
   }
 
   async deleteUserById(payload: RmqUserId) {
-    // 정책에 따라 변경 예정
     await this.readUserById(payload);
 
-    const deleteResponse = await this.userRepository.softDelete(payload.id);
+    let deleteResponse;
+    try {
+      deleteResponse = await this.userRepository.softDelete(payload.id);
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     if (!deleteResponse.affected) {
       throw new RmqError(404, `${payload.id} not found`, WHERE);
     }
-  }
-
-  async readUserNicknameById(payload: RmqUserId) {
-    const user = await this.readUserById(payload);
-    return user.nickname;
   }
 
   async updateUserNicknameById(payload: RmqUserUpdateNickname) {
     const user = await this.readUserById(payload);
     user.nickname = payload.nickname;
 
-    await this.userRepository.save(user).catch(() => {
-      throw new RmqError(409, 'duplicate nickname', WHERE);
-    });
+    try {
+      await this.userRepository.save(user);
+    } catch (e) {
+      if (e.code === '23505') {
+        throw new RmqError(409, 'duplicate nickname', WHERE);
+      } else {
+        throw new RmqError(500, `DB Error : ${e}`, WHERE);
+      }
+    }
     return user.nickname;
-  }
-
-  async readUserProfImgById(payload: RmqUserId) {
-    const user = await this.readUserById(payload);
-    return user.profImg;
   }
 
   async updateUserProfImgById(payload: RmqUserUpdateProfImg) {
     const user = await this.readUserById(payload);
-    user.profImg = payload.id;
+    user.profImg = payload.profImg;
 
-    await this.userRepository.save(user);
-
+    try {
+      await this.userRepository.save(user);
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     return user.profImg;
-  }
-
-  async readUser2FAById(payload: RmqUserId) {
-    const user = await this.readUserById(payload);
-
-    return {
-      info: user.twoFactorAuthenticationInfo,
-      key: user.twoFactorAuthenticationKey,
-    };
   }
 
   async updateUser2FAById(payload: RmqUserUpdate2FA) {
@@ -118,10 +159,15 @@ export class UserService {
     user.twoFactorAuthenticationInfo = payload.info;
     user.twoFactorAuthenticationKey = payload.key;
 
-    await this.userRepository.save(user).catch(() => {
-      throw new RmqError(409, 'duplicate 2FA key', WHERE);
-    });
-
+    try {
+      await this.userRepository.save(user);
+    } catch (e) {
+      if (e.code === '23505') {
+        throw new RmqError(409, 'duplicate 2FA key', WHERE);
+      } else {
+        throw new RmqError(500, `DB Error : ${e}`, WHERE);
+      }
+    }
     return {
       info: user.twoFactorAuthenticationInfo,
       key: user.twoFactorAuthenticationKey,
@@ -133,9 +179,20 @@ export class UserService {
 
     user.twoFactorAuthenticationInfo = null;
     user.twoFactorAuthenticationKey = null;
+    try {
+      await this.userRepository.save(user);
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
+  }
 
-    await this.userRepository.save(user).catch(() => {
-      throw new RmqError(409, 'Conflict', WHERE);
-    });
+  async readUserList() {
+    let list;
+    try {
+      list = await this.userRepository.find();
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
+    return list;
   }
 }

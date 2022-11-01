@@ -1,5 +1,6 @@
-import { RmqError } from '../user/dto/rmq.user.response.dto';
+import { RmqError } from './rmq-error';
 
+/* exceptionFactory for ValidationPipe */
 export function RmqErrorFactory(where: string, status = 400) {
   return (errors) => {
     let messages: string[] = [];

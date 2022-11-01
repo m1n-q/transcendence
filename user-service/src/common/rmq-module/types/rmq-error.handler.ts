@@ -1,22 +1,15 @@
-import { HttpException } from '@nestjs/common';
-import { RmqError, RmqResponse } from '../user/dto/rmq.user.response.dto';
 import * as amqplib from 'amqplib';
+import { RmqError } from 'src/common/rmq-module/types/rmq-error';
+import { RmqResponse } from 'src/common/rmq-module/types/rmq-response';
 
 export function RmqErrorHandler(
   channel: amqplib.Channel,
   msg: amqplib.ConsumeMessage,
   error: any,
 ) {
-  if (error instanceof HttpException) {
-    error = new RmqError(
-      error.getStatus(),
-      error.getResponse().toString(),
-      'user-service',
-    );
-  } else if (typeof error !== 'string' && !(error instanceof RmqError)) {
+  if (typeof error !== 'string' && !(error instanceof RmqError)) {
     error = JSON.stringify(error);
   }
-
   const errorResponse = new RmqResponse(error, false);
 
   const { replyTo, correlationId } = msg.properties;
@@ -24,6 +17,10 @@ export function RmqErrorHandler(
     error = Buffer.from(JSON.stringify(errorResponse));
 
     channel.publish('', replyTo, error, { correlationId });
+    channel.ack(msg);
+  } else {
+    /* for async messages */
+    channel.ack(msg);
+    return;
   }
-  channel.ack(msg);
 }

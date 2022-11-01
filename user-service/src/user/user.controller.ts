@@ -5,14 +5,15 @@ import {
   RmqUserUpdateNickname,
   RmqUserUpdateProfImg,
   RmqUserUpdate2FA,
+  RmqUserNickname,
 } from './dto/rmq.user.request.dto';
 import { UserService } from './user.service';
 import { Controller, UseInterceptors } from '@nestjs/common';
 import { RabbitPayload, RabbitRPC } from '@golevelup/nestjs-rabbitmq';
-import { RmqInterceptor } from '../interceptors/rmq.response.interceptor';
-import { RmqErrorHandler } from '../interceptors/rmq-error.handler';
+import { RmqResponseInterceptor } from 'src/common/rmq-module/types/rmq-response.interceptor.ts';
+import { RmqErrorHandler } from 'src/common/rmq-module/types/rmq-error.handler';
 
-@UseInterceptors(new RmqInterceptor())
+@UseInterceptors(new RmqResponseInterceptor())
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -39,6 +40,16 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
+    routingKey: 'user.read.by.nickname.rk',
+    queue: 'user.read.by.nickname.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async readUserByNickname(@RabbitPayload() msg: RmqUserNickname) {
+    return this.userService.readUserByNickname(msg);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
     routingKey: 'user.create.rk',
     queue: 'user.create.q',
     errorHandler: RmqErrorHandler,
@@ -59,16 +70,6 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.read.nickname.rk',
-    queue: 'user.read.nickname.q',
-    errorHandler: RmqErrorHandler,
-  })
-  async readUserNickname(@RabbitPayload() msg: RmqUserId) {
-    return this.userService.readUserNicknameById(msg);
-  }
-
-  @RabbitRPC({
-    exchange: 'user.d.x',
     routingKey: 'user.update.nickname.rk',
     queue: 'user.update.nickname.q',
     errorHandler: RmqErrorHandler,
@@ -79,32 +80,12 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.read.profImg.rk',
-    queue: 'user.read.profImg.q',
-    errorHandler: RmqErrorHandler,
-  })
-  async readUserProfImg(@RabbitPayload() msg: RmqUserId) {
-    return this.userService.readUserProfImgById(msg);
-  }
-
-  @RabbitRPC({
-    exchange: 'user.d.x',
     routingKey: 'user.update.profImg.rk',
     queue: 'user.update.profImg.q',
     errorHandler: RmqErrorHandler,
   })
   async updateUserProfImg(@RabbitPayload() msg: RmqUserUpdateProfImg) {
     return this.userService.updateUserProfImgById(msg);
-  }
-
-  @RabbitRPC({
-    exchange: 'user.d.x',
-    routingKey: 'user.read.2FA.rk',
-    queue: 'user.read.2FA.q',
-    errorHandler: RmqErrorHandler,
-  })
-  async readUser2FA(@RabbitPayload() msg: RmqUserId) {
-    return this.userService.readUser2FAById(msg);
   }
 
   @RabbitRPC({
@@ -125,5 +106,23 @@ export class UserController {
   })
   async deleteUser2FA(@RabbitPayload() msg: RmqUserId) {
     return this.userService.deleteUser2FAById(msg);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.read.nickname.rk',
+    queue: 'user.read.nickname.q',
+    errorHandler: RmqErrorHandler,
+  })
+
+  // 임시
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'user.read.list.rk',
+    queue: 'user.read.list.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async readAllUSer() {
+    return this.userService.readUserList();
   }
 }

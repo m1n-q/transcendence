@@ -1,17 +1,12 @@
-export class RmqError {
-  constructor(
-    private readonly code: number,
-    private readonly message: string | string[],
-    private readonly where: string,
-  ) {}
-}
-
-export class RmqResponse<T = any> {
-  data: T | null;
-  error: RmqError | null;
-
-  constructor(payload: any, readonly success: boolean = true) {
-    this.data = this.error = null;
-    success ? (this.data = payload) : (this.error = payload);
-  }
+export class RmqResponseUser {
+  id: string;
+  nickname: string;
+  provider: string;
+  thirdPartyId: string | number;
+  twoFactorAuthenticationKey: string | null;
+  twoFactorAuthenticationInfo: string | null;
+  profImg: string;
+  rankScore: number;
+  createdDate: Date;
+  deletedDate: Date;
 }

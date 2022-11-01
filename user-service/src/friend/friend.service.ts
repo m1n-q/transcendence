@@ -1,23 +1,25 @@
-import { BlackList } from './../entities/Black_list';
-import { RmqError } from '../user/dto/rmq.user.response.dto';
-import { Friend } from './../entities/Friend';
+import { BlackList } from '../common/entities/Black_list';
+import { RmqError } from 'src/common/rmq-module/types/rmq-error';
+import { Friend } from '../common/entities/Friend';
 import { UserService } from './../user/user.service';
-import { FriendRequest } from './../entities/Friend_request';
-import { User } from './/../entities/User';
+import { FriendRequest } from '../common/entities/Friend_request';
+import { User } from '../common/entities/User';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
-  RmqFriendRequest,
-  RmqFriendRequestId,
-  RmqBlockFriendRequest,
+  RmqRequestFriend,
+  RmqRequestFriendId,
+  RmqRequestBlockFriend,
 } from './dto/rmq.friend.request';
 import { DataSource, Repository } from 'typeorm';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 const WHERE = 'user_service';
 
 @Injectable()
 export class FriendService {
   constructor(
+    private readonly amqpConnection: AmqpConnection,
     @InjectRepository(User)
     private userRepository: Repository<User>,
     @InjectRepository(FriendRequest)
@@ -29,33 +31,47 @@ export class FriendService {
     private readonly userService: UserService,
     private dataSource: DataSource,
   ) {}
-
-  isSameId(request: string, receive: string) {
+  // 한줄로 사용하고 싶으면 함수 이름에 validate 같은?
+  // 함수 이름에 맞게 bool 리턴 후 각 함수에서 throw해주는 것이 좋을 듯
+  isSameId(request: string, receive: string): boolean {
     if (request === receive) {
-      throw new RmqError(409, 'same id', WHERE);
+      return true;
     }
+    return false;
   }
 
-  async createFriendRequest(payload: RmqFriendRequest) {
-    this.isSameId(payload.requester, payload.receiver);
+  async createFriendRequest(payload: RmqRequestFriend) {
+    if (this.isSameId(payload.requester, payload.receiver)) {
+      throw new RmqError(409, 'same id', WHERE);
+    }
     await this.userService.readUserById({ id: payload.receiver });
 
-    const findFriend = await this.friendRepository.findOne({
-      where: [
-        { requester: payload.requester, receiver: payload.receiver },
-        { requester: payload.receiver, receiver: payload.requester },
-      ],
-    });
+    let findFriend;
+    try {
+      findFriend = await this.friendRepository.findOne({
+        where: [
+          { requester: payload.requester, receiver: payload.receiver },
+          { requester: payload.receiver, receiver: payload.requester },
+        ],
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     if (findFriend) {
       throw new RmqError(409, 'already friend', WHERE);
     }
 
-    const findFriendRequest = await this.friendRequestRepository.findOne({
-      where: [
-        { requester: payload.requester, receiver: payload.receiver },
-        { requester: payload.receiver, receiver: payload.requester },
-      ],
-    });
+    let findFriendRequest;
+    try {
+      findFriendRequest = await this.friendRequestRepository.findOne({
+        where: [
+          { requester: payload.requester, receiver: payload.receiver },
+          { requester: payload.receiver, receiver: payload.requester },
+        ],
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     if (findFriendRequest) {
       throw new RmqError(409, 'already request', WHERE);
     }
@@ -64,29 +80,47 @@ export class FriendService {
 
     try {
       await this.friendRequestRepository.save(friendRequest);
-    } catch (error) {
-      throw new RmqError(409, 'Conflict', WHERE);
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
     }
+    //notification
+    this.amqpConnection.publish('user.t.x', 'event.on.user.friend-request.rk', {
+      recvUsers: [payload.receiver],
+      payload: `${payload.requester} has requested a friend.`,
+      created: Date.now(),
+    });
     return friendRequest;
   }
 
-  async readFriendRequest(payload: RmqFriendRequestId) {
-    const friendList = await this.friendRequestRepository.find({
-      where: { requester: payload.userId },
-    });
+  async readFriendRequest(payload: RmqRequestFriendId) {
+    let friendList;
+    try {
+      friendList = await this.friendRequestRepository.find({
+        where: { requester: payload.userId },
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     if (friendList.length === 0) {
       throw new RmqError(404, 'Not found list', WHERE);
     }
     return friendList;
   }
 
-  async deleteFriendRequest(payload: RmqFriendRequest) {
-    this.isSameId(payload.requester, payload.receiver);
+  async deleteFriendRequest(payload: RmqRequestFriend) {
+    if (this.isSameId(payload.requester, payload.receiver)) {
+      throw new RmqError(409, 'same id', WHERE);
+    }
     await this.userService.readUserById({ id: payload.receiver });
 
-    const findFriendRequest = await this.friendRequestRepository.findOne({
-      where: { requester: payload.requester, receiver: payload.receiver },
-    });
+    let findFriendRequest;
+    try {
+      findFriendRequest = await this.friendRequestRepository.findOne({
+        where: { requester: payload.requester, receiver: payload.receiver },
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
 
     if (!findFriendRequest) {
       throw new RmqError(409, 'not found request', WHERE);
@@ -94,18 +128,25 @@ export class FriendService {
 
     try {
       await this.friendRequestRepository.remove(findFriendRequest);
-    } catch (error) {
-      throw new RmqError(409, 'Conflict', WHERE);
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
     }
   }
 
-  async createBlockFriend(payload: RmqBlockFriendRequest) {
-    this.isSameId(payload.blocker, payload.blocked);
+  async createBlockFriend(payload: RmqRequestBlockFriend) {
+    if (this.isSameId(payload.blocker, payload.blocked)) {
+      throw new RmqError(409, 'same id', WHERE);
+    }
     await this.userService.readUserById({ id: payload.blocked });
 
-    const blackList = await this.blackListRepository.findOne({
-      where: { blocker: payload.blocker, blocked: payload.blocked },
-    });
+    let blackList;
+    try {
+      blackList = await this.blackListRepository.findOne({
+        where: { blocker: payload.blocker, blocked: payload.blocked },
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     if (blackList) {
       throw new RmqError(409, 'already request', WHERE);
     }
@@ -114,29 +155,41 @@ export class FriendService {
 
     try {
       await this.blackListRepository.save(blockFriend);
-    } catch (error) {
-      throw new RmqError(409, 'Conflict', WHERE);
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
     }
     return blockFriend;
   }
 
-  async readBlockFriend(payload: RmqFriendRequestId) {
-    const blackList = await this.blackListRepository.find({
-      where: { blocker: payload.userId },
-    });
+  async readBlockFriend(payload: RmqRequestFriendId) {
+    let blackList;
+    try {
+      blackList = await this.blackListRepository.find({
+        where: { blocker: payload.userId },
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     if (blackList.length === 0) {
       throw new RmqError(404, 'Not found list', WHERE);
     }
     return blackList;
   }
 
-  async deleteBlockFriend(payload: RmqBlockFriendRequest) {
-    this.isSameId(payload.blocker, payload.blocked);
+  async deleteBlockFriend(payload: RmqRequestBlockFriend) {
+    if (this.isSameId(payload.blocker, payload.blocked)) {
+      throw new RmqError(409, 'same id', WHERE);
+    }
     await this.userService.readUserById({ id: payload.blocked });
 
-    const findBlackList = await this.blackListRepository.findOne({
-      where: { blocker: payload.blocker, blocked: payload.blocked },
-    });
+    let findBlackList;
+    try {
+      findBlackList = await this.blackListRepository.findOne({
+        where: { blocker: payload.blocker, blocked: payload.blocked },
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
 
     if (!findBlackList) {
       throw new RmqError(409, 'not found request', WHERE);
@@ -144,31 +197,27 @@ export class FriendService {
 
     try {
       await this.blackListRepository.remove(findBlackList);
-    } catch (error) {
-      throw new RmqError(409, 'Conflict', WHERE);
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
     }
   }
 
-  async createFriend(payload: RmqFriendRequest) {
-    this.isSameId(payload.requester, payload.receiver);
-    await this.userService.readUserById({ id: payload.receiver });
-
-    const findFriend = await this.friendRepository.findOne({
-      where: { requester: payload.requester, receiver: payload.receiver },
-    });
-    if (findFriend) {
-      throw new RmqError(409, 'already friend', WHERE);
+  async createFriend(payload: RmqRequestFriend) {
+    let findFriendRequest;
+    try {
+      findFriendRequest = await this.friendRequestRepository.findOne({
+        where: { requester: payload.requester, receiver: payload.receiver },
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
     }
-
-    const findFriendRequest = await this.friendRequestRepository.findOne({
-      where: { requester: payload.receiver, receiver: payload.requester },
-    });
     if (!findFriendRequest) {
       throw new RmqError(409, 'Not found request', WHERE);
     }
+
     const friend = this.friendRepository.create({
-      requester: payload.receiver,
-      receiver: payload.requester,
+      requester: payload.requester,
+      receiver: payload.receiver,
     });
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -188,26 +237,39 @@ export class FriendService {
     return friend;
   }
 
-  async readFriend(payload: RmqFriendRequestId) {
-    const friendList = await this.friendRepository.find({
-      where: [{ requester: payload.userId }, { receiver: payload.userId }],
-    });
+  async readFriend(payload: RmqRequestFriendId) {
+    let friendList;
+    try {
+      friendList = await this.friendRepository.find({
+        where: [{ requester: payload.userId }, { receiver: payload.userId }],
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
     if (friendList.length === 0) {
       throw new RmqError(404, 'Not found list', WHERE);
     }
     return friendList;
   }
 
-  async deleteFriend(payload: RmqFriendRequest) {
-    this.isSameId(payload.requester, payload.receiver);
+  async deleteFriend(payload: RmqRequestFriend) {
+    if (this.isSameId(payload.requester, payload.receiver)) {
+      throw new RmqError(409, 'same id', WHERE);
+    }
+
     await this.userService.readUserById({ id: payload.receiver });
 
-    const findFriend = await this.friendRepository.findOne({
-      where: [
-        { requester: payload.requester, receiver: payload.receiver },
-        { requester: payload.receiver, receiver: payload.requester },
-      ],
-    });
+    let findFriend;
+    try {
+      findFriend = await this.friendRepository.findOne({
+        where: [
+          { requester: payload.requester, receiver: payload.receiver },
+          { requester: payload.receiver, receiver: payload.requester },
+        ],
+      });
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
+    }
 
     if (!findFriend) {
       throw new RmqError(409, 'not found friend', WHERE);
@@ -215,8 +277,8 @@ export class FriendService {
 
     try {
       await this.friendRepository.remove(findFriend);
-    } catch (error) {
-      throw new RmqError(409, 'Conflict', WHERE);
+    } catch (e) {
+      throw new RmqError(500, `DB Error : ${e}`, WHERE);
     }
   }
 }

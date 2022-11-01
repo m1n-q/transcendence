@@ -1,15 +1,15 @@
 import { FriendService } from './friend.service';
-import { RmqInterceptor } from './../interceptors/rmq.response.interceptor';
+import { RmqResponseInterceptor } from 'src/common/rmq-module/types/rmq-response.interceptor.ts';
 import { RabbitPayload, RabbitRPC } from '@golevelup/nestjs-rabbitmq';
 import { Controller, UseInterceptors } from '@nestjs/common';
-import { RmqErrorHandler } from 'src/interceptors/rmq-error.handler';
+import { RmqErrorHandler } from 'src/common/rmq-module/types/rmq-error.handler';
 import {
-  RmqFriendRequest,
-  RmqFriendRequestId,
-  RmqBlockFriendRequest,
+  RmqRequestFriend,
+  RmqRequestFriendId,
+  RmqRequestBlockFriend,
 } from './dto/rmq.friend.request';
 
-@UseInterceptors(new RmqInterceptor())
+@UseInterceptors(new RmqResponseInterceptor())
 @Controller('friend')
 export class FriendController {
   constructor(private readonly friendService: FriendService) {}
@@ -20,7 +20,7 @@ export class FriendController {
     queue: 'user.create.friend.request.q',
     errorHandler: RmqErrorHandler,
   })
-  async createFriendRequest(@RabbitPayload() msg: RmqFriendRequest) {
+  async createFriendRequest(@RabbitPayload() msg: RmqRequestFriend) {
     return this.friendService.createFriendRequest(msg);
   }
 
@@ -30,7 +30,7 @@ export class FriendController {
     queue: 'user.read.friend.request.q',
     errorHandler: RmqErrorHandler,
   })
-  async readFriendRequest(@RabbitPayload() msg: RmqFriendRequestId) {
+  async readFriendRequest(@RabbitPayload() msg: RmqRequestFriendId) {
     return this.friendService.readFriendRequest(msg);
   }
 
@@ -40,7 +40,7 @@ export class FriendController {
     queue: 'user.delete.friend.request.q',
     errorHandler: RmqErrorHandler,
   })
-  async deleteFriendRequest(@RabbitPayload() msg: RmqFriendRequest) {
+  async deleteFriendRequest(@RabbitPayload() msg: RmqRequestFriend) {
     return this.friendService.deleteFriendRequest(msg);
   }
 
@@ -50,7 +50,7 @@ export class FriendController {
     queue: 'user.create.friend.block.q',
     errorHandler: RmqErrorHandler,
   })
-  async createBlockFriend(@RabbitPayload() msg: RmqBlockFriendRequest) {
+  async createBlockFriend(@RabbitPayload() msg: RmqRequestBlockFriend) {
     return this.friendService.createBlockFriend(msg);
   }
 
@@ -60,7 +60,7 @@ export class FriendController {
     queue: 'user.read.friend.block.q',
     errorHandler: RmqErrorHandler,
   })
-  async readBlockFriend(@RabbitPayload() msg: RmqFriendRequestId) {
+  async readBlockFriend(@RabbitPayload() msg: RmqRequestFriendId) {
     return this.friendService.readBlockFriend(msg);
   }
 
@@ -70,7 +70,7 @@ export class FriendController {
     queue: 'user.delete.friend.block.q',
     errorHandler: RmqErrorHandler,
   })
-  async deleteBlockFriend(@RabbitPayload() msg: RmqBlockFriendRequest) {
+  async deleteBlockFriend(@RabbitPayload() msg: RmqRequestBlockFriend) {
     return this.friendService.deleteBlockFriend(msg);
   }
 
@@ -80,7 +80,7 @@ export class FriendController {
     queue: 'user.create.friend.q',
     errorHandler: RmqErrorHandler,
   })
-  async createFriend(@RabbitPayload() msg: RmqFriendRequest) {
+  async createFriend(@RabbitPayload() msg: RmqRequestFriend) {
     return this.friendService.createFriend(msg);
   }
 
@@ -90,7 +90,7 @@ export class FriendController {
     queue: 'user.read.friend.q',
     errorHandler: RmqErrorHandler,
   })
-  async readFriend(@RabbitPayload() msg: RmqFriendRequestId) {
+  async readFriend(@RabbitPayload() msg: RmqRequestFriendId) {
     return this.friendService.readFriend(msg);
   }
 
@@ -100,7 +100,7 @@ export class FriendController {
     queue: 'user.delete.friend.q',
     errorHandler: RmqErrorHandler,
   })
-  async deleteFriend(@RabbitPayload() msg: RmqFriendRequest) {
+  async deleteFriend(@RabbitPayload() msg: RmqRequestFriend) {
     return this.friendService.deleteFriend(msg);
   }
 }
