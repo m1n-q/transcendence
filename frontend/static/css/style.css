@@ -3,7 +3,7 @@ body {
 	margin:0%;
 	padding:0%;
 }
-ul li {
+ul li#button_list {
 	list-style-type: none;
 	display: inline-block;
 }
@@ -155,4 +155,13 @@ ul li {
 ul li button img {
 	width: 5em;
 	height: 5em;
+}
+
+#users.ui-autocomplete-input {
+	position: relative;
+	width: 80%;
+}
+
+#ui-menu-item-wrapper {
+	display: block;
 }

@@ -1,4 +1,12 @@
-import { Controller, Get, Redirect, Render, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Redirect,
+  Render,
+  Req,
+} from '@nestjs/common';
 import { Request } from 'express';
 
 @Controller()
@@ -21,5 +29,21 @@ export class AppController {
   @Render('chat')
   chatPage(@Req() req: Request) {
     return;
+  }
+
+  @Post('friend-request')
+  async temp(@Req() req, @Body('friend_id') friendId) {
+    let res;
+    try {
+      res = await fetch(`http://localhost:3000/friend/request/${friendId}`, {
+        headers: {
+          authorization: req.cookies['jwt-access'],
+        },
+      });
+    } catch (e) {
+      return;
+    }
+
+    return await res.json();
   }
 }

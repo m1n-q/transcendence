@@ -9,16 +9,14 @@ const chatSocket = io('ws://localhost:9999', {
   },
 });
 
-//* get DOM element
-const chatBox = document.getElementById('chat_box');
-const formElement = document.getElementById('chat_form');
-
 chatSocket.on('connect', async (message) => {
   console.log('CONNECTED TO CHAT SERVER');
 });
 
 /* global socket handlers */
 chatSocket.on('message', (message) => {
+  const chatBox = document.getElementById('chat_box');
+
   const user = message.user;
 
   let messageBoxElem = document.createElement('div');
@@ -53,5 +51,5 @@ const formHandler = (event) => {
   }
 };
 
-/* main */
+const formElement = document.getElementById('chat_form');
 formElement.addEventListener('submit', formHandler);

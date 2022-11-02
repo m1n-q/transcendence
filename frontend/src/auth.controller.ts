@@ -40,11 +40,13 @@ export class AuthController {
   @Get('/oauth2/42/result')
   async oauth42Result(@Query('code') code, @Res() res: Response) {
     const gwRes = await this.appService.signIn('42', code);
-    if (gwRes && !gwRes.access_token)
+    if (gwRes && !gwRes.access_token) {
+      console.log('FRONTEND: NO ACCESS_TOKEN!');
       res.redirect(
         `/auth/signup_view?provider=${gwRes.provider}&thirdPartyId=${gwRes.thirdPartyId}&profImg=${gwRes.profImg}`,
       );
-    else {
+    } else {
+      console.log('FRONTEND: GOT ACCESS TOKEN!');
       const { access_token, refresh_token } = gwRes;
       res.cookie('jwt-access', access_token);
       res.cookie('jwt-refresh', refresh_token);
@@ -55,11 +57,13 @@ export class AuthController {
   @Get('/oauth2/kakao/result')
   async oauthKakaoResult(@Query('code') code, @Res() res: Response) {
     const gwRes = await this.appService.signIn('kakao', code);
-    if (gwRes && !gwRes.access_token)
+    if (gwRes && !gwRes.access_token) {
+      console.log('FRONTEND: NO ACCESS_TOKEN!');
       res.redirect(
         `/auth/signup_view?provider=${gwRes.provider}&thirdPartyId=${gwRes.thirdPartyId}&profImg=${gwRes.profImg}`,
       );
-    else {
+    } else {
+      console.log('FRONTEND: GOT ACCESS TOKEN!');
       const { access_token, refresh_token } = gwRes;
       res.cookie('jwt-access', access_token);
       res.cookie('jwt-refresh', refresh_token);
@@ -70,11 +74,13 @@ export class AuthController {
   @Get('/oauth2/google/result')
   async oauthGoogleResult(@Query('code') code, @Res() res: Response) {
     const gwRes = await this.appService.signIn('google', code);
-    if (gwRes && !gwRes.access_token)
+    if (gwRes && !gwRes.access_token) {
+      console.log('FRONTEND: NO ACCESS_TOKEN!');
       res.redirect(
         `/auth/signup_view?provider=${gwRes.provider}&thirdPartyId=${gwRes.thirdPartyId}&profImg=${gwRes.profImg}`,
       );
-    else {
+    } else {
+      console.log('FRONTEND: GOT ACCESS TOKEN!');
       const { access_token, refresh_token } = gwRes;
       res.cookie('jwt-access', access_token);
       res.cookie('jwt-refresh', refresh_token);

@@ -10,7 +10,6 @@ const notiSocket = io('ws://localhost:11111', {
 });
 
 //* get DOM element
-const notificationCenter = document.getElementById('notification_center');
 
 notiSocket.on('connect', async (message) => {
   console.log('CONNECTED TO NOTIFICATION SERVER');
@@ -18,7 +17,8 @@ notiSocket.on('connect', async (message) => {
 
 /* global Socket handlers */
 notiSocket.on('notification', (message) => {
-  console.log('NOTIFY!');
+  const notificationCenter = document.getElementById('notification_center');
+
   let note = document.createElement('div');
   note.id = 'notification';
   note.textContent = message;

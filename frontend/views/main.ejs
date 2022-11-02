@@ -4,22 +4,40 @@
 <html>
 	<head>
 		<title>	Main </title>
+		<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+		<link rel="stylesheet" href="/resources/demos/style.css">
 		<link rel="stylesheet" href="css/style.css">
+		<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+		<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+		<script src="https://cdn.socket.io/4.5.0/socket.io.min.js" integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k" crossorigin="anonymous"></script>
+
 	</head>
 	<body>
+
+
 		<% if (user === false) {%>
 			<ul>
-				<li> <button class="img_button" type="button" onclick="location.href='auth/oauth2/42'"><img src='images/42.png' ></button> </li>
-				<li> <button class="img_button" type="button" onclick="location.href='auth/oauth2/google'"><img src='images/google.png' ></button> </li>
-				<li> <button class="img_button" type="button" onclick="location.href='auth/oauth2/kakao'"><img src='images/kakao.png' ></button> </li>
+				<li id="button_list"> <button class="img_button" type="button" onclick="location.href='auth/oauth2/42'"><img src='images/42.png' ></button> </li>
+				<li id="button_list"> <button class="img_button" type="button" onclick="location.href='auth/oauth2/google'"><img src='images/google.png' ></button> </li>
+				<li id="button_list"> <button class="img_button" type="button" onclick="location.href='auth/oauth2/kakao'"><img src='images/kakao.png' ></button> </li>
 			</ul>
 			<%} else {%>
+				<script src="js/notification.js"></script>
+				<script src="js/search.js"></script>
 				<ul>
-					<li> <button class="img_button" type="button" onclick="location.href='chat'"><img src='images/chat.png' ></button> </li>
+					<li id="button_list"> <button class="img_button" type="button" onclick="location.href='chat'"><img src='images/chat.png' ></button> </li>
 				</ul>
-				<div id = 'notification_center'>
+				<div id="notification_center">
 
 				</div>
+				<div class="ui-widget">
+					<label for="users">Search nickname: </label>
+					<input id="users">
+				</div>
+				<form action="/friend-request" method="POST">
+					<input id="users_id" type="hidden" name="friend_id">
+					<input type="submit">
+				</form>
 		<% } %>
 	</body>
 </html>
