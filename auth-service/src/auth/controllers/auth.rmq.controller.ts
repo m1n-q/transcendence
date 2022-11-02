@@ -83,6 +83,7 @@ export class AuthRmqController {
       if (res['provider']) res['profImg'] = profImg;
       return res;
     } catch (e) {
+      console.log('AUTH-SERVICE SIGN IN ERROR:', e);
       throw e;
     }
   }
@@ -124,6 +125,7 @@ export class AuthRmqController {
       if (res['provider']) res['profImg'] = profImg;
       return res;
     } catch (e) {
+      console.log('AUTH-SERVICE SIGN IN ERROR:', e);
       throw e;
     }
   }
@@ -160,6 +162,7 @@ export class AuthRmqController {
       if (res['provider']) res['profImg'] = profImg;
       return res;
     } catch (e) {
+      console.log('AUTH-SERVICE SIGN IN ERROR:', e);
       throw e;
     }
   }
