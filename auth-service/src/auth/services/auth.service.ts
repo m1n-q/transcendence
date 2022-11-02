@@ -97,14 +97,23 @@ export class AuthService {
       ? msg['access_token']
       : msg['refresh_token'];
 
-    if (!token) throw new RmqError(400, 'Invalid request', WHERE);
+    if (!token)
+      throw new RmqError({
+        code: 400,
+        message: 'Invalid request',
+        where: WHERE,
+      });
 
     try {
       payload = this.jwtService.verify(token, {
         secret,
       });
     } catch (e) {
-      throw new RmqError(401, 'Invalid token', WHERE);
+      throw new RmqError({
+        code: 401,
+        message: 'Invalid token',
+        where: WHERE,
+      });
     }
     return payload;
   }
@@ -130,7 +139,11 @@ export class AuthService {
 
     const result = refreshToken === hashed;
     if (result == false)
-      throw new RmqError(401, 'Refresh token not matches', WHERE);
+      throw new RmqError({
+        code: 401,
+        message: 'Refresh token not matches',
+        where: WHERE,
+      });
     return this.signIn(userInfo);
   }
 
@@ -166,16 +179,20 @@ export class AuthService {
       });
       /* request fail */
       if (!res.ok)
-        throw new RmqError(
-          res.status,
-          res.statusText,
+        throw new RmqError({
+          code: res.status,
+          message: res.statusText,
           // await res.text(),
-          `auth-service#getOauthTokens()`,
-        );
+          where: `auth-service#getOauthTokens()`,
+        });
     } catch (e) {
       if (e.code) throw e;
       /* network fail */
-      throw new RmqError(500, 'fetch fail', `auth-service#getOauthTokens()`);
+      throw new RmqError({
+        code: 500,
+        message: 'fetch fail',
+        where: `auth-service#getOauthTokens()`,
+      });
     }
 
     const tokens = await res.json();
@@ -194,15 +211,19 @@ export class AuthService {
       });
       /* request fail */
       if (!res.ok)
-        throw new RmqError(
-          res.status,
-          res.statusText,
-          `auth-service#getOauthResources()`,
-        );
+        throw new RmqError({
+          code: res.status,
+          message: res.statusText,
+          where: `auth-service#getOauthResources()`,
+        });
     } catch (e) {
       if (e.code) throw e;
       /* network fail */
-      throw new RmqError(500, 'fetch fail', `auth-service#getOauthResources()`);
+      throw new RmqError({
+        code: 500,
+        message: 'fetch fail',
+        where: `auth-service#getOauthResources()`,
+      });
     }
     const userProfile = await res.json();
     return userProfile;

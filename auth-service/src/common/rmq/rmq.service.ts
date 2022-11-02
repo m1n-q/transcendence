@@ -22,9 +22,14 @@ export class RmqService {
         timeout: 2000,
       });
     } catch (reqFail) {
-      throw new RmqError(408, 'Rmq Response Timeout', 'user-service');
+      throw new RmqError({
+        code: 408,
+        message: 'Rmq Response Timeout',
+        where: 'user-service',
+      });
     }
-    if (!response.success) throw response.error;
+
+    if (!response.success) throw new RmqError(response.error);
     return response.data;
   }
 
@@ -39,7 +44,11 @@ export class RmqService {
         timeout: 2000,
       });
     } catch (reqFail) {
-      throw new RmqError(408, 'Rmq Response Timeout', 'user-service');
+      throw new RmqError({
+        code: 408,
+        message: 'Rmq Response Timeout',
+        where: 'user-service',
+      });
     }
     if (!response.success) throw response.error;
     return response.data;
@@ -56,7 +65,11 @@ export class RmqService {
         timeout: 2000,
       });
     } catch (reqFail) {
-      throw new RmqError(408, 'Rmq Response Timeout', 'user-service');
+      throw new RmqError({
+        code: 408,
+        message: 'Rmq Response Timeout',
+        where: 'user-service',
+      });
     }
     if (!response.success) throw response.error;
     return response.data;
