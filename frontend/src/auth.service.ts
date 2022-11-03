@@ -24,7 +24,7 @@ export class AuthService {
 
   async signIn(provider: string, code: string) {
     console.log(code);
-    const res = await fetch(`http://localhost:3000/auth/oauth2/${provider}`, {
+    const res = await fetch(`http://localhost:3001/auth/oauth2/${provider}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ export class AuthService {
   }
 
   async signUp(data) {
-    const res = await fetch(`http://localhost:3000/auth/signup`, {
+    const res = await fetch(`http://localhost:3001/user`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

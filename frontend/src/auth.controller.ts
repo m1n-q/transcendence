@@ -40,6 +40,7 @@ export class AuthController {
   @Get('/oauth2/42/result')
   async oauth42Result(@Query('code') code, @Res() res: Response) {
     const gwRes = await this.appService.signIn('42', code);
+    //BUG: NO ACCESS TOKEN AND PROVIDER IF UNAUTHORIZED FROM PROVIDER
     if (gwRes && !gwRes.access_token) {
       console.log('FRONTEND: NO ACCESS_TOKEN!');
       res.redirect(

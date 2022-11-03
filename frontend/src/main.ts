@@ -11,8 +11,8 @@ async function bootstrap() {
   app.useStaticAssets(__dirname + '/../static');
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('ejs');
-  await app.listen(56789, () => {
-    console.log(`Frontend on 56789`);
+  await app.listen(3000, () => {
+    console.log(`Frontend on 3000`);
   });
 }
 bootstrap();
