@@ -5,9 +5,11 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   DeleteDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('user')
+@Index(['provider', 'thirdPartyId'], { unique: true })
 export class User {
   @Expose()
   @PrimaryGeneratedColumn('uuid')
@@ -22,17 +24,17 @@ export class User {
   provider: string;
 
   @Expose()
-  @Column({ unique: true })
+  @Column()
   thirdPartyId: string;
 
   @Column({ unique: true, nullable: true })
   twoFactorAuthenticationKey: string;
 
   @Column({ nullable: true })
-  twoFactorAuthenticationInfo: string;
+  twoFactorAuthenticationType: string;
 
   @Expose()
-  @Column()
+  @Column({ nullable: true })
   profImg: string;
 
   @Column()

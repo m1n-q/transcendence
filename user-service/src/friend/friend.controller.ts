@@ -1,5 +1,5 @@
 import { FriendService } from './friend.service';
-import { RmqResponseInterceptor } from 'src/common/rmq-module/types/rmq-response.interceptor.ts';
+import { RmqResponseInterceptor } from 'src/common/rmq-module/interceptors/rmq-response.interceptor.ts';
 import { RabbitPayload, RabbitRPC } from '@golevelup/nestjs-rabbitmq';
 import { Controller, UseInterceptors } from '@nestjs/common';
 import { RmqErrorHandler } from 'src/common/rmq-module/types/rmq-error.handler';

@@ -8,28 +8,28 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-export class RmqUserId {
+export class RmqUserIdDto {
   @IsNotEmpty()
   @IsUUID()
   id: string;
 }
-export class RmqUserNickname {
+export class RmqUserNicknameDto {
   @IsNotEmpty()
   @IsString()
   nickname: string;
 }
 
-export class RmqUser2FA {
+export class RmqUser2FADto {
   @IsNotEmpty()
   @IsString()
-  info: string;
+  type: string;
 
   @IsNotEmpty()
   @IsString()
   key: string;
 }
 
-export class RmqUSer3pID {
+export class RmqUSer3pIDDto {
   @IsNotEmpty()
   @IsString()
   provider: string;
@@ -39,7 +39,7 @@ export class RmqUSer3pID {
   thirdPartyId: string;
 }
 
-export class RmqUserCreate {
+export class RmqUserCreateDto {
   @IsNotEmpty()
   @IsString()
   thirdPartyId: string;
@@ -53,30 +53,15 @@ export class RmqUserCreate {
   nickname: string;
 
   @ValidateNested({ each: true })
-  @Type(() => RmqUser2FA)
-  '2FA': RmqUser2FA;
+  @Type(() => RmqUser2FADto)
+  '2FA': RmqUser2FADto;
 
   @IsNotEmpty()
   // @IsUrl()
   @IsString()
   profImg: string;
 }
-
-export class RmqUserUpdate2FA {
-  @IsNotEmpty()
-  @IsUUID()
-  id: string;
-
-  @IsNotEmpty()
-  @IsString()
-  info: string;
-
-  @IsNotEmpty()
-  @IsString()
-  key: string;
-}
-
-export class RmqUserUpdateNickname {
+export class RmqUserUpdateNicknameDto {
   @IsNotEmpty()
   @IsUUID()
   id: string;
@@ -84,14 +69,4 @@ export class RmqUserUpdateNickname {
   @IsNotEmpty()
   @IsString()
   nickname: string;
-}
-
-export class RmqUserUpdateProfImg {
-  @IsNotEmpty()
-  @IsUUID()
-  id: string;
-
-  @IsNotEmpty()
-  @IsString()
-  profImg: string;
 }

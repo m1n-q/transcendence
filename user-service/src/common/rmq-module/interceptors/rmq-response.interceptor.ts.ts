@@ -19,6 +19,7 @@ export class RmqResponseInterceptor<T>
     next: CallHandler,
   ): Observable<RmqResponse<T>> {
     if (!isRabbitContext(context)) return next.handle();
+
     return next.handle().pipe(
       map((data: T | RmqError) => {
         if (data instanceof RmqError) return new RmqResponse(data, false);
