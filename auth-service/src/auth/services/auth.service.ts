@@ -39,7 +39,6 @@ export class AuthService {
     try {
       userInfo = await this.rmqService.requestUserInfoBy3pId(thirdPartyInfo);
     } catch (e) {
-      if (e.code === 404) return thirdPartyInfo;
       throw e;
     }
 
@@ -182,7 +181,6 @@ export class AuthService {
         throw new RmqError({
           code: res.status,
           message: res.statusText,
-          // await res.text(),
           where: `auth-service#getOauthTokens()`,
         });
     } catch (e) {
@@ -236,7 +234,6 @@ export class AuthService {
     resources: string[],
   ): Promise<any> {
     const ret: any = {};
-
     const { access_token, refresh_token } = await this.getOauthTokens(
       code,
       param,
@@ -251,5 +248,119 @@ export class AuthService {
     }
 
     return ret;
+  }
+
+  async oauth42(code: string) {
+    const provider = '42';
+    const userProfile: any = await this.oauth(
+      code,
+      {
+        contentType: 'json',
+        clientID: process.env.OAUTH2_42_ID,
+        clientSecret: process.env.OAUTH2_42_SECRET,
+        tokenURI: 'https://api.intra.42.fr/oauth/token',
+        //ISSUE: 42 API does not works with redirect_uri containing query string
+        // redirectURI: process.env.OAUTH2_REDIRECT_URI + provider,
+        redirectURI: 'http://localhost:3000/login2',
+        endpoint: `https://api.intra.42.fr/v2/me`,
+      },
+      ['id', 'image_url'],
+    );
+
+    const { id: thirdPartyId, image_url: profImg } = userProfile;
+
+    console.log(Object.keys(userProfile)); //DELETE
+
+    try {
+      return await this.signInIfExists({
+        provider,
+        thirdPartyId,
+      });
+    } catch (e) {
+      if (e.code === 404)
+        return {
+          provider,
+          thirdPartyId,
+          profImg,
+          locale: 'kr', //FIXME
+        };
+
+      throw e;
+    }
+  }
+
+  async oauthKakao(code: string) {
+    const provider = 'kakao';
+    const userProfile: any = await this.oauth(
+      code,
+      {
+        contentType: 'x-www-form-urlencoded',
+        clientID: process.env.OAUTH2_KAKAO_ID,
+        clientSecret: process.env.OAUTH2_KAKAO_SECRET,
+        tokenURI: 'https://kauth.kakao.com/oauth/token',
+        redirectURI: process.env.OAUTH2_REDIRECT_URI + provider,
+        endpoint: 'https://kapi.kakao.com/v2/user/me',
+      },
+      ['id', 'kakao_account'],
+    );
+
+    const {
+      id: thirdPartyId,
+      kakao_account: {
+        profile: { profile_image_url: profImg },
+      },
+    } = userProfile;
+
+    try {
+      return await this.signInIfExists({
+        provider,
+        thirdPartyId,
+      });
+    } catch (e) {
+      if (e.code === 404)
+        return {
+          provider,
+          thirdPartyId,
+          profImg,
+          locale: 'kr',
+        };
+
+      throw e;
+    }
+  }
+
+  async oauthGoogle(code: string) {
+    const provider = 'google';
+    const userProfile: any = await this.oauth(
+      code,
+      {
+        contentType: 'json',
+        clientID: process.env.OAUTH2_GOOGLE_ID,
+        clientSecret: process.env.OAUTH2_GOOGLE_SECRET,
+        tokenURI: 'https://www.googleapis.com/oauth2/v4/token',
+        redirectURI: process.env.OAUTH2_REDIRECT_URI + provider,
+        endpoint: 'https://www.googleapis.com/oauth2/v2/userinfo',
+      },
+      ['id', 'picture', 'locale'],
+    );
+
+    const { id: thirdPartyId, picture: profImg, locale } = userProfile;
+
+    try {
+      return await this.signInIfExists({
+        provider,
+        thirdPartyId,
+      });
+    } catch (e) {
+      if (e.code === 404)
+        return {
+          provider,
+          thirdPartyId,
+          profImg,
+          locale,
+        };
+
+      throw e;
+    }
   }
 }

@@ -7,7 +7,6 @@ export function RmqErrorHandler(
   msg: amqplib.ConsumeMessage,
   error: any,
 ) {
-  console.log(error);
   if (typeof error !== 'string' && !(error instanceof RmqError)) {
     error = JSON.stringify(error);
   }
