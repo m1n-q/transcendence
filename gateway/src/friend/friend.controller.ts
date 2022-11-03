@@ -41,7 +41,7 @@ export class FriendController {
 
   @Get('/request/sended')
   async getRequestsSended(@Req() req) {
-    TODO;
+    //TODO;
     // return this.friendService.getRequestList(req.user.id);
   }
 
