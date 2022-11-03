@@ -11,7 +11,8 @@ export class TestController {
     const response: RmqResponse<RmqResponseUser> =
       await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'user.read.list.2FA.rk',
+        routingKey: 'user.read.list.rk',
+        payload: {},
       });
     if (!response.success) throw new HttpException(response.error, 500);
     return response;

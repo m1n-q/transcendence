@@ -9,5 +9,6 @@ export class RmqResponse<T = object> {
     this.created = Date.now().toString();
     this.data = this.error = null;
     success ? (this.data = payload) : (this.error = payload);
+    console.log(this.error instanceof RmqError);
   }
 }

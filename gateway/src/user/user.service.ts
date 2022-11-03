@@ -1,85 +1,100 @@
 import { RmqResponse } from './../common/rmq/types/rmq-response';
-import { CreateUserRequest } from './dto/user.request.dto';
-import { HttpException, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RmqResponseUser } from './dto/user.response.dto';
+import { UserInfo, UserProfile } from './user-info';
 
 @Injectable()
 export class UserService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
-  async join(body: CreateUserRequest) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
+  async requestSignUp(data) {
+    let response: RmqResponse;
+
+    try {
+      response = await this.amqpConnection.request({
         exchange: 'user.d.x',
         routingKey: 'user.create.rk',
-        payload: {
-          thirdPartyId: body.thirdPartyId,
-          provider: body.provider,
-          nickname: body.nickname,
-          '2FA': body['2FA'],
-          profImg: body.profImg,
-        },
+        payload: data,
+        timeout: 2000,
       });
-    if (!response.success) throw new HttpException(response.error, 500);
-    return response;
+    } catch (reqFail) {
+      throw new InternalServerErrorException('request to user-serivce failed');
+    }
+
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return response.data;
   }
 
-  async getById(id: string) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
+  async getUserByNickname(nickname): Promise<UserProfile> {
+    let response: RmqResponse<UserProfile>;
+
+    try {
+      response = await this.amqpConnection.request<RmqResponse<UserProfile>>({
+        exchange: 'user.d.x',
+        routingKey: 'user.read.by.nickname.rk',
+        payload: { nickname },
+        timeout: 2000,
+      });
+    } catch (reqFail) {
+      throw new InternalServerErrorException('request to user-serivce failed');
+    }
+
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return response.data;
+  }
+
+  async getUserById(id): Promise<UserInfo> {
+    let response: RmqResponse<UserInfo>;
+
+    try {
+      response = await this.amqpConnection.request<RmqResponse<UserInfo>>({
         exchange: 'user.d.x',
         routingKey: 'user.read.by.id.rk',
-        payload: {
-          id: id,
-        },
+        payload: { id },
+        timeout: 2000,
       });
+    } catch (reqFail) {
+      throw new InternalServerErrorException('request to user-serivce failed');
+    }
 
-    if (!response.success) throw new HttpException(response.error, 500);
-    return response;
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return response.data;
   }
 
   async deleteById(id: string) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
+    let response;
+    try {
+      response = await this.amqpConnection.request<
+        RmqResponse<RmqResponseUser>
+      >({
         exchange: 'user.d.x',
         routingKey: 'user.delete.rk',
         payload: {
           id: id,
         },
       });
-    if (!response.success) throw new HttpException(response.error, 500);
-  }
-
-  async getNicknameById(id: string) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
-        exchange: 'user.d.x',
-        routingKey: 'user.read.by.id.rk',
-        payload: {
-          id: id,
-        },
-      });
-    if (!response.success) throw new HttpException(response.error, 500);
-    return response.data.nickname;
-  }
-
-  async getUserByNickname(nickname: string) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
-        exchange: 'user.d.x',
-        routingKey: 'user.read.by.nickname.rk',
-        payload: {
-          nickname,
-        },
-      });
-    if (!response.success) throw new HttpException(response.error, 500);
-    return response.data;
+    } catch (e) {
+      throw new InternalServerErrorException('request to user-serivce failed');
+    }
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return;
   }
 
   async updateNicknameById(id: string, newNickname: string) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
+    let response;
+    try {
+      response = await this.amqpConnection.request<
+        RmqResponse<RmqResponseUser>
+      >({
         exchange: 'user.d.x',
         routingKey: 'user.update.nickname.rk',
         payload: {
@@ -87,79 +102,60 @@ export class UserService {
           nickname: newNickname,
         },
       });
-    if (!response.success) throw new HttpException(response.error, 500);
+    } catch (e) {
+      throw new InternalServerErrorException('request to user-serivce failed');
+    }
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return;
   }
 
-  async getProfImgById(id: string) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
-        exchange: 'user.d.x',
-        routingKey: 'user.read.by.id.rk',
-        payload: {
-          id: id,
-        },
-      });
-    if (!response.success) throw new HttpException(response.error, 500);
-    return response.data.profImg;
-  }
-
+  //NOTE: nullable
   async updateProfImgById(id: string, newProfileImage: string) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
+    let response;
+    try {
+      response = await this.amqpConnection.request<
+        RmqResponse<RmqResponseUser>
+      >({
         exchange: 'user.d.x',
         routingKey: 'user.update.profImg.rk',
         payload: {
           id: id,
-          profImg: newProfileImage,
+          nickname: newProfileImage,
         },
       });
-    if (!response.success) throw new HttpException(response.error, 500);
+    } catch (e) {
+      throw new InternalServerErrorException('request to user-serivce failed');
+    }
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return;
   }
 
-  async getTwoFactorAuthenticationById(id: string) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
-        exchange: 'user.d.x',
-        routingKey: 'user.read.by.id.rk',
-        payload: {
-          id: id,
-        },
-      });
-    if (!response.success) throw new HttpException(response.error, 500);
-
-    return {
-      info: response.data.twoFactorAuthenticationInfo,
-      key: response.data.twoFactorAuthenticationKey,
-    };
-  }
-
+  //NOTE: nullable
   async updateTwoFactorAuthenticationById(
     id: string,
-    newInfo: string,
+    newType: string,
     newKey: string,
   ) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
+    let response;
+    try {
+      response = await this.amqpConnection.request<
+        RmqResponse<RmqResponseUser>
+      >({
         exchange: 'user.d.x',
         routingKey: 'user.update.2FA.rk',
         payload: {
           id: id,
-          info: newInfo,
+          type: newType,
           key: newKey,
         },
       });
-    if (!response.success) throw new HttpException(response.error, 500);
-  }
-
-  async deleteTwoFactorAuthenticationById(id: string) {
-    const response: RmqResponse<RmqResponseUser> =
-      await this.amqpConnection.request({
-        exchange: 'user.d.x',
-        routingKey: 'user.delete.2FA.rk',
-        payload: {
-          id: id,
-        },
-      });
-    if (!response.success) throw new HttpException(response.error, 500);
+    } catch (e) {
+      throw new InternalServerErrorException('request to user-serivce failed');
+    }
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return;
   }
 }

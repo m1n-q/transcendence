@@ -1,6 +1,9 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Injectable } from '@nestjs/common';
-import { RmqError } from '../common/rmq/types/rmq-error';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { RmqResponse } from '../common/rmq/types/rmq-response';
 
 @Injectable()
@@ -19,29 +22,11 @@ export class AuthService {
         timeout: 2000,
       });
     } catch (reqFail) {
-      throw new RmqError(408, 'Rmq Response Timeout', 'auth-service');
+      throw new InternalServerErrorException('request to auth-service failed');
     }
 
-    if (!response.success) throw response.error;
-    return response.data;
-  }
-
-  async requestSignUp(data) {
-    let response: RmqResponse;
-
-    try {
-      response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
-        routingKey: 'user.create.rk',
-        payload: data,
-        timeout: 2000,
-      });
-    } catch (reqFail) {
-      console.log(reqFail);
-      throw new RmqError(408, 'Rmq Response Timeout', 'auth-service');
-    }
-
-    if (!response.success) throw response.error;
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
     return response.data;
   }
 }

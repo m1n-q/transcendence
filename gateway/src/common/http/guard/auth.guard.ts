@@ -6,32 +6,41 @@ import {
   ExecutionContext,
   HttpException,
   Injectable,
+  InternalServerErrorException,
 } from '@nestjs/common';
+import { Request } from 'express';
+import { RmqError } from '../../rmq/types/rmq-error';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private readonly amqpConnection: AmqpConnection) {}
   public async canActivate(context: ExecutionContext) {
-    const request = context.switchToHttp().getRequest();
+    const request: Request = context.switchToHttp().getRequest();
     const { authorization } = request.headers;
-    const access_token = authorization;
+    if (!authorization) throw new HttpException('Unauthorized', 401);
 
-    if (access_token === undefined) {
-      throw new HttpException('Token does not exist', 401);
+    const bearerToken = authorization.split(' ');
+    if (bearerToken.length !== 2 || bearerToken[0] !== 'Bearer')
+      throw new HttpException('Unauthorized', 401);
+
+    const access_token = bearerToken[1];
+    let response;
+    try {
+      response = await this.amqpConnection.request<RmqResponse>({
+        exchange: 'auth.d.x',
+        routingKey: 'auth.verify.jwt.rk',
+        payload: {
+          access_token,
+        },
+      });
+    } catch (e) {
+      throw new InternalServerErrorException('request to auth-service failed');
     }
 
-    const auth: RmqResponse = await this.amqpConnection.request({
-      exchange: 'auth.d.x',
-      routingKey: 'auth.verify.jwt.rk',
-      payload: {
-        access_token,
-      },
-    });
-    if (auth.success === false) {
-      throw new HttpException('Token does not exist', 401);
-    }
+    if (response.success === false)
+      throw new HttpException(response.error.message, response.error.code);
 
-    request.user = auth;
+    request['user'] = response.data;
     return true;
   }
 }

@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { TestController } from './test.controller';
+import { BlockService } from './block/block.service';
 
 @Module({
   imports: [
@@ -34,6 +35,6 @@ import { TestController } from './test.controller';
     FriendController,
     TestController,
   ],
-  providers: [AuthService, UserService, FriendService],
+  providers: [AuthService, UserService, FriendService, BlockService],
 })
 export class AppModule {}

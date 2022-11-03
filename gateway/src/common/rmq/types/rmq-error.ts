@@ -1,19 +1,11 @@
-import { HttpException } from '@nestjs/common';
-
 export class RmqError {
-  constructor(
-    private readonly code: number,
-    private readonly message: string | string[],
-    private readonly where: string,
-  ) {}
+  public code: number;
+  public message: string | string[];
+  public where: string;
 
-  getCode(): number {
-    return this.code;
-  }
-  getMessage(): string | string[] {
-    return this.message;
-  }
-  getWhere(): string {
-    return this.where;
+  constructor(e: RmqError) {
+    this.code = e.code;
+    this.message = e.message;
+    this.where = e.where;
   }
 }
