@@ -29,7 +29,7 @@ export class RedisService {
     return await this.redisClient.hSet(key, field, value);
   }
   async hdel(key, field) {
-    return await this.multi().hDel(key, field);
+    return await this.redisClient.hDel(key, field);
   }
 
   async hsetJson(key: string, data: object) {
