@@ -128,7 +128,10 @@ dist
 .tern-port
 
 # secret keys
-.key
+*.key
+
+# dump.rdb
+*.rdb
 
 # media files
 media/
