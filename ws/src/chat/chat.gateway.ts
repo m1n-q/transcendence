@@ -65,7 +65,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
       'chatEventHandler',
     );
-    clientSocket['userInfo'] = user;
+    clientSocket['user_info'] = user;
     /* save connected socket per user */
     userDB[user.id] = clientSocket;
   }
@@ -82,7 +82,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() clientSocket: Socket,
   ) {
     clientSocket.emit('message', {
-      user: clientSocket['userInfo'],
+      user: clientSocket['user_info'],
       payload: message.payload,
     });
   }

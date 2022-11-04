@@ -1,7 +1,7 @@
-export class UserInfoDto {
-  userId: string;
+export class UserInfo {
+  user_id: string;
   nickname: string;
-  profImg: string;
+  prof_img: string;
   mmr: number;
   iat: Date;
   exp: Date;
