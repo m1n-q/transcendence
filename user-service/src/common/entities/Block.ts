@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 
 @Entity('block')
-export class BlackList {
+export class Block {
   @PrimaryGeneratedColumn('uuid')
   block_id: string;
 
@@ -20,7 +20,7 @@ export class BlackList {
   blocked: string;
 
   @CreateDateColumn()
-  createdDate: Date;
+  created: Date;
 
   @ManyToOne(() => User, (user) => user.user_id)
   @JoinColumn({ name: 'blocker' })

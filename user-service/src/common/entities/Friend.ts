@@ -20,7 +20,7 @@ export class Friend {
   receiver: string;
 
   @CreateDateColumn()
-  createdDate: Date;
+  created: Date;
 
   @ManyToOne(() => User, (user) => user.user_id)
   @JoinColumn({ name: 'requester' })

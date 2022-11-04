@@ -79,7 +79,7 @@ export class UserService {
     return user;
   }
 
-  async readUserById(payload: RmqUserIdDto): Promise<UserInfo> {
+  async readUserById(payload: RmqUserIdDto) {
     let user;
     try {
       user = await this.userRepository.findOne({
@@ -216,6 +216,33 @@ export class UserService {
       });
     }
     return user;
+  }
+
+  async readUserListById(userIdList) {
+    const list = await Promise.all(
+      Object.values(userIdList).map(async (item: string) => {
+        try {
+          const user = await this.userRepository.findOne({
+            where: { user_id: item },
+          });
+          return {
+            user_id: user.user_id,
+            nickname: user.nickname,
+            prof_img: user.prof_img,
+            mmr: user.mmr,
+            created: user.created,
+            deleted: user.deleted,
+          };
+        } catch (e) {
+          throw new RmqError({
+            code: 500,
+            message: `DB Error : ${e}`,
+            where: WHERE,
+          });
+        }
+      }),
+    );
+    return list;
   }
 
   async readUserList() {
