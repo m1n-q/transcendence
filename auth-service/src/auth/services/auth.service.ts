@@ -262,12 +262,13 @@ export class AuthService {
         redirectURI: process.env.OAUTH2_REDIRECT_URI + provider,
         endpoint: `https://api.intra.42.fr/v2/me`,
       },
-      ['id', 'image_url'],
+      ['id', 'image_url', 'campus'],
     );
 
-    const { id: thirdPartyId, image_url: profImg } = userProfile;
-
-    console.log(Object.keys(userProfile)); //DELETE
+    const { id: thirdPartyId, image_url: profImg, campus } = userProfile;
+    const locale: string = campus[0].language.name
+      .substring(0, 2)
+      .toLowerCase();
 
     try {
       return await this.signInIfExists({
@@ -280,7 +281,7 @@ export class AuthService {
           provider,
           thirdPartyId,
           profImg,
-          locale: 'kr', //FIXME
+          locale,
         };
 
       throw e;
@@ -320,7 +321,7 @@ export class AuthService {
           provider,
           thirdPartyId,
           profImg,
-          locale: 'kr',
+          locale: 'ko',
         };
 
       throw e;
