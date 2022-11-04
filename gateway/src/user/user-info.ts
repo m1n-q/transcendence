@@ -25,7 +25,7 @@ export class UserInfo {
   provider: string;
   thirdPartyId: string;
   twoFactorAuthenticationKey: string;
-  twoFactorAuthenticationInfo: string;
+  twoFactorAuthenticationType: string;
   profImg: string;
   rankScore: number;
   createdDate: Date;

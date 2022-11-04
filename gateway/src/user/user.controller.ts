@@ -28,36 +28,33 @@ export class UserController {
   @Get()
   @UseGuards(AuthGuard)
   async getMyProfile(@Req() req) {
-    return this.userService.getUserById(req.user.id);
+    return this.userService.getUserById(req.user.user_id);
   }
 
   @HttpCode(204)
   @Delete()
   @UseGuards(AuthGuard)
   async deleteUser(@Req() req) {
-    return this.userService.deleteById(req.user.id);
+    return this.userService.deleteById(req.user.user_id);
   }
 
-  @HttpCode(204)
   @Put('/nickname')
   @UseGuards(AuthGuard)
   async updateNickname(@Req() req, @Body('nickname') nickname: string) {
-    return this.userService.updateNicknameById(req.user.id, nickname);
+    return this.userService.updateNicknameById(req.user.user_id, nickname);
   }
 
   //NOTE: nullable (instead of delete)
-  @HttpCode(204)
   @Put('/prof-img')
   @UseGuards(AuthGuard)
   async updateProfileImgById(
     @Req() req,
     @Body('prof_img') profileImage: string,
   ) {
-    return this.userService.updateProfImgById(req.user.id, profileImage);
+    return this.userService.updateProfImgById(req.user.user_id, profileImage);
   }
 
   //NOTE: nullable (instead of delete)
-  @HttpCode(204)
   @Put('/2fa')
   @UseGuards(AuthGuard)
   async updateTwoFactorAuthenticationById(
@@ -65,7 +62,7 @@ export class UserController {
     @Body() body: TwoFactorAuthenticationInfo,
   ) {
     return this.userService.updateTwoFactorAuthenticationById(
-      req.user.id,
+      req.user.user_id,
       body.type,
       body.key,
     );

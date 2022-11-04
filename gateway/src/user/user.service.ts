@@ -18,7 +18,7 @@ export class UserService {
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'user.create.rk',
+        routingKey: 'rmq.to.user.create.rk',
         payload: data,
         timeout: 2000,
       });
@@ -31,13 +31,13 @@ export class UserService {
     return response.data;
   }
 
-  async getUserByNickname(nickname): Promise<UserProfile> {
+  async getUserByNickname(nickname: string): Promise<UserProfile> {
     let response: RmqResponse<UserProfile>;
 
     try {
       response = await this.amqpConnection.request<RmqResponse<UserProfile>>({
         exchange: 'user.d.x',
-        routingKey: 'user.read.by.nickname.rk',
+        routingKey: 'rmq.to.user.read.by.nickname.rk',
         payload: { nickname },
         timeout: 2000,
       });
@@ -50,14 +50,14 @@ export class UserService {
     return response.data;
   }
 
-  async getUserById(id): Promise<UserInfo> {
+  async getUserById(user_id: string): Promise<UserInfo> {
     let response: RmqResponse<UserInfo>;
 
     try {
       response = await this.amqpConnection.request<RmqResponse<UserInfo>>({
         exchange: 'user.d.x',
-        routingKey: 'user.read.by.id.rk',
-        payload: { id },
+        routingKey: 'rmq.to.user.read.by.id.rk',
+        payload: { user_id },
         timeout: 2000,
       });
     } catch (reqFail) {
@@ -69,16 +69,16 @@ export class UserService {
     return response.data;
   }
 
-  async deleteById(id: string) {
+  async deleteById(user_id: string) {
     let response;
     try {
       response = await this.amqpConnection.request<
         RmqResponse<RmqResponseUser>
       >({
         exchange: 'user.d.x',
-        routingKey: 'user.delete.rk',
+        routingKey: 'rmq.to.user.delete.rk',
         payload: {
-          id: id,
+          user_id,
         },
       });
     } catch (e) {
@@ -89,16 +89,16 @@ export class UserService {
     return;
   }
 
-  async updateNicknameById(id: string, newNickname: string) {
+  async updateNicknameById(user_id: string, newNickname: string) {
     let response;
     try {
       response = await this.amqpConnection.request<
         RmqResponse<RmqResponseUser>
       >({
         exchange: 'user.d.x',
-        routingKey: 'user.update.nickname.rk',
+        routingKey: 'rmq.to.user.update.nickname.rk',
         payload: {
-          id: id,
+          user_id,
           nickname: newNickname,
         },
       });
@@ -107,21 +107,21 @@ export class UserService {
     }
     if (!response.success)
       throw new HttpException(response.error.message, response.error.code);
-    return;
+    return response.data;
   }
 
   //NOTE: nullable
-  async updateProfImgById(id: string, newProfileImage: string) {
+  async updateProfImgById(user_id: string, newProfileImage: string) {
     let response;
     try {
       response = await this.amqpConnection.request<
         RmqResponse<RmqResponseUser>
       >({
         exchange: 'user.d.x',
-        routingKey: 'user.update.profImg.rk',
+        routingKey: 'rmq.to.user.update.profImg.rk',
         payload: {
-          id: id,
-          nickname: newProfileImage,
+          user_id,
+          prof_img: newProfileImage,
         },
       });
     } catch (e) {
@@ -129,12 +129,12 @@ export class UserService {
     }
     if (!response.success)
       throw new HttpException(response.error.message, response.error.code);
-    return;
+    return response.data;
   }
 
   //NOTE: nullable
   async updateTwoFactorAuthenticationById(
-    id: string,
+    user_id: string,
     newType: string,
     newKey: string,
   ) {
@@ -144,9 +144,9 @@ export class UserService {
         RmqResponse<RmqResponseUser>
       >({
         exchange: 'user.d.x',
-        routingKey: 'user.update.2FA.rk',
+        routingKey: 'rmq.to.user.update.2FA.rk',
         payload: {
-          id: id,
+          user_id,
           type: newType,
           key: newKey,
         },
@@ -156,6 +156,6 @@ export class UserService {
     }
     if (!response.success)
       throw new HttpException(response.error.message, response.error.code);
-    return;
+    return response.data;
   }
 }

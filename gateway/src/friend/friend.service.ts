@@ -9,6 +9,24 @@ import {
 export class FriendService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
+  async getFriends(id) {
+    let response;
+    try {
+      response = await this.amqpConnection.request({
+        exchange: 'user.d.x',
+        routingKey: 'user.read.friend.rk',
+        payload: {
+          userId: id,
+        },
+      });
+    } catch (e) {
+      throw new InternalServerErrorException('request to user-service failed');
+    }
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return response;
+  }
+
   async makeRequest(id, receiver) {
     let response;
     try {
@@ -92,24 +110,6 @@ export class FriendService {
         payload: {
           requester: id,
           receiver: friendId,
-        },
-      });
-    } catch (e) {
-      throw new InternalServerErrorException('request to user-service failed');
-    }
-    if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
-    return response;
-  }
-
-  async getFriends(id) {
-    let response;
-    try {
-      response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
-        routingKey: 'user.read.friend.rk',
-        payload: {
-          userId: id,
         },
       });
     } catch (e) {
