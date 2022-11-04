@@ -2,15 +2,20 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
+  Query,
   Redirect,
   Render,
   Req,
+  Res,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
+import { AuthService } from './auth.service';
 
 @Controller()
 export class AppController {
+  constructor(private readonly authService: AuthService) {}
   @Get()
   @Redirect('/main')
   m(@Req() req: Request) {
@@ -45,5 +50,27 @@ export class AppController {
     }
 
     return await res.json();
+  }
+
+  @Get('login/:provider')
+  async oauthResult(
+    @Param('provider') provider,
+    @Query('code') code,
+    @Res() res: Response,
+  ) {
+    const gwRes = await this.authService.signIn(provider, code);
+    //BUG: NO ACCESS TOKEN AND PROVIDER IF UNAUTHORIZED FROM PROVIDER
+    if (gwRes && !gwRes.access_token) {
+      console.log('FRONTEND: NO ACCESS_TOKEN!');
+      res.redirect(
+        `/auth/signup_view?provider=${gwRes.provider}&thirdPartyId=${gwRes.thirdPartyId}&profImg=${gwRes.profImg}`,
+      );
+    } else {
+      console.log('FRONTEND: GOT ACCESS TOKEN!');
+      const { access_token, refresh_token } = gwRes;
+      res.cookie('jwt-access', access_token);
+      res.cookie('jwt-refresh', refresh_token);
+      res.redirect('/main');
+    }
   }
 }

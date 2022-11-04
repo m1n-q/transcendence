@@ -20,7 +20,7 @@ import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly appService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Get('signup_view')
   @Render('signup')
@@ -34,73 +34,21 @@ export class AuthController {
 
   @Post('signup')
   async signUp(@Body() body) {
-    return this.appService.signUp(body);
-  }
-
-  @Get('/oauth2/42/result')
-  async oauth42Result(@Query('code') code, @Res() res: Response) {
-    const gwRes = await this.appService.signIn('42', code);
-    //BUG: NO ACCESS TOKEN AND PROVIDER IF UNAUTHORIZED FROM PROVIDER
-    if (gwRes && !gwRes.access_token) {
-      console.log('FRONTEND: NO ACCESS_TOKEN!');
-      res.redirect(
-        `/auth/signup_view?provider=${gwRes.provider}&thirdPartyId=${gwRes.thirdPartyId}&profImg=${gwRes.profImg}`,
-      );
-    } else {
-      console.log('FRONTEND: GOT ACCESS TOKEN!');
-      const { access_token, refresh_token } = gwRes;
-      res.cookie('jwt-access', access_token);
-      res.cookie('jwt-refresh', refresh_token);
-      res.redirect('/main');
-    }
-  }
-
-  @Get('/oauth2/kakao/result')
-  async oauthKakaoResult(@Query('code') code, @Res() res: Response) {
-    const gwRes = await this.appService.signIn('kakao', code);
-    if (gwRes && !gwRes.access_token) {
-      console.log('FRONTEND: NO ACCESS_TOKEN!');
-      res.redirect(
-        `/auth/signup_view?provider=${gwRes.provider}&thirdPartyId=${gwRes.thirdPartyId}&profImg=${gwRes.profImg}`,
-      );
-    } else {
-      console.log('FRONTEND: GOT ACCESS TOKEN!');
-      const { access_token, refresh_token } = gwRes;
-      res.cookie('jwt-access', access_token);
-      res.cookie('jwt-refresh', refresh_token);
-      res.redirect('/main');
-    }
-  }
-
-  @Get('/oauth2/google/result')
-  async oauthGoogleResult(@Query('code') code, @Res() res: Response) {
-    const gwRes = await this.appService.signIn('google', code);
-    if (gwRes && !gwRes.access_token) {
-      console.log('FRONTEND: NO ACCESS_TOKEN!');
-      res.redirect(
-        `/auth/signup_view?provider=${gwRes.provider}&thirdPartyId=${gwRes.thirdPartyId}&profImg=${gwRes.profImg}`,
-      );
-    } else {
-      console.log('FRONTEND: GOT ACCESS TOKEN!');
-      const { access_token, refresh_token } = gwRes;
-      res.cookie('jwt-access', access_token);
-      res.cookie('jwt-refresh', refresh_token);
-      res.redirect('/main');
-    }
+    return this.authService.signUp(body);
   }
 
   @Get('/oauth2/42')
   async oauth42(@Res() res) {
-    res.redirect(this.appService.get42AuthCode());
+    res.redirect(this.authService.get42AuthCode());
   }
 
   @Get('/oauth2/kakao')
   async oauthKakao(@Res() res) {
-    res.redirect(this.appService.getKakaoAuthCode());
+    res.redirect(this.authService.getKakaoAuthCode());
   }
 
   @Get('/oauth2/google')
   async oauthGoogle(@Res() res) {
-    res.redirect(this.appService.getGoogleAuthCode());
+    res.redirect(this.authService.getGoogleAuthCode());
   }
 }
