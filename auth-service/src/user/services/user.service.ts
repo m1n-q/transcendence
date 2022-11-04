@@ -1,13 +1,13 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from '../../auth/dto/create-user.dto';
-import { RmqError } from './types/rmq-error';
-import { RmqResponse } from './types/rmq-response';
+import { RmqError } from '../../common/rmq/types/rmq-error';
+import { RmqResponse } from '../../common/rmq/types/rmq-response';
 import { ThirdPartyInfoDto } from '../../auth/dto/third-party-info.dto';
 import { UserInfoDto } from '../../auth/dto/user-info.dto';
 
 @Injectable()
-export class RmqService {
+export class UserService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
   /* after get user's info by oauth provider */

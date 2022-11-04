@@ -5,7 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthHttpController } from './auth/controllers/auth.http.controller';
 import { AuthService } from './auth/services/auth.service';
 import { RedisModule } from './redis-module/redis.module';
-import { RmqService } from './common/rmq/rmq.service';
+import { UserService } from './user/services/user.service';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { RmqResponseInterceptor } from './common/rmq/interceptors/rmq-response.interceptor';
 import { AuthRmqController } from './auth/controllers/auth.rmq.controller';
@@ -35,7 +35,7 @@ import { AuthRmqController } from './auth/controllers/auth.rmq.controller';
   ],
   providers: [
     AuthService,
-    RmqService,
+    UserService,
     AuthRmqController,
     RmqResponseInterceptor,
   ],

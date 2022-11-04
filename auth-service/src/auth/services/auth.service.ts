@@ -9,7 +9,7 @@ import {
 } from '../dto/verify-jwt-request.dto';
 import { RmqError } from '../../common/rmq/types/rmq-error';
 import { plainToInstance } from 'class-transformer';
-import { RmqService } from '../../common/rmq/rmq.service';
+import { UserService } from '../../user/services/user.service';
 import { URLSearchParams } from 'url';
 
 const WHERE = 'auth-service';
@@ -29,7 +29,7 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
-    private readonly rmqService: RmqService,
+    private readonly userService: UserService,
   ) {}
 
   /* if cannot find user with given third-party info, return those info for signing up */
@@ -37,7 +37,7 @@ export class AuthService {
     let userInfo: UserInfoDto;
 
     try {
-      userInfo = await this.rmqService.requestUserInfoBy3pId(thirdPartyInfo);
+      userInfo = await this.userService.requestUserInfoBy3pId(thirdPartyInfo);
     } catch (e) {
       throw e;
     }
