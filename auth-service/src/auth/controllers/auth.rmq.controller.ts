@@ -31,7 +31,7 @@ export class AuthRmqController {
   @RabbitRPC({
     exchange: 'auth.d.x',
     queue: 'auth.verify.jwt.q',
-    routingKey: 'auth.verify.jwt.rk',
+    routingKey: 'req.to.auth.verify.jwt.rk',
     errorHandler: RmqErrorHandler,
   })
   async verifyJwt(msg: VerifyAccessJwtRequestDto) {
@@ -41,7 +41,7 @@ export class AuthRmqController {
   @RabbitRPC({
     exchange: 'auth.d.x',
     queue: 'auth.refresh.jwt.q',
-    routingKey: 'auth.refresh.jwt.rk',
+    routingKey: 'req.to.auth.refresh.jwt.rk',
     errorHandler: RmqErrorHandler,
   })
   async refresh(msg: VerifyRefreshJwtRequestDto) {
@@ -54,7 +54,7 @@ export class AuthRmqController {
   @RabbitRPC({
     exchange: 'auth.d.x',
     queue: 'auth.signin.42.q',
-    routingKey: 'auth.signin.42.rk',
+    routingKey: 'req.to.auth.signin.42.rk',
     errorHandler: RmqErrorHandler,
   })
   async oauth42(msg: { code: string }) {
@@ -64,7 +64,7 @@ export class AuthRmqController {
   @RabbitRPC({
     exchange: 'auth.d.x',
     queue: 'auth.signin.kakao.q',
-    routingKey: 'auth.signin.kakao.rk',
+    routingKey: 'req.to.auth.signin.kakao.rk',
     errorHandler: RmqErrorHandler,
   })
   async oauthKakao(msg: { code: string }) {
@@ -74,7 +74,7 @@ export class AuthRmqController {
   @RabbitRPC({
     exchange: 'auth.d.x',
     queue: 'auth.signin.google.q',
-    routingKey: 'auth.signin.google.rk',
+    routingKey: 'req.to.auth.signin.google.rk',
     errorHandler: RmqErrorHandler,
   })
   async oauthGoogle(msg: { code: string }) {
