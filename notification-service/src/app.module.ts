@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.rmq.controller';
-import { AppService } from './app.service';
+import { NotificationRmqController } from './notification/controllers/notification.rmq.controller';
+import { NotificationService } from './notification/services/notification.service';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { RmqService } from './common/rmq/rmq.service';
-import { TempController } from './temp.controller';
 
 @Module({
   imports: [
@@ -26,7 +24,7 @@ import { TempController } from './temp.controller';
       enableControllerDiscovery: true,
     }),
   ],
-  controllers: [AppController, TempController],
-  providers: [AppService, AppController, RmqService],
+  controllers: [NotificationRmqController],
+  providers: [NotificationService, NotificationRmqController],
 })
 export class AppModule {}

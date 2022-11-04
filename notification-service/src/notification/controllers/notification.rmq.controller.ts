@@ -1,9 +1,9 @@
 import { RabbitPayload, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Controller, UsePipes, ValidationPipe } from '@nestjs/common';
-import { AppService } from './app.service';
-import { RmqErrorFactory } from './common/rmq/rmq-error.factory';
-import { RmqErrorHandler } from './common/rmq/rmq-error.handler';
-import { RmqEvent } from './common/rmq/types/rmq-event';
+import { NotificationService } from '../services/notification.service';
+import { RmqErrorFactory } from '../../common/rmq/rmq-error.factory';
+import { RmqErrorHandler } from '../../common/rmq/rmq-error.handler';
+import { RmqEvent } from '../../common/rmq/types/rmq-event';
 import * as amqplib from 'amqplib';
 
 // event.on.<service name>.<event type>[.additional.param].rk
@@ -17,8 +17,8 @@ import * as amqplib from 'amqplib';
   }),
 )
 @Controller()
-export class AppController {
-  constructor(private readonly appService: AppService) {}
+export class NotificationRmqController {
+  constructor(private readonly notificationService: NotificationService) {}
 
   @RabbitSubscribe({
     exchange: 'user.t.x' /* process.env does not work */,
@@ -33,6 +33,9 @@ export class AppController {
     msg: RmqEvent,
     rawMessage: amqplib.ConsumeMessage,
   ): void {
-    return this.appService.handleUserEvent(msg, rawMessage.fields.routingKey);
+    return this.notificationService.handleUserEvent(
+      msg,
+      rawMessage.fields.routingKey,
+    );
   }
 }
