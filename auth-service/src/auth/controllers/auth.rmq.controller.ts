@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import {
+  Tokens,
   VerifyAccessJwtRequestDto,
   VerifyRefreshJwtRequestDto,
 } from '../dto/verify-jwt-request.dto';
@@ -79,5 +80,15 @@ export class AuthRmqController {
   })
   async oauthGoogle(msg: { code: string }) {
     return this.authService.oauthGoogle(msg.code);
+  }
+
+  @RabbitRPC({
+    exchange: 'auth.d.x',
+    queue: 'auth.signout.q',
+    routingKey: 'req.to.auth.signout.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async signOut(msg: VerifyRefreshJwtRequestDto) {
+    return this.authService.signOut(msg.refresh_token);
   }
 }

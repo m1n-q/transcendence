@@ -4,6 +4,7 @@ import { RedisService } from '../../redis-module/services/redis.service';
 import { UserInfo } from '../dto/user-info';
 import { ThirdPartyInfo } from '../dto/third-party-info';
 import {
+  Tokens,
   VerifyAccessJwtRequestDto,
   VerifyRefreshJwtRequestDto,
 } from '../dto/verify-jwt-request.dto';
@@ -32,6 +33,9 @@ export class AuthService {
     private readonly userService: UserService,
   ) {}
 
+  makeUserKey(user_id: string) {
+    return 'user:' + user_id;
+  }
   /* if cannot find user with given third-party info, return those info for signing up */
   async signInIfExists(thirdPartyInfo: ThirdPartyInfo) {
     let userInfo: UserInfo;
@@ -45,14 +49,15 @@ export class AuthService {
     return this.signIn(userInfo);
   }
 
+  //TODO: check redis response
   /* issue access_token and refresh_token */
   async signIn(userInfo: UserInfo) {
     const access_token = this.issueAccessToken(userInfo);
     const refresh_token = this.issueRefreshToken(userInfo);
 
-    //TODO: check redis response
+    /* override existing refresh_token. only one refresh_token per userId */
     const res: any[] = await this.storeRefreshToken(
-      'user:' + userInfo.user_id,
+      this.makeUserKey(userInfo.user_id),
       refresh_token,
       RT_EXPIRES_IN,
     );
@@ -60,8 +65,22 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
-  /* issue access_token and refresh_token */
-  async signOut(userInfo: UserInfo) {}
+  /* remove refresh_token mapping from redis */
+  async signOut(refreshToken) {
+    let userInfo: UserInfo;
+    try {
+      userInfo = await this.verifyJwt(
+        { refresh_token: refreshToken },
+        process.env.JWT_REFRESH_SECRET,
+      );
+    } catch (e) {
+      /* if verify failed due to expiry date, token already removed from redis */
+      e.message = 'Invalid token, or already signed out';
+      throw e;
+    }
+
+    this.redisService.hdel(this.makeUserKey(userInfo.user_id), 'refresh_token');
+  }
 
   /* store refresh token mapped with userId */
   async storeRefreshToken(key, refreshToken, TTL) {
@@ -135,7 +154,7 @@ export class AuthService {
     });
 
     const hashed = await this.redisService.hget(
-      'user:' + userInfo.user_id,
+      this.makeUserKey(userInfo.user_id),
       'refresh_token',
     );
 
