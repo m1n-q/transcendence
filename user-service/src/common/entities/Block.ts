@@ -5,10 +5,14 @@ import {
   ManyToOne,
   PrimaryColumn,
   JoinColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity('blackList')
+@Entity('block')
 export class BlackList {
+  @PrimaryGeneratedColumn('uuid')
+  block_id: string;
+
   @PrimaryColumn()
   blocker: string;
 
@@ -18,11 +22,11 @@ export class BlackList {
   @CreateDateColumn()
   createdDate: Date;
 
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.user_id)
   @JoinColumn({ name: 'blocker' })
   requester: User;
 
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.user_id)
   @JoinColumn({ name: 'blocked' })
   receiver: User;
 }

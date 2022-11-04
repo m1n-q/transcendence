@@ -9,11 +9,11 @@ import {
 } from 'typeorm';
 
 @Entity('user')
-@Index(['provider', 'thirdPartyId'], { unique: true })
+@Index(['provider', 'third_party_id'], { unique: true })
 export class User {
   @Expose()
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  user_id: string;
 
   @Expose()
   @Column({ unique: true })
@@ -25,24 +25,24 @@ export class User {
 
   @Expose()
   @Column()
-  thirdPartyId: string;
+  third_party_id: string;
 
   @Column({ unique: true, nullable: true })
-  twoFactorAuthenticationKey: string;
+  two_factor_authentication_key: string;
 
   @Column({ nullable: true })
-  twoFactorAuthenticationType: string;
+  two_factor_authentication_type: string;
 
   @Expose()
   @Column({ nullable: true })
-  profImg: string;
+  prof_img: string;
 
   @Column()
-  rankScore: number;
+  mmr: number;
 
   @CreateDateColumn()
-  createdDate: Date;
+  created: Date;
 
   @DeleteDateColumn()
-  deletedDate: Date;
+  deleted: Date;
 }

@@ -18,8 +18,8 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.create.rk',
-    queue: 'user.create.q',
+    routingKey: 'rmq.to.user.create.rk',
+    queue: 'rmq.to.user.create.q',
     errorHandler: RmqErrorHandler,
   })
   async createUser(@RabbitPayload() msg: RmqUserCreateDto) {
@@ -28,8 +28,8 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.read.by.nickname.rk',
-    queue: 'user.read.by.nickname.q',
+    routingKey: 'rmq.to.user.read.by.nickname.rk',
+    queue: 'rmq.to.user.read.by.nickname.q',
     errorHandler: RmqErrorHandler,
   })
   async readUserByNickname(@RabbitPayload() msg: RmqUserNicknameDto) {
@@ -38,8 +38,8 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.read.by.id.rk',
-    queue: 'user.read.by.id.q',
+    routingKey: 'rmq.to.user.read.by.id.rk',
+    queue: 'rmq.to.user.read.by.id.q',
     errorHandler: RmqErrorHandler,
   })
   async readUserById(@RabbitPayload() msg: RmqUserIdDto) {
@@ -48,8 +48,8 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.delete.rk',
-    queue: 'user.delete.q',
+    routingKey: 'rmq.to.user.delete.rk',
+    queue: 'rmq.to.user.delete.q',
     errorHandler: RmqErrorHandler,
   })
   async deleteUser(@RabbitPayload() msg: RmqUserIdDto) {
@@ -58,8 +58,8 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.update.nickname.rk',
-    queue: 'user.update.nickname.q',
+    routingKey: 'rmq.to.user.update.nickname.rk',
+    queue: 'rmq.to.user.update.nickname.q',
     errorHandler: RmqErrorHandler,
   })
   async updateUserNicknameById(@RabbitPayload() msg: RmqUserUpdateNicknameDto) {
@@ -68,8 +68,8 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.update.profImg.rk',
-    queue: 'user.update.profImg.q',
+    routingKey: 'rmq.to.user.update.profImg.rk',
+    queue: 'rmq.to.user.update.profImg.q',
     errorHandler: RmqErrorHandler,
   })
   async updateUserProfImgById(@RabbitPayload() msg) {
@@ -78,8 +78,8 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.update.2FA.rk',
-    queue: 'user.update.2FA.q',
+    routingKey: 'rmq.to.user.update.2FA.rk',
+    queue: 'rmq.to.user.update.2FA.q',
     errorHandler: RmqErrorHandler,
   })
   async updateUser2FAById(@RabbitPayload() msg) {
@@ -88,8 +88,8 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.read.by.3pId.rk',
-    queue: 'user.read.by.3pId.q',
+    routingKey: 'req.to.user.read.by.3pId.rk',
+    queue: 'rmq.to.user.read.by.3pId.q',
     errorHandler: RmqErrorHandler,
   })
   async readUserBy3pId(@RabbitPayload() msg: RmqUSer3pIDDto) {
@@ -98,8 +98,8 @@ export class UserController {
   // 임시
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'user.read.list.rk',
-    queue: 'user.read.list.q',
+    routingKey: 'rmq.to.user.read.list.rk',
+    queue: 'rmq.to.user.read.list.q',
     errorHandler: RmqErrorHandler,
   })
   async readUserList() {

@@ -1,4 +1,4 @@
-import { BlackList } from '../common/entities/Black_list';
+import { BlackList } from '../common/entities/Block';
 import { RmqError } from 'src/common/rmq-module/types/rmq-error';
 import { Friend } from '../common/entities/Friend';
 import { UserService } from './../user/user.service';
@@ -47,7 +47,7 @@ export class FriendService {
         where: `${WHERE}#createFriendRequest()`,
       });
     }
-    await this.userService.readUserById({ id: payload.receiver });
+    await this.userService.readUserById({ user_id: payload.receiver });
 
     let findFriend;
     try {
@@ -131,7 +131,7 @@ export class FriendService {
     let friendList;
     try {
       friendList = await this.friendRequestRepository.find({
-        where: { requester: payload.userId },
+        where: { requester: payload.user_id },
       });
     } catch (e) {
       throw new RmqError({
@@ -158,7 +158,7 @@ export class FriendService {
         where: `${WHERE}#deleteFriendRequest()`,
       });
     }
-    await this.userService.readUserById({ id: payload.receiver });
+    await this.userService.readUserById({ user_id: payload.receiver });
 
     let findFriendRequest;
     try {
@@ -200,7 +200,7 @@ export class FriendService {
         where: `${WHERE}#createBlockFriend()`,
       });
     }
-    await this.userService.readUserById({ id: payload.blocked });
+    await this.userService.readUserById({ user_id: payload.blocked });
 
     let blackList;
     try {
@@ -240,7 +240,7 @@ export class FriendService {
     let blackList;
     try {
       blackList = await this.blackListRepository.find({
-        where: { blocker: payload.userId },
+        where: { blocker: payload.user_id },
       });
     } catch (e) {
       throw new RmqError({
@@ -267,7 +267,7 @@ export class FriendService {
         where: `${WHERE}#deleteBlockFriend()`,
       });
     }
-    await this.userService.readUserById({ id: payload.blocked });
+    await this.userService.readUserById({ user_id: payload.blocked });
 
     let findBlackList;
     try {
@@ -352,7 +352,7 @@ export class FriendService {
     let friendList;
     try {
       friendList = await this.friendRepository.find({
-        where: [{ requester: payload.userId }, { receiver: payload.userId }],
+        where: [{ requester: payload.user_id }, { receiver: payload.user_id }],
       });
     } catch (e) {
       throw new RmqError({
@@ -380,7 +380,7 @@ export class FriendService {
       });
     }
 
-    await this.userService.readUserById({ id: payload.receiver });
+    await this.userService.readUserById({ user_id: payload.receiver });
 
     let findFriend;
     try {

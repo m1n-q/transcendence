@@ -4,7 +4,7 @@ import { FriendController } from './friend/friend.controller';
 import { UserController } from './user/user.controller';
 import { FriendRequest } from './common/entities/Friend_request';
 import { Friend } from './common/entities/Friend';
-import { BlackList } from './common/entities/Black_list';
+import { BlackList } from './common/entities/Block';
 import { User } from './common/entities/User';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -26,7 +26,7 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
       database: process.env.DB_DATABASE,
       entities: [User, BlackList, Friend, FriendRequest],
       synchronize: true,
-      dropSchema: true,
+      // dropSchema: true,
       namingStrategy: new SnakeNamingStrategy(),
     }),
     TypeOrmModule.forFeature([User, FriendRequest, Friend, BlackList]),

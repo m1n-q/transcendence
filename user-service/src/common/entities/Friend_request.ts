@@ -5,10 +5,14 @@ import {
   ManyToOne,
   PrimaryColumn,
   JoinColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 
 @Entity('friend_request')
 export class FriendRequest {
+  @PrimaryGeneratedColumn('uuid')
+  request_id: string;
+
   @PrimaryColumn()
   requester: string;
 
@@ -18,11 +22,11 @@ export class FriendRequest {
   @CreateDateColumn()
   createdDate: Date;
 
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.user_id)
   @JoinColumn({ name: 'requester' })
   requesters: User;
 
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.user_id)
   @JoinColumn({ name: 'receiver' })
   receivers: User;
 }

@@ -11,7 +11,7 @@ import {
 export class RmqUserIdDto {
   @IsNotEmpty()
   @IsUUID()
-  id: string;
+  user_id: string;
 }
 export class RmqUserNicknameDto {
   @IsNotEmpty()
@@ -36,13 +36,13 @@ export class RmqUSer3pIDDto {
 
   @IsNotEmpty()
   // @IsNumberString()
-  thirdPartyId: string;
+  third_party_id: string;
 }
 
 export class RmqUserCreateDto {
   @IsNotEmpty()
   @IsString()
-  thirdPartyId: string;
+  third_party_id: string;
 
   @IsNotEmpty()
   @IsString()
@@ -59,12 +59,12 @@ export class RmqUserCreateDto {
   @IsNotEmpty()
   // @IsUrl()
   @IsString()
-  profImg: string;
+  prof_img: string;
 }
 export class RmqUserUpdateNicknameDto {
   @IsNotEmpty()
   @IsUUID()
-  id: string;
+  user_id: string;
 
   @IsNotEmpty()
   @IsString()

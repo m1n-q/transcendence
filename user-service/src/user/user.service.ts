@@ -20,12 +20,12 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
-  async createUser(payload: RmqUserCreateDto): Promise<UserInfo> {
-    const user = this.userRepository.create(payload);
-    user.rankScore = 1000;
+  async createUser(payload: RmqUserCreateDto) {
+    const user: UserInfo = this.userRepository.create(payload);
+    user.mmr = 1000;
     if (payload['2FA'] !== undefined) {
-      user.twoFactorAuthenticationType = payload['2FA'].type;
-      user.twoFactorAuthenticationKey = payload['2FA'].key;
+      user.two_factor_authentication_type = payload['2FA'].type;
+      user.two_factor_authentication_key = payload['2FA'].key;
     }
     try {
       await this.userRepository.save(user);
@@ -44,7 +44,12 @@ export class UserService {
         });
       }
     }
-    return user;
+
+    return {
+      user_id: user.user_id,
+      nickname: user.nickname,
+      created: user.created,
+    };
   }
 
   async readUserByNickname(payload: RmqUserNicknameDto): Promise<UserProfile> {
@@ -68,16 +73,18 @@ export class UserService {
       });
     }
     delete user.provider;
-    delete user.thirdPartyId;
-    delete user.twoFactorAuthenticationKey;
-    delete user.twoFactorAuthenticationInfo;
+    delete user.third_party_id;
+    delete user.two_factor_authentication_key;
+    delete user.two_factor_authentication_type;
     return user;
   }
 
   async readUserById(payload: RmqUserIdDto): Promise<UserInfo> {
     let user;
     try {
-      user = await this.userRepository.findOne({ where: { id: payload.id } });
+      user = await this.userRepository.findOne({
+        where: { user_id: payload.user_id },
+      });
     } catch (e) {
       throw new RmqError({
         code: 500,
@@ -88,7 +95,7 @@ export class UserService {
     if (!user) {
       throw new RmqError({
         code: 404,
-        message: `${payload.id} not found`,
+        message: `${payload.user_id} not found`,
         where: `${WHERE}#readUserById()`,
       });
     }
@@ -100,7 +107,7 @@ export class UserService {
 
     let response;
     try {
-      response = await this.userRepository.softDelete(payload.id);
+      response = await this.userRepository.softDelete(payload.user_id);
     } catch (e) {
       throw new RmqError({
         code: 500,
@@ -111,7 +118,7 @@ export class UserService {
     if (!response.affected) {
       throw new RmqError({
         code: 404,
-        message: `${payload.id} soft delete error`,
+        message: `${payload.user_id} soft delete error`,
         where: `${WHERE}#deleteUserById()`,
       });
     }
@@ -139,13 +146,12 @@ export class UserService {
         });
       }
     }
-    return;
+    return { nickname: user.nickname };
   }
 
   async updateUserProfImgById(payload) {
     const user = await this.readUserById(payload);
-    user.profImg = payload.profImg;
-
+    user.prof_img = payload.prof_img;
     try {
       await this.userRepository.save(user);
     } catch (e) {
@@ -155,15 +161,13 @@ export class UserService {
         where: WHERE,
       });
     }
-    return;
+    return { prof_img: user.prof_img };
   }
 
   async updateUser2FAById(payload) {
     const user = await this.readUserById(payload);
-
-    console.log(payload);
-    user.twoFactorAuthenticationType = payload.type;
-    user.twoFactorAuthenticationKey = payload.key;
+    user.two_factor_authentication_type = payload.type;
+    user.two_factor_authentication_key = payload.key;
 
     try {
       await this.userRepository.save(user);
@@ -183,8 +187,8 @@ export class UserService {
       }
     }
     return {
-      type: user.twoFactorAuthenticationType,
-      key: user.twoFactorAuthenticationKey,
+      type: user.two_factor_authentication_type,
+      key: user.two_factor_authentication_key,
     };
   }
 
@@ -193,7 +197,7 @@ export class UserService {
     try {
       user = await this.userRepository.findOne({
         where: {
-          thirdPartyId: payload.thirdPartyId,
+          third_party_id: payload.third_party_id,
           provider: payload.provider,
         },
       });
@@ -207,7 +211,7 @@ export class UserService {
     if (!user) {
       throw new RmqError({
         code: 404,
-        message: `${payload.thirdPartyId} not found`,
+        message: `${payload.third_party_id} not found`,
         where: `${WHERE}#readUserBy3pId()`,
       });
     }

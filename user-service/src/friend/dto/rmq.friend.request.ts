@@ -13,7 +13,7 @@ export class RmqRequestFriend {
 export class RmqRequestFriendId {
   @IsNotEmpty()
   @IsUUID()
-  userId: string;
+  user_id: string;
 }
 
 export class RmqRequestBlockFriend {
