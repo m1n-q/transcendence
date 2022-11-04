@@ -63,7 +63,7 @@ export class AppController {
     if (gwRes && !gwRes.access_token) {
       console.log('FRONTEND: NO ACCESS_TOKEN!');
       res.redirect(
-        `/auth/signup_view?provider=${gwRes.provider}&thirdPartyId=${gwRes.thirdPartyId}&profImg=${gwRes.profImg}`,
+        `/auth/signup_view?provider=${gwRes.provider}&third_party_id=${gwRes.third_party_id}&prof_img=${gwRes.prof_img}`,
       );
     } else {
       console.log('FRONTEND: GOT ACCESS TOKEN!');

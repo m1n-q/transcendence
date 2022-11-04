@@ -26,10 +26,10 @@ export class AuthController {
   @Render('signup')
   signUpView(
     @Query('provider') provider,
-    @Query('thirdPartyId') thirdPartyId,
-    @Query('profImg') profImg,
+    @Query('third_party_id') third_party_id,
+    @Query('prof_img') prof_img,
   ) {
-    return { provider, thirdPartyId, profImg };
+    return { provider, third_party_id, prof_img };
   }
 
   @Post('signup')

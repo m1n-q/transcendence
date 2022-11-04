@@ -35,8 +35,8 @@ export class Oauth42Strategy extends PassportStrategy(oStrategy, 'oauth2-42') {
     }
 
     // https://stackoverflow.com/questions/53511974/javascript-fetch-failed-to-execute-json-on-response-body-stream-is-locked
-    const { id: thirdPartyId, image_url: profImg } = await res.json();
-    return { provider: '42', thirdPartyId, profImg };
+    const { id: third_party_id, image_url: prof_img } = await res.json();
+    return { provider: '42', third_party_id, prof_img };
   }
 }
 
@@ -59,10 +59,10 @@ export class Oauth42Strategy extends PassportStrategy(oStrategy, 'oauth2-42') {
 //   async validate(accessToken: string, refreshToken: string, profile: any) {
 //     const {
 //       provider,
-//       id: thirdPartyId,
-//       _json: { picture: profImg },
+//       id: third_party_id,
+//       _json: { picture: prof_img },
 //     } = profile;
-//     return { provider, thirdPartyId, profImg };
+//     return { provider, third_party_id, prof_img };
 //   }
 // }
 
@@ -79,8 +79,8 @@ export class Oauth42Strategy extends PassportStrategy(oStrategy, 'oauth2-42') {
 //   }
 
 //   async validate(accessToken: string, refreshToken: string, profile: any) {
-//     const { provider, id: thirdPartyId, profile_image: profImg } = profile;
-//     return { provider, thirdPartyId, profImg };
+//     const { provider, id: third_party_id, profile_image: prof_img } = profile;
+//     return { provider, third_party_id, prof_img };
 //   }
 // }
 

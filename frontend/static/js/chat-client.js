@@ -22,17 +22,17 @@ chatSocket.on('message', (message) => {
   let messageBoxElem = document.createElement('div');
   let messageElem = document.createElement('div');
   let profButton = document.createElement('button');
-  let profImg = document.createElement('img');
+  let prof_img = document.createElement('img');
   let nickname = document.createElement('div');
 
   messageElem.id = 'chat_message';
   messageElem.textContent = message.payload;
 
-  profImg.id = 'prof_img';
-  profImg.src = user.profImg !== 'undefined' ? user.profImg : '123';
+  prof_img.id = 'prof_img';
+  prof_img.src = user.prof_img !== 'undefined' ? user.prof_img : '123';
 
   profButton.id = 'prof_img_button';
-  profButton.appendChild(profImg);
+  profButton.appendChild(prof_img);
 
   messageBoxElem.id = 'chat_message_box';
   messageBoxElem.appendChild(profButton);
