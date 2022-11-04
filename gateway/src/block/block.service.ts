@@ -4,19 +4,38 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { resolveObjectURL } from 'buffer';
 
 @Injectable()
 export class BlockService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
-  async blockUser(id, blockedId) {
+  async getBlockList(user_id) {
     let response;
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'user.create.friend.block.rk',
+        routingKey: 'rmq.to.user.read.block.rk',
         payload: {
-          blocker: id,
+          user_id: user_id,
+        },
+      });
+    } catch (e) {
+      throw new InternalServerErrorException('request to user-service failed');
+    }
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return response.data;
+  }
+
+  async blockUser(user_id, blockedId) {
+    let response;
+    try {
+      response = await this.amqpConnection.request({
+        exchange: 'user.d.x',
+        routingKey: 'rmq.to.user.create.block.rk',
+        payload: {
+          blocker: user_id,
           blocked: blockedId,
         },
       });
@@ -25,17 +44,18 @@ export class BlockService {
     }
     if (!response.success)
       throw new HttpException(response.error.message, response.error.code);
-    return response;
+    return response.data;
   }
 
-  async cancelBlock(blockListId) {
+  async cancelBlock(block_id, user_id) {
     let response;
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'user.delete.friend.block.rk',
+        routingKey: 'rmq.to.user.delete.block.rk',
         payload: {
-          blockListId: blockListId,
+          block_id: block_id,
+          user_id: user_id,
         },
       });
     } catch (e) {
@@ -43,23 +63,6 @@ export class BlockService {
     }
     if (!response.success)
       throw new HttpException(response.error.message, response.error.code);
-  }
-
-  async getBlockList(id) {
-    let response;
-    try {
-      response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
-        routingKey: 'user.read.friend.block.rk',
-        payload: {
-          userId: id,
-        },
-      });
-    } catch (e) {
-      throw new InternalServerErrorException('request to user-service failed');
-    }
-    if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
-    return response;
+    return;
   }
 }

@@ -11,23 +11,23 @@ export class TwoFactorAuthenticationInfo {
 }
 
 export class UserProfile {
-  id: string;
+  user_id: string;
   nickname: string;
-  profImg: string;
-  rankScore: number;
-  createdDate: Date;
-  deletedDate: Date;
+  prof_img: string;
+  mmr: number;
+  created: Date;
+  deleted: Date;
 }
 
 export class UserInfo {
-  id: string;
+  user_id: string;
   nickname: string;
   provider: string;
-  thirdPartyId: string;
-  twoFactorAuthenticationKey: string;
-  twoFactorAuthenticationType: string;
-  profImg: string;
-  rankScore: number;
-  createdDate: Date;
-  deletedDate: Date;
+  third_party_id: string;
+  two_factor_authentication_key: string;
+  two_factor_authentication_type: string;
+  prof_img: string;
+  mmr: number;
+  created: Date;
+  deleted: Date;
 }

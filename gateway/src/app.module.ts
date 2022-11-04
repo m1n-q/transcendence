@@ -1,3 +1,4 @@
+import { BlockController } from './block/block.controller';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { FriendService } from './friend/friend.service';
 import { UserService } from './user/user.service';
@@ -33,6 +34,7 @@ import { BlockService } from './block/block.service';
     AuthController,
     UserController,
     FriendController,
+    BlockController,
     TestController,
   ],
   providers: [AuthService, UserService, FriendService, BlockService],

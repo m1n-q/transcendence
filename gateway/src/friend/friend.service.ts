@@ -9,14 +9,14 @@ import {
 export class FriendService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
-  async getFriends(id) {
+  async getFriends(user_id) {
     let response;
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'user.read.friend.rk',
+        routingKey: 'rmq.to.user.read.friend.rk',
         payload: {
-          userId: id,
+          user_id: user_id,
         },
       });
     } catch (e) {
@@ -24,17 +24,72 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(response.error.message, response.error.code);
-    return response;
+    return response.data;
   }
 
-  async makeRequest(id, receiver) {
+  async deleteFriend(user_id, friend_id) {
     let response;
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'user.create.friend.request.rk',
+        routingKey: 'rmq.to.user.delete.friend.rk',
         payload: {
-          requester: id,
+          user_id: user_id,
+          friend_id: friend_id,
+        },
+      });
+    } catch (e) {
+      throw new InternalServerErrorException('request to user-service failed');
+    }
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return;
+  }
+  //request==========================================================
+  async getRequestsSentList(user_id) {
+    let response;
+    try {
+      response = await this.amqpConnection.request({
+        exchange: 'user.d.x',
+        routingKey: 'rmq.to.user.read.friend.request.sent.list.rk',
+        payload: {
+          user_id: user_id,
+        },
+      });
+    } catch (e) {
+      throw new InternalServerErrorException('request to user-service failed');
+    }
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return response.data;
+  }
+
+  async getRequestsRecvList(user_id) {
+    let response;
+    try {
+      response = await this.amqpConnection.request({
+        exchange: 'user.d.x',
+        routingKey: 'rmq.to.user.read.friend.request.recv.list.rk',
+        payload: {
+          user_id: user_id,
+        },
+      });
+    } catch (e) {
+      throw new InternalServerErrorException('request to user-service failed');
+    }
+    if (!response.success)
+      throw new HttpException(response.error.message, response.error.code);
+    return response.data;
+  }
+
+  async makeRequest(user_id, receiver) {
+    let response;
+    try {
+      response = await this.amqpConnection.request({
+        exchange: 'user.d.x',
+        routingKey: 'rmq.to.user.create.friend.request.rk',
+        payload: {
+          requester: user_id,
           receiver: receiver,
         },
       });
@@ -43,18 +98,18 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(response.error.message, response.error.code);
-    return response;
+    return response.data;
   }
 
-  async deleteFriendRequest(id, friendId) {
+  async cancelRequest(request_id, user_id) {
     let response;
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'user.delete.friend.request.rk',
+        routingKey: 'rmq.to.user.cancel.friend.request.rk',
         payload: {
-          requester: id,
-          receiver: friendId,
+          requester: user_id,
+          request_id: request_id,
         },
       });
     } catch (e) {
@@ -62,16 +117,18 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(response.error.message, response.error.code);
+    return;
   }
 
-  async getRequestsReceived(id: string) {
+  async acceptRequest(request_id, user_id) {
     let response;
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'user.read.friend.request.rk',
+        routingKey: 'rmq.to.user.accept.friend.request.rk',
         payload: {
-          userId: id,
+          request_id: request_id,
+          receiver: user_id,
         },
       });
     } catch (e) {
@@ -79,18 +136,21 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(response.error.message, response.error.code);
-    return response;
+    return {
+      statusCode: 201,
+      message: 'friend relationship created',
+    };
   }
 
-  async createFriend(id, friendId) {
+  async rejectRequest(request_id, user_id) {
     let response;
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'user.create.friend.rk',
+        routingKey: 'rmq.to.user.reject.friend.request.rk',
         payload: {
-          requester: friendId,
-          receiver: id,
+          receiver: user_id,
+          request_id: request_id,
         },
       });
     } catch (e) {
@@ -98,25 +158,6 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(response.error.message, response.error.code);
-    return response;
-  }
-
-  async deleteFriend(id, friendId) {
-    let response;
-    try {
-      response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
-        routingKey: 'user.delete.friend.rk',
-        payload: {
-          requester: id,
-          receiver: friendId,
-        },
-      });
-    } catch (e) {
-      throw new InternalServerErrorException('request to user-service failed');
-    }
-    if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
-    return response;
+    return;
   }
 }
