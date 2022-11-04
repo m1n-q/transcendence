@@ -130,5 +130,8 @@ dist
 # secret keys
 *.key
 
+# dump.rdb
+*.rdb
+
 # media files
 media/
