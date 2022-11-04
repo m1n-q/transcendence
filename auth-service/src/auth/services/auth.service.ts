@@ -169,12 +169,12 @@ export class AuthService {
   }
 
   /* get access_token, refresh_token of resource server */
-  async getOauthTokens(code: string, param: OauthParam) {
+  async getOauthTokens(authorization_code: string, param: OauthParam) {
     let res: Response;
 
     let body: any = {
       grant_type: 'authorization_code',
-      code: code,
+      code: authorization_code,
       redirect_uri: param.redirectURI,
       client_id: param.clientID,
       client_secret: param.clientSecret,
@@ -251,13 +251,13 @@ export class AuthService {
 
   /* grant authorization code and get tokens, and request resources with the tokens */
   async oauth(
-    code: string,
+    authorization_code: string,
     param: OauthParam,
     resources: string[],
   ): Promise<any> {
     const ret: any = {};
     const { access_token, refresh_token } = await this.getOauthTokens(
-      code,
+      authorization_code,
       param,
     );
     const userProfile = await this.getOauthResources(
@@ -272,10 +272,10 @@ export class AuthService {
     return ret;
   }
 
-  async oauth42(code: string) {
+  async oauth42(authorization_code: string) {
     const provider = '42';
     const userProfile: any = await this.oauth(
-      code,
+      authorization_code,
       {
         contentType: 'json',
         clientID: process.env.OAUTH2_42_ID,
@@ -310,10 +310,10 @@ export class AuthService {
     }
   }
 
-  async oauthKakao(code: string) {
+  async oauthKakao(authorization_code: string) {
     const provider = 'kakao';
     const userProfile: any = await this.oauth(
-      code,
+      authorization_code,
       {
         contentType: 'x-www-form-urlencoded',
         clientID: process.env.OAUTH2_KAKAO_ID,
@@ -350,10 +350,10 @@ export class AuthService {
     }
   }
 
-  async oauthGoogle(code: string) {
+  async oauthGoogle(authorization_code: string) {
     const provider = 'google';
     const userProfile: any = await this.oauth(
-      code,
+      authorization_code,
       {
         contentType: 'json',
         clientID: process.env.OAUTH2_GOOGLE_ID,

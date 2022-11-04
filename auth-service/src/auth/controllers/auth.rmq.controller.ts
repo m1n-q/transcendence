@@ -58,8 +58,8 @@ export class AuthRmqController {
     routingKey: 'req.to.auth.signin.42.rk',
     errorHandler: RmqErrorHandler,
   })
-  async oauth42(msg: { code: string }) {
-    return this.authService.oauth42(msg.code);
+  async oauth42(msg: { authorization_code: string }) {
+    return this.authService.oauth42(msg.authorization_code);
   }
 
   @RabbitRPC({
@@ -68,8 +68,8 @@ export class AuthRmqController {
     routingKey: 'req.to.auth.signin.kakao.rk',
     errorHandler: RmqErrorHandler,
   })
-  async oauthKakao(msg: { code: string }) {
-    return this.authService.oauthKakao(msg.code);
+  async oauthKakao(msg: { authorization_code: string }) {
+    return this.authService.oauthKakao(msg.authorization_code);
   }
 
   @RabbitRPC({
@@ -78,8 +78,8 @@ export class AuthRmqController {
     routingKey: 'req.to.auth.signin.google.rk',
     errorHandler: RmqErrorHandler,
   })
-  async oauthGoogle(msg: { code: string }) {
-    return this.authService.oauthGoogle(msg.code);
+  async oauthGoogle(msg: { authorization_code: string }) {
+    return this.authService.oauthGoogle(msg.authorization_code);
   }
 
   @RabbitRPC({
