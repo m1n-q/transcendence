@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '../../redis-module/services/redis.service';
-import { UserInfoDto } from '../dto/user-info.dto';
-import { ThirdPartyInfoDto } from '../dto/third-party-info.dto';
+import { UserInfo } from '../dto/user-info';
+import { ThirdPartyInfo } from '../dto/third-party-info';
 import {
   VerifyAccessJwtRequestDto,
   VerifyRefreshJwtRequestDto,
@@ -33,8 +33,8 @@ export class AuthService {
   ) {}
 
   /* if cannot find user with given third-party info, return those info for signing up */
-  async signInIfExists(thirdPartyInfo: ThirdPartyInfoDto) {
-    let userInfo: UserInfoDto;
+  async signInIfExists(thirdPartyInfo: ThirdPartyInfo) {
+    let userInfo: UserInfo;
 
     try {
       userInfo = await this.userService.requestUserInfoBy3pId(thirdPartyInfo);
@@ -46,19 +46,22 @@ export class AuthService {
   }
 
   /* issue access_token and refresh_token */
-  async signIn(userInfo: UserInfoDto) {
+  async signIn(userInfo: UserInfo) {
     const access_token = this.issueAccessToken(userInfo);
     const refresh_token = this.issueRefreshToken(userInfo);
 
     //TODO: check redis response
     const res: any[] = await this.storeRefreshToken(
-      'user:' + userInfo.userId,
+      'user:' + userInfo.user_id,
       refresh_token,
       RT_EXPIRES_IN,
     );
 
     return { access_token, refresh_token };
   }
+
+  /* issue access_token and refresh_token */
+  async signOut(userInfo: UserInfo) {}
 
   /* store refresh token mapped with userId */
   async storeRefreshToken(key, refreshToken, TTL) {
@@ -71,14 +74,14 @@ export class AuthService {
     return res;
   }
 
-  issueAccessToken(payload: UserInfoDto) {
+  issueAccessToken(payload: UserInfo) {
     return this.jwtService.sign(Object.assign({}, payload), {
       secret: process.env.JWT_ACCESS_SECRET,
       expiresIn: AT_EXPIRES_IN,
     });
   }
 
-  issueRefreshToken(payload: UserInfoDto) {
+  issueRefreshToken(payload: UserInfo) {
     const refreshToken = this.jwtService.sign(Object.assign({}, payload), {
       secret: process.env.JWT_REFRESH_SECRET,
       expiresIn: RT_EXPIRES_IN,
@@ -127,12 +130,12 @@ export class AuthService {
       throw e;
     }
 
-    const userInfo = plainToInstance(UserInfoDto, payload, {
+    const userInfo = plainToInstance(UserInfo, payload, {
       excludeExtraneousValues: true,
     });
 
     const hashed = await this.redisService.hget(
-      'user:' + userInfo.userId,
+      'user:' + userInfo.user_id,
       'refresh_token',
     );
 
@@ -265,7 +268,7 @@ export class AuthService {
       ['id', 'image_url', 'campus'],
     );
 
-    const { id: thirdPartyId, image_url: profImg, campus } = userProfile;
+    const { id: third_party_id, image_url: prof_img, campus } = userProfile;
     const locale: string = campus[0].language.name
       .substring(0, 2)
       .toLowerCase();
@@ -273,14 +276,14 @@ export class AuthService {
     try {
       return await this.signInIfExists({
         provider,
-        thirdPartyId,
+        third_party_id,
       });
     } catch (e) {
       if (e.code === 404)
         return {
           provider,
-          thirdPartyId,
-          profImg,
+          third_party_id,
+          prof_img,
           locale,
         };
 
@@ -304,23 +307,23 @@ export class AuthService {
     );
 
     const {
-      id: thirdPartyId,
+      id: third_party_id,
       kakao_account: {
-        profile: { profile_image_url: profImg },
+        profile: { profile_image_url: prof_img },
       },
     } = userProfile;
 
     try {
       return await this.signInIfExists({
         provider,
-        thirdPartyId,
+        third_party_id,
       });
     } catch (e) {
       if (e.code === 404)
         return {
           provider,
-          thirdPartyId,
-          profImg,
+          third_party_id,
+          prof_img,
           locale: 'ko',
         };
 
@@ -343,19 +346,19 @@ export class AuthService {
       ['id', 'picture', 'locale'],
     );
 
-    const { id: thirdPartyId, picture: profImg, locale } = userProfile;
+    const { id: third_party_id, picture: prof_img, locale } = userProfile;
 
     try {
       return await this.signInIfExists({
         provider,
-        thirdPartyId,
+        third_party_id,
       });
     } catch (e) {
       if (e.code === 404)
         return {
           provider,
-          thirdPartyId,
-          profImg,
+          third_party_id,
+          prof_img,
           locale,
         };
 

@@ -3,21 +3,21 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from '../../auth/dto/create-user.dto';
 import { RmqError } from '../../common/rmq/types/rmq-error';
 import { RmqResponse } from '../../common/rmq/types/rmq-response';
-import { ThirdPartyInfoDto } from '../../auth/dto/third-party-info.dto';
-import { UserInfoDto } from '../../auth/dto/user-info.dto';
+import { ThirdPartyInfo } from '../../auth/dto/third-party-info';
+import { UserInfo } from '../../auth/dto/user-info';
 
 @Injectable()
 export class UserService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
   /* after get user's info by oauth provider */
-  async requestUserInfoBy3pId(thirdPartyInfo: ThirdPartyInfoDto) {
-    let response: RmqResponse<UserInfoDto>;
+  async requestUserInfoBy3pId(thirdPartyInfo: ThirdPartyInfo) {
+    let response: RmqResponse<UserInfo>;
 
     try {
-      response = await this.amqpConnection.request<RmqResponse<UserInfoDto>>({
+      response = await this.amqpConnection.request<RmqResponse<UserInfo>>({
         exchange: 'user.d.x',
-        routingKey: 'user.read.by.3pId.rk',
+        routingKey: 'req.to.user.read.by.3pId.rk',
         payload: thirdPartyInfo,
         timeout: 2000,
       });
@@ -34,12 +34,12 @@ export class UserService {
   }
 
   async requestUserInfoById(userId: string) {
-    let response: RmqResponse<UserInfoDto>;
+    let response: RmqResponse<UserInfo>;
 
     try {
-      response = await this.amqpConnection.request<RmqResponse<UserInfoDto>>({
+      response = await this.amqpConnection.request<RmqResponse<UserInfo>>({
         exchange: 'user.d.x',
-        routingKey: 'user.read.by.id.rk',
+        routingKey: 'req.to.user.read.by.id.rk',
         payload: userId,
         timeout: 2000,
       });
@@ -55,12 +55,12 @@ export class UserService {
   }
 
   async requestCreateUser(data: CreateUserDto) {
-    let response: RmqResponse<UserInfoDto>;
+    let response: RmqResponse<UserInfo>;
 
     try {
-      response = await this.amqpConnection.request<RmqResponse<UserInfoDto>>({
+      response = await this.amqpConnection.request<RmqResponse<UserInfo>>({
         exchange: 'user.d.x',
-        routingKey: 'user.create.rk',
+        routingKey: 'req.to.user.create.rk',
         payload: data,
         timeout: 2000,
       });

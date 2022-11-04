@@ -1,10 +1,10 @@
 import { Expose } from 'class-transformer';
 import { IsUUID, IsAlphanumeric, IsUrl, IsPositive } from 'class-validator';
 
-export class UserInfoDto {
+export class UserInfo {
   @Expose()
   @IsUUID()
-  userId: string;
+  user_id: string;
 
   @Expose()
   @IsAlphanumeric()
@@ -12,7 +12,7 @@ export class UserInfoDto {
 
   @Expose()
   @IsUrl()
-  profImg: string;
+  prof_img: string;
 
   @Expose()
   @IsPositive()

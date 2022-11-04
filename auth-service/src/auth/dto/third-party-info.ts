@@ -1,8 +1,8 @@
 import { Expose } from 'class-transformer';
 
-export class ThirdPartyInfoDto {
+export class ThirdPartyInfo {
   @Expose()
   provider: string;
   @Expose()
-  thirdPartyId: number;
+  third_party_id: number;
 }

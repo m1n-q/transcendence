@@ -1,7 +1,7 @@
 export class CreateUserDto {
-  thirdPartyId: string;
+  third_party_id: number;
   provider: string;
   nickname: string;
-  '2FA': { info: string; key: string };
-  profImg: string;
+  '2FA': { type: string; key: string };
+  prof_img: string;
 }
