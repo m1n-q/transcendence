@@ -259,9 +259,7 @@ export class AuthService {
         clientID: process.env.OAUTH2_42_ID,
         clientSecret: process.env.OAUTH2_42_SECRET,
         tokenURI: 'https://api.intra.42.fr/oauth/token',
-        //ISSUE: 42 API does not works with redirect_uri containing query string
-        // redirectURI: process.env.OAUTH2_REDIRECT_URI + provider,
-        redirectURI: 'http://localhost:3000/login2',
+        redirectURI: process.env.OAUTH2_REDIRECT_URI + provider,
         endpoint: `https://api.intra.42.fr/v2/me`,
       },
       ['id', 'image_url'],
