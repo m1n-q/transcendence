@@ -14,7 +14,7 @@ export class FriendService {
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.read.friend.rk',
+        routingKey: 'req.to.user.read.friend.rk',
         payload: {
           user_id: user_id,
         },
@@ -32,7 +32,7 @@ export class FriendService {
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.delete.friend.rk',
+        routingKey: 'req.to.user.delete.friend.rk',
         payload: {
           user_id: user_id,
           friend_id: friend_id,
@@ -51,7 +51,7 @@ export class FriendService {
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.read.friend.request.sent.list.rk',
+        routingKey: 'req.to.user.read.friend.request.sent.list.rk',
         payload: {
           user_id: user_id,
         },
@@ -69,7 +69,7 @@ export class FriendService {
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.read.friend.request.recv.list.rk',
+        routingKey: 'req.to.user.read.friend.request.recv.list.rk',
         payload: {
           user_id: user_id,
         },
@@ -87,7 +87,7 @@ export class FriendService {
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.create.friend.request.rk',
+        routingKey: 'req.to.user.create.friend.request.rk',
         payload: {
           requester: user_id,
           receiver: receiver,
@@ -106,7 +106,7 @@ export class FriendService {
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.cancel.friend.request.rk',
+        routingKey: 'req.to.user.cancel.friend.request.rk',
         payload: {
           requester: user_id,
           request_id: request_id,
@@ -125,7 +125,7 @@ export class FriendService {
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.accept.friend.request.rk',
+        routingKey: 'req.to.user.accept.friend.request.rk',
         payload: {
           request_id: request_id,
           receiver: user_id,
@@ -147,7 +147,7 @@ export class FriendService {
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.reject.friend.request.rk',
+        routingKey: 'req.to.user.reject.friend.request.rk',
         payload: {
           receiver: user_id,
           request_id: request_id,

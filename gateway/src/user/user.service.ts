@@ -18,7 +18,7 @@ export class UserService {
     try {
       response = await this.amqpConnection.request({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.create.rk',
+        routingKey: 'req.to.user.create.rk',
         payload: data,
         timeout: 2000,
       });
@@ -37,7 +37,7 @@ export class UserService {
     try {
       response = await this.amqpConnection.request<RmqResponse<UserProfile>>({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.read.by.nickname.rk',
+        routingKey: 'req.to.user.read.by.nickname.rk',
         payload: { nickname },
         timeout: 2000,
       });
@@ -56,7 +56,7 @@ export class UserService {
     try {
       response = await this.amqpConnection.request<RmqResponse<UserInfo>>({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.read.by.id.rk',
+        routingKey: 'req.to.user.read.by.id.rk',
         payload: { user_id },
         timeout: 2000,
       });
@@ -76,7 +76,7 @@ export class UserService {
         RmqResponse<RmqResponseUser>
       >({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.delete.rk',
+        routingKey: 'req.to.user.delete.rk',
         payload: {
           user_id,
         },
@@ -96,7 +96,7 @@ export class UserService {
         RmqResponse<RmqResponseUser>
       >({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.update.nickname.rk',
+        routingKey: 'req.to.user.update.nickname.rk',
         payload: {
           user_id,
           nickname: newNickname,
@@ -118,7 +118,7 @@ export class UserService {
         RmqResponse<RmqResponseUser>
       >({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.update.profImg.rk',
+        routingKey: 'req.to.user.update.profImg.rk',
         payload: {
           user_id,
           prof_img: newProfileImage,
@@ -144,7 +144,7 @@ export class UserService {
         RmqResponse<RmqResponseUser>
       >({
         exchange: 'user.d.x',
-        routingKey: 'rmq.to.user.update.2FA.rk',
+        routingKey: 'req.to.user.update.2FA.rk',
         payload: {
           user_id,
           type: newType,
