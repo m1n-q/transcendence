@@ -19,8 +19,8 @@ export class FriendController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.read.friend.rk',
-    queue: 'rmq.to.user.read.friend.q',
+    routingKey: 'req.to.user.read.friend.rk',
+    queue: 'req.to.user.read.friend.q',
     errorHandler: RmqErrorHandler,
   })
   async readFriend(@RabbitPayload() msg: RmqUserId) {
@@ -29,8 +29,8 @@ export class FriendController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.delete.friend.rk',
-    queue: 'rmq.to.user.delete.friend.q',
+    routingKey: 'req.to.user.delete.friend.rk',
+    queue: 'req.to.user.delete.friend.q',
     errorHandler: RmqErrorHandler,
   })
   async deleteFriend(@RabbitPayload() msg: RmqDeleteFriend) {
@@ -40,8 +40,8 @@ export class FriendController {
   //request=====================================================
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.read.friend.request.sent.list.rk',
-    queue: 'rmq.to.user.read.friend.request.sent.list.rk',
+    routingKey: 'req.to.user.read.friend.request.sent.list.rk',
+    queue: 'req.to.user.read.friend.request.sent.list.rk',
     errorHandler: RmqErrorHandler,
   })
   async readSentFriendRequest(@RabbitPayload() msg: RmqUserId) {
@@ -50,8 +50,8 @@ export class FriendController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.read.friend.request.recv.list.rk',
-    queue: 'rmq.to.user.read.friend.request.recv.list.rk',
+    routingKey: 'req.to.user.read.friend.request.recv.list.rk',
+    queue: 'req.to.user.read.friend.request.recv.list.rk',
     errorHandler: RmqErrorHandler,
   })
   async readRecvFriendRequest(@RabbitPayload() msg: RmqUserId) {
@@ -60,8 +60,8 @@ export class FriendController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.create.friend.request.rk',
-    queue: 'rmq.to.user.create.friend.request.q',
+    routingKey: 'req.to.user.create.friend.request.rk',
+    queue: 'req.to.user.create.friend.request.q',
     errorHandler: RmqErrorHandler,
   })
   async createFriendRequest(@RabbitPayload() msg: RmqRequestFriend) {
@@ -70,8 +70,8 @@ export class FriendController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.cancel.friend.request.rk',
-    queue: 'rmq.to.user.cancel.friend.request.q',
+    routingKey: 'req.to.user.cancel.friend.request.rk',
+    queue: 'req.to.user.cancel.friend.request.q',
     errorHandler: RmqErrorHandler,
   })
   async cancelFriendRequest(@RabbitPayload() msg: RmqCancelFriendRequest) {
@@ -80,8 +80,8 @@ export class FriendController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.accept.friend.request.rk',
-    queue: 'rmq.to.user.accept.friend.request.q',
+    routingKey: 'req.to.user.accept.friend.request.rk',
+    queue: 'req.to.user.accept.friend.request.q',
     errorHandler: RmqErrorHandler,
   })
   async acceptFriendRequest(@RabbitPayload() msg: RmqAcceptFriendRequest) {
@@ -91,8 +91,8 @@ export class FriendController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.reject.friend.request.rk',
-    queue: 'rmq.to.user.reject.friend.request.q',
+    routingKey: 'req.to.user.reject.friend.request.rk',
+    queue: 'req.to.user.reject.friend.request.q',
     errorHandler: RmqErrorHandler,
   })
   async rejectFriendRequest(@RabbitPayload() msg: RmqRejectFriendRequest) {

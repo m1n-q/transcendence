@@ -16,8 +16,8 @@ export class BlockController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.read.block.rk',
-    queue: 'rmq.to.user.read.block.q',
+    routingKey: 'req.to.user.read.block.rk',
+    queue: 'req.to.user.read.block.q',
     errorHandler: RmqErrorHandler,
   })
   async readBlockList(@RabbitPayload() msg: RmqUserId) {
@@ -26,7 +26,7 @@ export class BlockController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.create.block.rk',
+    routingKey: 'req.to.user.create.block.rk',
     queue: 'tmq.to.user.create.block.q',
     errorHandler: RmqErrorHandler,
   })
@@ -36,8 +36,8 @@ export class BlockController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
-    routingKey: 'rmq.to.user.delete.block.rk',
-    queue: 'rmq.to.user.delete.block.q',
+    routingKey: 'req.to.user.delete.block.rk',
+    queue: 'req.to.user.delete.block.q',
     errorHandler: RmqErrorHandler,
   })
   async deleteBlock(@RabbitPayload() msg: RmqDeleteBlock) {
