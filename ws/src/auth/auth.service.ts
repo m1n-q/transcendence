@@ -8,12 +8,12 @@ import { UserInfo } from './dto/user-info.dto';
 export class AuthService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
-  async verifyJwt(accessToken) {
+  async verifyJwt(accessToken): Promise<UserInfo> {
     let response: RmqResponse<UserInfo>;
     try {
       response = await this.amqpConnection.request<RmqResponse<UserInfo>>({
         exchange: 'auth.d.x',
-        routingKey: 'auth.verify.jwt.rk',
+        routingKey: 'req.to.auth.verify.jwt.rk',
         payload: { access_token: accessToken },
       });
     } catch (e) {

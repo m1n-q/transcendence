@@ -9,8 +9,10 @@ import {
 import { Socket, Server } from 'socket.io';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { ConsumeMessage } from 'amqplib';
-import { RmqService } from '../common/rmq/rmq.service';
 import { RmqEvent } from '../common/rmq/types/rmq-event';
+import { RedisService } from '../redis-module/services/redis.service';
+import { AuthService } from '../auth/auth.service';
+import { UserInfo } from '../auth/dto/user-info.dto';
 
 //                        TODO                          //
 //*
@@ -18,7 +20,6 @@ import { RmqEvent } from '../common/rmq/types/rmq-event';
 //*  종료 시, 맵핑 제거하기
 //*
 //*===================================================@//
-const userDB = {};
 
 @WebSocketGateway({ cors: true })
 export class NotificationGateway
@@ -29,17 +30,28 @@ export class NotificationGateway
   private logger = new Logger('NotificationGateway');
 
   constructor(
-    private readonly rmqService: RmqService,
+    private readonly authService: AuthService,
+    private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
   ) {}
+
+  makeUserKey(user_id: string) {
+    return 'user:' + user_id;
+  }
+
+  getClientSocket(clientId: string): Socket {
+    return this.server.sockets.sockets.get(clientId);
+  }
 
   async ntfEventHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
     const re = /(?<=event.on.notification.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const { 0: evType, 1: userId } = params;
 
-    const sock: Socket = userDB[userId];
-    sock.emit('notification', evType + ': ' + msg.payload);
+    const clientSock: Socket = this.getClientSocket(
+      await this.redisService.hget(this.makeUserKey(userId), 'ntf_sock'),
+    );
+    clientSock.emit('notification', evType + ': ' + msg.payload);
   }
 
   async handleConnection(
@@ -50,34 +62,38 @@ export class NotificationGateway
     const access_token = clientSocket.handshake.auth['access_token'];
     let user;
     try {
-      user = await this.rmqService.verifyJwt(access_token);
+      user = await this.authService.verifyJwt(access_token);
     } catch (e) {
       this.logger.error(e);
       // TODO: if e.code === 401, refresh
-
-      // throw e;
       return;
     }
-    this.logger.debug(`< ${user.id} > connected`);
+    this.logger.debug(`< ${user.user_id} > connected`);
 
     /* create queue per user and bind handler */
     this.amqpConnection.createSubscriber(
       this.ntfEventHandler,
       {
         exchange: process.env.RMQ_NOTIFICATION_TOPIC,
-        queue: `event.on.notification.${user.id}.q`,
-        routingKey: `event.on.notification.*.${user.id}.rk`,
+        queue: `event.on.notification.${user.user_id}.q`,
+        routingKey: `event.on.notification.*.${user.user_id}.rk`,
         errorHandler: (c, m, e) => this.logger.error(e),
       },
       'ntfEventHandler',
     );
 
+    /* bind user info to socket */
+    clientSocket['user_info'] = user;
+
     /* save connected socket per user */
-    userDB[user.id] = clientSocket;
+    await this.redisService.hsetJson(this.makeUserKey(user.user_id), {
+      ntf_sock: clientSocket.id,
+    });
   }
 
-  //NOTE: userID: socketId 형태로 맵핑되어 있으나, 연결 종료시 주어진 정보는 socket ID 입니다. 효율적으로 삭제하기 위한 재설계가 필요합니다.
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    // delete userDB['']
+    const user: UserInfo = clientSocket['user_info'];
+    this.logger.debug(`< ${user.user_id} > disconnected`);
+    await this.redisService.hdel(this.makeUserKey(user.user_id), 'ntf_sock');
   }
 }
