@@ -14,13 +14,6 @@ import { RedisService } from '../redis-module/services/redis.service';
 import { AuthService } from '../auth/auth.service';
 import { UserInfo } from '../auth/dto/user-info.dto';
 
-//                        TODO                          //
-//*
-//*
-//*  종료 시, 맵핑 제거하기
-//*
-//*===================================================@//
-
 @WebSocketGateway({ cors: true })
 export class NotificationGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -95,5 +88,8 @@ export class NotificationGateway
     const user: UserInfo = clientSocket['user_info'];
     this.logger.debug(`< ${user.user_id} > disconnected`);
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'ntf_sock');
+    await this.amqpConnection.channel.deleteQueue(
+      `event.on.notification.${user.user_id}.q`,
+    );
   }
 }

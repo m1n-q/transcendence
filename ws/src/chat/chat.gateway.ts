@@ -16,8 +16,6 @@ import { AuthService } from '../auth/auth.service';
 import { RedisService } from '../redis-module/services/redis.service';
 import { UserInfo } from '../auth/dto/user-info.dto';
 
-const userDB = {};
-
 @WebSocketGateway(9999, { cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -92,6 +90,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const user: UserInfo = clientSocket['user_info'];
     this.logger.debug(`< ${user.user_id} > disconnected`);
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'chat_sock');
+    await this.amqpConnection.channel.deleteQueue(
+      `event.on.chat.${user.user_id}.q`,
+    );
   }
 
   /* XXX: echo */
