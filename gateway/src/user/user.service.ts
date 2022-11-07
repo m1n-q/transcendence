@@ -20,7 +20,6 @@ export class UserService {
         exchange: 'user.d.x',
         routingKey: 'req.to.user.create.rk',
         payload: data,
-        timeout: 2000,
       });
     } catch (reqFail) {
       throw new InternalServerErrorException('request to user-serivce failed');
@@ -39,7 +38,6 @@ export class UserService {
         exchange: 'user.d.x',
         routingKey: 'req.to.user.read.by.nickname.rk',
         payload: { nickname },
-        timeout: 2000,
       });
     } catch (reqFail) {
       throw new InternalServerErrorException('request to user-serivce failed');
@@ -58,7 +56,6 @@ export class UserService {
         exchange: 'user.d.x',
         routingKey: 'req.to.user.read.by.id.rk',
         payload: { user_id },
-        timeout: 2000,
       });
     } catch (reqFail) {
       throw new InternalServerErrorException('request to user-serivce failed');

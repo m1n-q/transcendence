@@ -18,7 +18,6 @@ export class AuthService {
         exchange: 'auth.d.x',
         routingKey: `req.to.auth.signin.${provider}.rk`,
         payload: { authorization_code: code },
-        timeout: 2000,
       });
     } catch (reqFail) {
       throw new InternalServerErrorException('request to auth-service failed');
