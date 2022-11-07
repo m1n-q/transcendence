@@ -33,6 +33,12 @@ import { BlockService } from './block/block.service';
     }),
     TypeOrmModule.forFeature([User, FriendRequest, Friend, Block]),
     RabbitMQModule.forRoot(RabbitMQModule, {
+      exchanges: [
+        {
+          name: 'user.d.x',
+          type: 'direct',
+        },
+      ],
       uri: process.env.RMQ_URI,
       enableControllerDiscovery: true,
     }),
