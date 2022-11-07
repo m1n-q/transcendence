@@ -1,7 +1,9 @@
 import { Type } from 'class-transformer';
 import {
+  IsEmpty,
   IsNotEmpty,
   IsNumberString,
+  IsOptional,
   IsString,
   IsUrl,
   IsUUID,
@@ -58,8 +60,10 @@ export class RmqUserCreateDto {
 
   // @IsNotEmpty()
   // @IsUrl()
-  // @IsString()
-  prof_img: string;
+
+  @IsOptional()
+  @IsString()
+  prof_img: string | null;
 }
 export class RmqUserUpdateNicknameDto {
   @IsNotEmpty()
