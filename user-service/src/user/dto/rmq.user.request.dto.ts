@@ -41,7 +41,7 @@ export class RmqUSer3pIDDto {
 
 export class RmqUserCreateDto {
   @IsNotEmpty()
-  @IsString()
+  // @IsString()
   third_party_id: string;
 
   @IsNotEmpty()
@@ -56,9 +56,9 @@ export class RmqUserCreateDto {
   @Type(() => RmqUser2FADto)
   '2FA': RmqUser2FADto;
 
-  @IsNotEmpty()
+  // @IsNotEmpty()
   // @IsUrl()
-  @IsString()
+  // @IsString()
   prof_img: string;
 }
 export class RmqUserUpdateNicknameDto {
