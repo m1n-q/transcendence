@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, UseFilters } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -7,6 +7,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
@@ -15,7 +16,21 @@ import { RmqEvent } from '../common/rmq/types/rmq-event';
 import { AuthService } from '../auth/auth.service';
 import { RedisService } from '../redis-module/services/redis.service';
 import { UserInfo } from '../auth/dto/user-info.dto';
+import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 
+class ChatMessageFromClient {
+  room: string;
+  payload: string;
+}
+
+class ChatMessageFromServer {
+  constructor(
+    private readonly sender: UserInfo,
+    private readonly payload: string,
+  ) {}
+}
+
+@UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9999, { cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -36,49 +51,79 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return this.server.sockets.sockets.get(clientId);
   }
 
-  async chatEventHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
-    const re = /(?<=event.on.chat.)(.*)(?=.rk)/;
-    const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
-    const { 0: evType, 1: userId } = params;
-
-    const clientSock: Socket = this.getClientSocket(
-      await this.redisService.hget(this.makeUserKey(userId), 'chat_sock'),
-    );
-    clientSock.emit('message', evType + ': ' + msg.payload);
+  getUser(clientSocket: Socket): UserInfo {
+    return clientSocket['user_info'];
   }
 
-  async handleConnection(
+  Q(userId: string) {
+    return `event.on.chat.${userId}.q`;
+  }
+
+  @SubscribeMessage('join')
+  async joinRoom(
+    @MessageBody() message,
     @ConnectedSocket() clientSocket: Socket,
-    ...args: any[]
   ) {
+    let user: UserInfo;
+    if (!(user = this.getUser(clientSocket)))
+      user = await this.bindUser(clientSocket);
+
+    await clientSocket.join(message.room);
+
+    await this.amqpConnection.channel.assertExchange(
+      `chat.${message.room}.t.x`,
+      'topic',
+      {
+        autoDelete: true,
+      },
+    );
+    2;
+    await this.amqpConnection.channel.bindQueue(
+      this.Q(user.user_id),
+      `chat.${message.room}.t.x`,
+      `event.on.chat.${message.room}.rk`,
+    );
+  }
+
+  async bindUser(clientSocket: Socket) {
     /* get user info */
     const access_token = clientSocket.handshake.auth['access_token'];
     let user;
     try {
       user = await this.authService.verifyJwt(access_token);
     } catch (e) {
-      this.logger.error(e);
-      // TODO: if e.code === 401, refresh
+      throw new WsException(e);
+    }
 
-      // throw e;
+    /* bind user info to socket */
+    clientSocket['user_info'] = user;
+    return user;
+  }
+
+  async handleConnection(
+    @ConnectedSocket() clientSocket: Socket,
+    ...args: any[]
+  ) {
+    let user: UserInfo;
+
+    try {
+      user = await this.bindUser(clientSocket);
+    } catch (e) {
+      clientSocket.disconnect(true);
       return;
     }
+
     this.logger.debug(`< ${user.user_id} > connected`);
 
     /* create queue per user and bind handler */
     this.amqpConnection.createSubscriber(
       this.chatEventHandler,
       {
-        exchange: process.env.RMQ_NOTIFICATION_TOPIC,
-        queue: `event.on.chat.${user.user_id}.q`,
-        routingKey: `event.on.chat.*.${user.user_id}.rk`,
+        queue: this.Q(user.user_id),
         errorHandler: (c, m, e) => this.logger.error(e),
       },
       'chatEventHandler',
     );
-
-    /* bind user info to socket */
-    clientSocket['user_info'] = user;
 
     /* save connected socket per user */
     await this.redisService.hsetJson(this.makeUserKey(user.user_id), {
@@ -87,7 +132,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    const user: UserInfo = clientSocket['user_info'];
+    let user: UserInfo;
+
+    try {
+      user = this.getUser(clientSocket);
+    } catch (e) {
+      clientSocket.disconnect(true);
+      return;
+    }
+
     this.logger.debug(`< ${user.user_id} > disconnected`);
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'chat_sock');
     await this.amqpConnection.channel.deleteQueue(
@@ -95,15 +148,36 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
   }
 
-  /* XXX: echo */
   @SubscribeMessage('publish')
   async publish(
-    @MessageBody() message,
+    @MessageBody() message: ChatMessageFromClient,
     @ConnectedSocket() clientSocket: Socket,
   ) {
-    clientSocket.emit('message', {
-      user: clientSocket['user_info'],
-      payload: message.payload,
-    });
+    const m = new ChatMessageFromServer(
+      this.getUser(clientSocket),
+      message.payload,
+    );
+
+    /* except client socket */
+    clientSocket.to(message.room).emit('subscribe', m);
+    clientSocket.emit('subscribe_self', m);
   }
+
+  async chatEventHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
+    const re = /(?<=event.on.chat.)(.*)(?=.rk)/;
+    const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
+    const { 0: evType, 1: userId } = params;
+
+    const clientSock: Socket = this.getClientSocket(
+      await this.redisService.hget(this.makeUserKey(userId), 'chat_sock'),
+    );
+    clientSock.emit('subscribe', evType + ': ' + msg.payload);
+  }
+
+  /*
+
+  Rabbit Subscriber:
+
+
+  */
 }

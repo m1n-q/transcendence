@@ -1,10 +1,11 @@
-import { Logger } from '@nestjs/common';
+import { Logger, UseFilters } from '@nestjs/common';
 import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
@@ -13,7 +14,9 @@ import { RmqEvent } from '../common/rmq/types/rmq-event';
 import { RedisService } from '../redis-module/services/redis.service';
 import { AuthService } from '../auth/auth.service';
 import { UserInfo } from '../auth/dto/user-info.dto';
+import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 
+@UseFilters(new WsExceptionsFilter())
 @WebSocketGateway({ cors: true })
 export class NotificationGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -36,6 +39,25 @@ export class NotificationGateway
     return this.server.sockets.sockets.get(clientId);
   }
 
+  getUser(clientSocket: Socket): UserInfo {
+    return clientSocket['user_info'];
+  }
+  async bindUser(clientSocket: Socket) {
+    /* get user info */
+    const access_token = clientSocket.handshake.auth['access_token'];
+    let user;
+    try {
+      user = await this.authService.verifyJwt(access_token);
+    } catch (e) {
+      // TODO: if e.code === 401, refresh
+      throw new WsException(e);
+    }
+
+    /* bind user info to socket */
+    clientSocket['user_info'] = user;
+    return user;
+  }
+
   async ntfEventHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
     const re = /(?<=event.on.notification.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
@@ -47,20 +69,20 @@ export class NotificationGateway
     clientSock.emit('notification', evType + ': ' + msg.payload);
   }
 
+  @UseFilters(new WsExceptionsFilter())
   async handleConnection(
     @ConnectedSocket() clientSocket: Socket,
     ...args: any[]
   ) {
-    /* get user info */
-    const access_token = clientSocket.handshake.auth['access_token'];
-    let user;
+    let user: UserInfo;
+
     try {
-      user = await this.authService.verifyJwt(access_token);
+      user = await this.bindUser(clientSocket);
     } catch (e) {
-      this.logger.error(e);
-      // TODO: if e.code === 401, refresh
+      clientSocket.disconnect(true);
       return;
     }
+
     this.logger.debug(`< ${user.user_id} > connected`);
 
     /* create queue per user and bind handler */
@@ -85,7 +107,15 @@ export class NotificationGateway
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    const user: UserInfo = clientSocket['user_info'];
+    let user: UserInfo;
+
+    try {
+      user = this.getUser(clientSocket);
+    } catch (e) {
+      clientSocket.disconnect(true);
+      return;
+    }
+
     this.logger.debug(`< ${user.user_id} > disconnected`);
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'ntf_sock');
     await this.amqpConnection.channel.deleteQueue(
