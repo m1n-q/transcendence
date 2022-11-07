@@ -23,7 +23,6 @@ export class BlockService {
   ) {}
   async readBlockList(payload: RmqUserId) {
     let blackList;
-    console.log(payload.user_id);
     try {
       blackList = await this.blockRepository.find({
         where: { blocker: payload.user_id },

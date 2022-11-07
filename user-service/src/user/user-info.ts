@@ -3,8 +3,8 @@ export class UserProfile {
   nickname: string;
   prof_img: string;
   mmr: number;
-  created: Date;
-  deleted: Date;
+  created: Date | string;
+  deleted: Date | string;
 }
 
 export class UserInfo {
@@ -16,6 +16,6 @@ export class UserInfo {
   two_factor_authentication_type: string;
   prof_img: string;
   mmr: number;
-  created: Date;
-  deleted: Date;
+  created: Date | string;
+  deleted: Date | string;
 }

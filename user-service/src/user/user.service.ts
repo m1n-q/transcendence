@@ -6,7 +6,7 @@ import {
   RmqUserUpdateNicknameDto,
   RmqUserNicknameDto,
 } from './dto/rmq.user.request.dto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, PipeTransform } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from 'src/common/entities/User';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -48,7 +48,7 @@ export class UserService {
     return {
       user_id: user.user_id,
       nickname: user.nickname,
-      created: user.created,
+      created: user.created.toString(),
     };
   }
 
@@ -215,6 +215,7 @@ export class UserService {
         where: `${WHERE}#readUserBy3pId()`,
       });
     }
+    user.created = user.created.toString();
     return user;
   }
 
@@ -230,7 +231,7 @@ export class UserService {
             nickname: user.nickname,
             prof_img: user.prof_img,
             mmr: user.mmr,
-            created: user.created,
+            created: user.created.toString(),
             deleted: user.deleted,
           };
         } catch (e) {

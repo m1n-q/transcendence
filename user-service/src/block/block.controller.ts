@@ -21,7 +21,11 @@ export class BlockController {
     errorHandler: RmqErrorHandler,
   })
   async readBlockList(@RabbitPayload() msg: RmqUserId) {
-    return this.blockService.readBlockList(msg);
+    const list = await this.blockService.readBlockList(msg);
+    Object.values(list).map((item: any) => {
+      item.created = item.created.toString();
+    });
+    return list;
   }
 
   @RabbitRPC({
@@ -31,7 +35,9 @@ export class BlockController {
     errorHandler: RmqErrorHandler,
   })
   async createBlock(@RabbitPayload() msg: RmqRequestBlock) {
-    return this.blockService.createBlock(msg);
+    const block = await this.blockService.createBlock(msg);
+    block.created = block.created.toString();
+    return block;
   }
 
   @RabbitRPC({
@@ -41,6 +47,6 @@ export class BlockController {
     errorHandler: RmqErrorHandler,
   })
   async deleteBlock(@RabbitPayload() msg: RmqDeleteBlock) {
-    return this.blockService.deleteBlock(msg);
+    return await this.blockService.deleteBlock(msg);
   }
 }

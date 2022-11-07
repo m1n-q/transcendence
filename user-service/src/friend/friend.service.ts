@@ -152,7 +152,7 @@ export class FriendService {
     return friendRequestList;
   }
 
-  async createFriendRequest(payload: RmqRequestFriend) {
+  async createFriendRequest(payload: RmqRequestFriend): Promise<any> {
     if (this.isSameId(payload.requester, payload.receiver)) {
       throw new RmqError({
         code: 409,
@@ -275,7 +275,7 @@ export class FriendService {
     }
   }
 
-  async acceptFriendRequest(payload: RmqAcceptFriendRequest) {
+  async acceptFriendRequest(payload: RmqAcceptFriendRequest): Promise<any> {
     let findFriendRequest;
     try {
       findFriendRequest = await this.friendRequestRepository.findOne({

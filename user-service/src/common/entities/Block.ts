@@ -6,6 +6,7 @@ import {
   PrimaryColumn,
   JoinColumn,
   PrimaryGeneratedColumn,
+  Column,
 } from 'typeorm';
 
 @Entity('block')
@@ -19,7 +20,10 @@ export class Block {
   @PrimaryColumn()
   blocked: string;
 
-  @CreateDateColumn()
+  @Column({
+    type: 'timestamp with time zone',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   created: Date;
 
   @ManyToOne(() => User, (user) => user.user_id)

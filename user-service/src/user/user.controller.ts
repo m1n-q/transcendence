@@ -23,7 +23,7 @@ export class UserController {
     errorHandler: RmqErrorHandler,
   })
   async createUser(@RabbitPayload() msg: RmqUserCreateDto) {
-    return this.userService.createUser(msg);
+    return await this.userService.createUser(msg);
   }
 
   @RabbitRPC({
@@ -33,7 +33,9 @@ export class UserController {
     errorHandler: RmqErrorHandler,
   })
   async readUserByNickname(@RabbitPayload() msg: RmqUserNicknameDto) {
-    return this.userService.readUserByNickname(msg);
+    const user = await this.userService.readUserByNickname(msg);
+    user.created = user.created.toString();
+    return user;
   }
 
   @RabbitRPC({
@@ -43,7 +45,9 @@ export class UserController {
     errorHandler: RmqErrorHandler,
   })
   async readUserById(@RabbitPayload() msg: RmqUserIdDto) {
-    return this.userService.readUserById(msg);
+    const user = await this.userService.readUserById(msg);
+    user.created = user.created.toString();
+    return user;
   }
 
   @RabbitRPC({
@@ -53,7 +57,7 @@ export class UserController {
     errorHandler: RmqErrorHandler,
   })
   async deleteUser(@RabbitPayload() msg: RmqUserIdDto) {
-    return this.userService.deleteUserById(msg);
+    return await this.userService.deleteUserById(msg);
   }
 
   @RabbitRPC({
@@ -63,7 +67,7 @@ export class UserController {
     errorHandler: RmqErrorHandler,
   })
   async updateUserNicknameById(@RabbitPayload() msg: RmqUserUpdateNicknameDto) {
-    return this.userService.updateUserNicknameById(msg);
+    return await this.userService.updateUserNicknameById(msg);
   }
 
   @RabbitRPC({
@@ -73,7 +77,7 @@ export class UserController {
     errorHandler: RmqErrorHandler,
   })
   async updateUserProfImgById(@RabbitPayload() msg) {
-    return this.userService.updateUserProfImgById(msg);
+    return await this.userService.updateUserProfImgById(msg);
   }
 
   @RabbitRPC({
@@ -83,7 +87,7 @@ export class UserController {
     errorHandler: RmqErrorHandler,
   })
   async updateUser2FAById(@RabbitPayload() msg) {
-    return this.userService.updateUser2FAById(msg);
+    return await this.userService.updateUser2FAById(msg);
   }
 
   @RabbitRPC({
@@ -93,7 +97,7 @@ export class UserController {
     errorHandler: RmqErrorHandler,
   })
   async readUserBy3pId(@RabbitPayload() msg: RmqUSer3pIDDto) {
-    return this.userService.readUserBy3pId(msg);
+    return await this.userService.readUserBy3pId(msg);
   }
   // 임시
   @RabbitRPC({
@@ -103,6 +107,6 @@ export class UserController {
     errorHandler: RmqErrorHandler,
   })
   async readUserList() {
-    return this.userService.readUserList();
+    return await this.userService.readUserList();
   }
 }

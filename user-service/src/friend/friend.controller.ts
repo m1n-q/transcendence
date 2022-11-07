@@ -24,7 +24,7 @@ export class FriendController {
     errorHandler: RmqErrorHandler,
   })
   async readFriend(@RabbitPayload() msg: RmqUserId) {
-    return this.friendService.readFriend(msg);
+    return await this.friendService.readFriend(msg);
   }
 
   @RabbitRPC({
@@ -34,7 +34,7 @@ export class FriendController {
     errorHandler: RmqErrorHandler,
   })
   async deleteFriend(@RabbitPayload() msg: RmqDeleteFriend) {
-    return this.friendService.deleteFriend(msg);
+    return await this.friendService.deleteFriend(msg);
   }
 
   //request=====================================================
@@ -45,7 +45,11 @@ export class FriendController {
     errorHandler: RmqErrorHandler,
   })
   async readSentFriendRequest(@RabbitPayload() msg: RmqUserId) {
-    return this.friendService.readSentFriendRequest(msg);
+    const request = await this.friendService.readSentFriendRequest(msg);
+    Object.values(request).map((item: any) => {
+      item.created = item.created.toString();
+    });
+    return request;
   }
 
   @RabbitRPC({
@@ -55,7 +59,11 @@ export class FriendController {
     errorHandler: RmqErrorHandler,
   })
   async readRecvFriendRequest(@RabbitPayload() msg: RmqUserId) {
-    return this.friendService.readRecvFriendRequest(msg);
+    const request = await this.friendService.readRecvFriendRequest(msg);
+    Object.values(request).map((item: any) => {
+      item.created = item.created.toString();
+    });
+    return request;
   }
 
   @RabbitRPC({
@@ -65,7 +73,9 @@ export class FriendController {
     errorHandler: RmqErrorHandler,
   })
   async createFriendRequest(@RabbitPayload() msg: RmqRequestFriend) {
-    return this.friendService.createFriendRequest(msg);
+    const request = await this.friendService.createFriendRequest(msg);
+    request.created = request.created.toString();
+    return request;
   }
 
   @RabbitRPC({
@@ -75,7 +85,7 @@ export class FriendController {
     errorHandler: RmqErrorHandler,
   })
   async cancelFriendRequest(@RabbitPayload() msg: RmqCancelFriendRequest) {
-    return this.friendService.cancelFriendRequest(msg);
+    return await this.friendService.cancelFriendRequest(msg);
   }
 
   @RabbitRPC({
@@ -85,7 +95,6 @@ export class FriendController {
     errorHandler: RmqErrorHandler,
   })
   async acceptFriendRequest(@RabbitPayload() msg: RmqAcceptFriendRequest) {
-    console.log('here');
     return this.friendService.acceptFriendRequest(msg);
   }
 
@@ -96,6 +105,6 @@ export class FriendController {
     errorHandler: RmqErrorHandler,
   })
   async rejectFriendRequest(@RabbitPayload() msg: RmqRejectFriendRequest) {
-    return this.friendService.rejectFriendRequest(msg);
+    return await this.friendService.rejectFriendRequest(msg);
   }
 }
