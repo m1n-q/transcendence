@@ -17,7 +17,7 @@ import { UserInfo } from '../auth/dto/user-info.dto';
 import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 
 @UseFilters(new WsExceptionsFilter())
-@WebSocketGateway({ cors: true })
+@WebSocketGateway(1234, { cors: true })
 export class NotificationGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
