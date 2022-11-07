@@ -3,6 +3,7 @@ window.getCookie = function (name) {
   if (match) return match[2];
 };
 
+const roomName = 'TESTROOM';
 const chatSocket = io('ws://localhost:9999', {
   auth: {
     access_token: getCookie('jwt-access'),
@@ -11,13 +12,14 @@ const chatSocket = io('ws://localhost:9999', {
 
 chatSocket.on('connect', async (message) => {
   console.log('CONNECTED TO CHAT SERVER');
+  chatSocket.emit('join', { room: roomName });
 });
 
-/* global socket handlers */
-chatSocket.on('message', (message) => {
-  const chatBox = document.getElementById('chat_box');
+function makeMessageBox(message, other = true) {
+  let chatBox;
+  chatBox = document.getElementsByClassName('chat_box')[0];
 
-  const user = message.user;
+  const sender = message.sender;
 
   let messageBoxElem = document.createElement('div');
   let messageElem = document.createElement('div');
@@ -25,20 +27,37 @@ chatSocket.on('message', (message) => {
   let prof_img = document.createElement('img');
   let nickname = document.createElement('div');
 
-  messageElem.id = 'chat_message';
+  messageElem.className = 'chat_message';
   messageElem.textContent = message.payload;
 
-  prof_img.id = 'prof_img';
-  prof_img.src = user.prof_img !== 'undefined' ? user.prof_img : '123';
+  prof_img.className = 'prof_img';
+  prof_img.src = sender.prof_img !== 'undefined' ? sender.prof_img : '123';
 
-  profButton.id = 'prof_img_button';
+  profButton.className = 'prof_img_button';
   profButton.appendChild(prof_img);
 
-  messageBoxElem.id = 'chat_message_box';
-  messageBoxElem.appendChild(profButton);
-  messageBoxElem.appendChild(messageElem);
+  messageBoxElem.className = 'chat_message_box';
+  if (other) {
+    messageBoxElem.id = 'other';
+    messageBoxElem.appendChild(messageElem);
+    messageBoxElem.appendChild(profButton);
+  } else {
+    messageBoxElem.appendChild(profButton);
+    messageBoxElem.appendChild(messageElem);
+  }
 
   chatBox.appendChild(messageBoxElem);
+}
+
+/* global socket handlers */
+chatSocket.on('subscribe', (message) => {
+  console.log('GOT OTHER');
+  makeMessageBox(message);
+});
+
+chatSocket.on('subscribe_self', (message) => {
+  console.log('GOT SELF');
+  makeMessageBox(message, false);
 });
 
 /* form event handler */
@@ -46,10 +65,10 @@ const formHandler = (event) => {
   event.preventDefault();
   const inputValue = event.target.elements[0].value;
   if (inputValue) {
-    chatSocket.emit('publish', { payload: inputValue });
+    chatSocket.emit('publish', { room: roomName, payload: inputValue });
     event.target.elements[0].value = '';
   }
 };
 
-const formElement = document.getElementById('chat_form');
+const formElement = document.getElementsByClassName('chat_form')[0];
 formElement.addEventListener('submit', formHandler);

@@ -25,7 +25,7 @@ ul li#button_list {
 
 
 
-#chat_box {
+.chat_box {
 	/* position:relative; */
 	/* display: inline-block; */
 	width: 100%;
@@ -36,11 +36,16 @@ ul li#button_list {
 	overflow: auto;
 }
 
-#chat_message_box {
+.chat_message_box {
 	display: block;
+	clear: both;
 }
 
-#chat_message_box #chat_message {
+#other.chat_message_box {
+	text-align: right;
+}
+
+.chat_message {
 	position:relative;
 	display: inline-block;
 	width: fit-content;
@@ -58,7 +63,8 @@ ul li#button_list {
 	font-size: 150%;
 }
 
-#chat_message_box #prof_img_button {
+
+.prof_img_button {
 	position:relative;
 	display: inline-block;
 	background-color: rgba(0, 8, 98, 0.0);
@@ -73,17 +79,21 @@ ul li#button_list {
 	height:7em;
 }
 
-#chat_message_box #prof_img_button:hover {
+#other .chat_message {
+	display: inline-block;
+}
+
+.prof_img_button:hover {
 	cursor: pointer;
 }
 
-#chat_message_box #prof_img_button #prof_img {
+.prof_img_button .prof_img {
 	width: 100%;
 	height: 100%;
 	border-radius: 100%;
 }
 
-#chat_form {
+.chat_form {
 	/* position: absolute; */
 	display: flex;
 	width: 100%;
@@ -93,7 +103,7 @@ ul li#button_list {
 	background-color: rgba(0, 8, 98, 0.2);
 }
 
-#chat_form #chat_text {
+.chat_form .chat_text {
 	position: relative;
 	display: inline-block;
 	vertical-align: auto;
@@ -107,7 +117,7 @@ ul li#button_list {
 	color:rgb(227, 228, 238)
 }
 
-#chat_form #chat_send {
+.chat_form .chat_send {
 	position: relative;
 	border-style: none;
 	display: inline-block;
@@ -119,7 +129,7 @@ ul li#button_list {
 	border-style: none;
 }
 
-#chat_form #chat_send:hover {
+.chat_form .chat_send:hover {
 	background-color: rgba(10, 79, 79, 0.347);
 }
 
