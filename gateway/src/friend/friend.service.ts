@@ -23,7 +23,10 @@ export class FriendService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return response.data;
   }
 
@@ -42,7 +45,10 @@ export class FriendService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return;
   }
   //request==========================================================
@@ -60,7 +66,10 @@ export class FriendService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return response.data;
   }
 
@@ -78,7 +87,10 @@ export class FriendService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return response.data;
   }
 
@@ -97,7 +109,10 @@ export class FriendService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return response.data;
   }
 
@@ -116,7 +131,10 @@ export class FriendService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return;
   }
 
@@ -135,7 +153,10 @@ export class FriendService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return {
       statusCode: 201,
       message: 'friend relationship created',
@@ -157,7 +178,10 @@ export class FriendService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return;
   }
 }

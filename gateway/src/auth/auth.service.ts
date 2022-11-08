@@ -23,7 +23,10 @@ export class AuthService {
       throw new InternalServerErrorException('request to auth-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return response.data;
   }
 }

@@ -24,7 +24,10 @@ export class BlockService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return response.data;
   }
 
@@ -43,7 +46,10 @@ export class BlockService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return response.data;
   }
 
@@ -62,7 +68,10 @@ export class BlockService {
       throw new InternalServerErrorException('request to user-service failed');
     }
     if (!response.success)
-      throw new HttpException(response.error.message, response.error.code);
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
     return;
   }
 }
