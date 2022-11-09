@@ -23,10 +23,6 @@ export class UserService {
   async createUser(payload: RmqUserCreateDto) {
     const user: UserInfo = this.userRepository.create(payload);
     user.mmr = 1000;
-    if (payload['2FA'] !== undefined) {
-      user.two_factor_authentication_type = payload['2FA'].type;
-      user.two_factor_authentication_key = payload['2FA'].key;
-    }
     try {
       await this.userRepository.save(user);
     } catch (e) {

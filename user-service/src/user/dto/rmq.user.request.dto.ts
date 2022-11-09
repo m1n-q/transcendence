@@ -54,13 +54,6 @@ export class RmqUserCreateDto {
   @IsString()
   nickname: string;
 
-  @ValidateNested({ each: true })
-  @Type(() => RmqUser2FADto)
-  '2FA': RmqUser2FADto;
-
-  // @IsNotEmpty()
-  // @IsUrl()
-
   @IsOptional()
   @IsString()
   prof_img: string | null;
