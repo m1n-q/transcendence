@@ -8,7 +8,7 @@ async function bootstrap() {
   app.use(cookieParser());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.enableCors();
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 80;
   await app.listen(port, () => {
     console.log(`Server on ${port}`);
   });
