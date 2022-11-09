@@ -215,7 +215,6 @@ export class UserService {
         where: `${WHERE}#readUserBy3pId()`,
       });
     }
-    user.created = user.created.toString();
     return user;
   }
 
