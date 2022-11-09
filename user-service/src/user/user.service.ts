@@ -27,6 +27,20 @@ export class UserService {
       await this.userRepository.save(user);
     } catch (e) {
       if (e.code === '23505') {
+        const findUser = await this.userRepository.findOne({
+          where: {
+            third_party_id: payload.third_party_id,
+            provider: payload.provider,
+          },
+          withDeleted: true,
+        });
+        if (findUser) {
+          throw new RmqError({
+            code: 409,
+            message: 'This user is account has been deleted',
+            where: `${WHERE}#createUser()`,
+          });
+        }
         throw new RmqError({
           code: 409,
           message: 'duplicate key violates unique constraint',
