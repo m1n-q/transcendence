@@ -28,7 +28,7 @@ export class AuthGuard implements CanActivate {
     try {
       response = await this.amqpConnection.request<RmqResponse>({
         exchange: 'auth.d.x',
-        routingKey: 'auth.verify.jwt.rk',
+        routingKey: 'req.to.auth.verify.jwt.rk',
         payload: {
           access_token,
         },
