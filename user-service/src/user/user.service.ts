@@ -6,7 +6,7 @@ import {
   RmqUserUpdateNicknameDto,
   RmqUserNicknameDto,
 } from './dto/rmq.user.request.dto';
-import { Injectable, PipeTransform } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from 'src/common/entities/User';
 import { InjectRepository } from '@nestjs/typeorm';

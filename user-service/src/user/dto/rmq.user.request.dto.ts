@@ -43,7 +43,7 @@ export class RmqUSer3pIDDto {
 
 export class RmqUserCreateDto {
   @IsNotEmpty()
-  // @IsString()
+  @IsString()
   third_party_id: string;
 
   @IsNotEmpty()
