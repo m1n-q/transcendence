@@ -16,7 +16,7 @@ export class Oauth42Strategy extends PassportStrategy(oStrategy, 'oauth2-42') {
       clientSecret: process.env.OAUTH2_42_SECRET,
       authorizationURL: 'https://api.intra.42.fr/oauth/authorize',
       tokenURL: 'https://api.intra.42.fr/oauth/token',
-      callbackURL: 'http://localhost:3000/auth/oauth2/42/result',
+      callbackURL: 'http://localhost/auth/oauth2/42/result',
       passReqToCallback: true,
     });
   }
@@ -51,7 +51,7 @@ export class Oauth42Strategy extends PassportStrategy(oStrategy, 'oauth2-42') {
 //       clientSecret: process.env.OAUTH2_GOOGLE_SECRET,
 //       authorizationURL: 'https://accounts.google.com/o/oauth2/auth',
 //       tokenURL: 'https://accounts.google.com/o/oauth2/token',
-//       callbackURL: 'http://localhost:3000/auth/oauth2/google/result',
+//       callbackURL: 'http://localhost/auth/oauth2/google/result',
 //       scope: ['https://www.googleapis.com/auth/userinfo.profile'],
 //     });
 //   }
@@ -74,7 +74,7 @@ export class Oauth42Strategy extends PassportStrategy(oStrategy, 'oauth2-42') {
 //   constructor() {
 //     super({
 //       clientID: process.env.OAUTH2_KAKAO_ID,
-//       callbackURL: 'http://localhost:3000/auth/oauth2/kakao/result',
+//       callbackURL: 'http://localhost/auth/oauth2/kakao/result',
 //     });
 //   }
 

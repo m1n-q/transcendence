@@ -40,7 +40,7 @@ export class AppController {
   async temp(@Req() req, @Body('friend_id') friendId) {
     let res;
     try {
-      res = await fetch(`http://localhost:3000/friend/request/${friendId}`, {
+      res = await fetch(`http://localhost/friend/request/${friendId}`, {
         headers: {
           authorization: req.cookies['jwt-access'],
         },
@@ -60,6 +60,7 @@ export class AppController {
   ) {
     const gwRes = await this.authService.signIn(provider, code);
     //BUG: NO ACCESS TOKEN AND PROVIDER IF UNAUTHORIZED FROM PROVIDER
+    //프로바이더에 이미 로그인을 한 상태에서, 새로고침 등을 하는거면 (우리 사이트 쿠키는 지우고), 그럼 아까 code를 재사용해서 unauthorized가 뜨는건지, 찍어봐야함
     if (gwRes && !gwRes.access_token) {
       console.log('FRONTEND: NO ACCESS_TOKEN!');
       res.redirect(

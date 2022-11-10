@@ -3,7 +3,7 @@ window.getCookie = function (name) {
   if (match) return match[2];
 };
 
-const notiSocket = io('ws://localhost:11111', {
+const notiSocket = io('ws://localhost:1234', {
   auth: {
     access_token: getCookie('jwt-access'),
   },

@@ -1,7 +1,7 @@
 async function getAllUsers() {
   let response;
   try {
-    response = await fetch('http://localhost:3000/test/user-list');
+    response = await fetch('http://localhost/test/user-list');
   } catch (e) {
     console.log(e);
   }

@@ -3,18 +3,21 @@ window.getCookie = function (name) {
   if (match) return match[2];
 };
 
-const roomName = 'TESTROOM';
+/* send access_token from cookie */
 const chatSocket = io('ws://localhost:9999', {
   auth: {
     access_token: getCookie('jwt-access'),
   },
 });
 
+/* on connection, need to notiify server which room client joined */
+const roomName = 'TESTROOM';
 chatSocket.on('connect', async (message) => {
   console.log('CONNECTED TO CHAT SERVER');
   chatSocket.emit('join', { room: roomName });
 });
 
+/* render message box */
 function makeMessageBox(message, other = true) {
   let chatBox;
   chatBox = document.getElementsByClassName('chat_box')[0];
@@ -50,17 +53,18 @@ function makeMessageBox(message, other = true) {
 }
 
 /* global socket handlers */
+
+/* render received message */
 chatSocket.on('subscribe', (message) => {
-  console.log('GOT OTHER');
   makeMessageBox(message);
 });
 
+/* render sended message */
 chatSocket.on('subscribe_self', (message) => {
-  console.log('GOT SELF');
   makeMessageBox(message, false);
 });
 
-/* form event handler */
+/* chat-form event handler */
 const formHandler = (event) => {
   event.preventDefault();
   const inputValue = event.target.elements[0].value;
