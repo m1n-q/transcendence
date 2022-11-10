@@ -90,7 +90,7 @@ export class NotificationGateway
       this.ntfEventHandler,
       {
         exchange: process.env.RMQ_NOTIFICATION_TOPIC,
-        queue: `event.on.notification.${user.user_id}.q`,
+        queue: `notification.${user.user_id}.q`,
         routingKey: `event.on.notification.*.${user.user_id}.rk`,
         errorHandler: (c, m, e) => this.logger.error(e),
       },
@@ -119,7 +119,7 @@ export class NotificationGateway
     this.logger.debug(`< ${user.user_id} > disconnected`);
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'ntf_sock');
     await this.amqpConnection.channel.deleteQueue(
-      `event.on.notification.${user.user_id}.q`,
+      `notification.${user.user_id}.q`,
     );
   }
 }
