@@ -4,5 +4,5 @@ export class ThirdPartyInfo {
   @Expose()
   provider: string;
   @Expose()
-  third_party_id: number;
+  third_party_id: string;
 }

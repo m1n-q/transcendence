@@ -1,5 +1,5 @@
 export class CreateUserDto {
-  third_party_id: number;
+  third_party_id: string;
   provider: string;
   nickname: string;
   '2FA': { type: string; key: string };
