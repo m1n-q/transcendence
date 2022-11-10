@@ -14,7 +14,8 @@ import { UserService } from '../../user/services/user.service';
 import { URLSearchParams } from 'url';
 
 const WHERE = 'auth-service';
-const AT_EXPIRES_IN = 60 * 15;
+// const AT_EXPIRES_IN = 60 * 15;
+const AT_EXPIRES_IN = 60 * 60;
 const RT_EXPIRES_IN = 60 * 60 * 24 * 7;
 type OauthParam = {
   contentType: 'json' | 'x-www-form-urlencoded';
