@@ -208,7 +208,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   roomQ(roomId: string) {
-    return `chat.$room.${roomId}.${this.serverId}.q`;
+    return `chat.room.${roomId}.${this.serverId}.q`;
   }
 
   roomTX(roomId: string) {
