@@ -10,6 +10,8 @@ import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { TestController } from './test.controller';
 import { BlockService } from './block/block.service';
+import { ChatService } from './chat/services/chat.service';
+import { ChatController } from './chat/controllers/chat.controller';
 
 @Module({
   imports: [
@@ -33,10 +35,18 @@ import { BlockService } from './block/block.service';
   controllers: [
     AuthController,
     UserController,
+    AuthController,
     FriendController,
     BlockController,
     TestController,
+    ChatController,
   ],
-  providers: [AuthService, UserService, FriendService, BlockService],
+  providers: [
+    AuthService,
+    UserService,
+    FriendService,
+    BlockService,
+    ChatService,
+  ],
 })
 export class AppModule {}
