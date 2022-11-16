@@ -8,9 +8,7 @@ export class MessageType {
 }
 
 export class ChatRoomMessageDto {
-  @Expose()
-  @IsUUID()
-  roomId: string;
+  room_id: string;
 
   @Expose()
   @ValidateNested({ each: true })

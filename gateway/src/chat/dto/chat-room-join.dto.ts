@@ -1,16 +1,11 @@
 import { Expose } from 'class-transformer';
-import { IsString } from 'class-validator';
+import { IsString, IsUUID } from 'class-validator';
 
 export class ChatRoomJoinDto {
-  @Expose()
-  @IsString()
-  roomId: string;
+  room_id: string;
+  user_id: string;
 
   @Expose()
   @IsString()
-  userId: string;
-
-  @Expose()
-  @IsString()
-  roomPassword: string;
+  room_password: string;
 }

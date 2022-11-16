@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsEnum, IsString } from 'class-validator';
+import { IsEnum, IsString, IsUUID } from 'class-validator';
 
 export enum ChatUserRole {
   USER = 'user',
@@ -7,17 +7,12 @@ export enum ChatUserRole {
 }
 
 export class ChatUserRoleDto {
-  @Expose()
-  @IsString()
-  roomId: string;
+  room_id: string;
+  room_owner_id: string;
 
   @Expose()
-  @IsString()
-  roomOwnerId: string;
-
-  @Expose()
-  @IsString()
-  userId: string;
+  @IsUUID()
+  user_id: string;
 
   @Expose()
   @IsEnum(ChatUserRole)
