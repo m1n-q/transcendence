@@ -95,10 +95,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.games[roomName].rPlayerId = clientSocket.id;
       this.games[roomName].rPlayerInfo = clientSocket['user_info'].user;
       clientSocket['isOwner'] = false;
+      this.server.to(`${roomName}`).emit('user_joined_room', {
+        owner: this.games[roomName].lPlayerId,
+        lPlayerInfo: this.games[roomName].lPlayerInfo,
+        rPlayerInfo: this.games[roomName].rPlayerInfo,
+      });
     }
-    clientSocket.emit('user_joined_room', {
-      owner: this.games[roomName].lPlayerId,
-    });
   }
 
   @SubscribeMessage('player_change_difficulty')
@@ -204,6 +206,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (e) {
       throw new WsException(e);
     }
+    delete user.created;
+    delete user.deleted;
     clientSocket['user_info'] = { user, waiting: 0 };
   }
 
