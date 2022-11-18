@@ -2,7 +2,7 @@ import { Expose, Type } from 'class-transformer';
 import { IsUUID, ValidateNested } from 'class-validator';
 
 export class MessageType {
-  sender: string;
+  sender_id: string;
   payload: string;
   created: string;
 }

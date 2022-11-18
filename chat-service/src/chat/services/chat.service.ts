@@ -578,7 +578,7 @@ export class ChatService {
     const { room_id: roomId, messages } = chatRoomMessageDto;
 
     const toSave = messages.map((message) => {
-      return { roomId, senderId: message.sender, payload: message.payload };
+      return { roomId, senderId: message.sender_id, payload: message.payload };
     });
     const result = await this.chatRoomMessageRepo.save(toSave);
 
