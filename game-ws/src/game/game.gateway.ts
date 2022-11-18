@@ -222,7 +222,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           try {
             this.updateGameResult(this.games[roomName]);
           } catch (e) {
-            new WsException(e);
+            throw new WsException(e);
           }
         }
         clearInterval(this.renderInterval[roomName]);
