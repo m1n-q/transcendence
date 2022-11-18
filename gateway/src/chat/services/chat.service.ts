@@ -129,20 +129,6 @@ export class ChatService {
     );
   }
 
-  async storeMessages(chatRoomMessageDto: ChatRoomMessageDto) {
-    return this.requestToChatService(
-      this.RK('req', 'chat.store.messages'),
-      chatRoomMessageDto,
-    );
-  }
-
-  async getAllMessages(roomId: string) {
-    return this.requestToChatService(
-      this.RK('req', 'chat.get.all.messages'),
-      roomId,
-    );
-  }
-
   async searchRooms(roomName: string) {
     return this.requestToChatService(this.RK('req', 'chat.search.rooms'), {
       room_name: roomName,
@@ -162,6 +148,27 @@ export class ChatService {
     return this.requestToChatService(
       this.RK('req', 'chat.set.room.access'),
       chatRoomAccessibilityDto,
+    );
+  }
+
+  async storeRoomMessages(chatRoomMessageDto: ChatRoomMessageDto) {
+    return this.requestToChatService(
+      this.RK('req', 'chat.store.messages'),
+      chatRoomMessageDto,
+    );
+  }
+
+  async getAllRoomMessages(roomId: string) {
+    return this.requestToChatService(
+      this.RK('req', 'chat.get.all.room.messages'),
+      roomId,
+    );
+  }
+
+  async getJoinedRooms(userId: string) {
+    return this.requestToChatService(
+      this.RK('req', 'chat.get.joined.rooms'),
+      userId,
     );
   }
 }

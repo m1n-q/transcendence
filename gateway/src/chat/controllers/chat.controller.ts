@@ -153,7 +153,7 @@ export class ChatController {
     @Body() chatRoomMessageDto: ChatRoomMessageDto,
   ) {
     chatRoomMessageDto.room_id = roomId;
-    return this.chatService.storeMessages(chatRoomMessageDto);
+    return this.chatService.storeRoomMessages(chatRoomMessageDto);
   }
 
   @Get('room/:roomId/messages')
@@ -161,7 +161,7 @@ export class ChatController {
     @Req() req,
     @Param('roomId', new ParseUUIDPipe()) roomId,
   ) {
-    return this.chatService.getAllMessages(roomId);
+    return this.chatService.getAllRoomMessages(roomId);
   }
 
   @Put('room/:roomId/access')
@@ -183,5 +183,10 @@ export class ChatController {
   @Get('rooms/all')
   async searchAllRooms(@Req() req) {
     return this.chatService.searchAllRooms();
+  }
+
+  @Get('rooms/joined')
+  async getJoinedRooms(@Req() req) {
+    return this.chatService.getJoinedRooms(req.user.user_id);
   }
 }
