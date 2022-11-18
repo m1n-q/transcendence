@@ -109,6 +109,29 @@ export class ChatService {
     };
   }
 
+  async searchAllRooms() {
+    let rooms: ChatRoom[];
+    try {
+      rooms = await this.chatRoomRepo.findBy({
+        roomAccess: Not(ChatRoomAccess.PRIVATE),
+      });
+    } catch (e) {
+      throw toRmqError(e);
+    }
+
+    return {
+      rooms: rooms.map((room) => {
+        return {
+          room_id: room.roomId,
+          room_name: room.roomName,
+          room_owner_id: room.roomOwnerId,
+          room_access: room.roomAccess,
+          created: room.created,
+        };
+      }),
+    };
+  }
+
   async createRoom(chatRoomCreationDto: ChatRoomCreationDto) {
     const {
       room_name: roomName,

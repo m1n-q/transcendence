@@ -240,6 +240,16 @@ export class ChatRmqController {
     return this.chatService.searchRooms(chatRoomSearchDto);
   }
 
+  @RabbitRPC({
+    exchange: 'chat.d.x',
+    queue: 'chat.search.all.rooms.q',
+    routingKey: 'req.to.chat.search.all.rooms.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async searchAllRooms() {
+    return this.chatService.searchAllRooms();
+  }
+
   /*             TODO             */
   async storeMessages(
     @RabbitRequest() req,
