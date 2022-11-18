@@ -1,13 +1,20 @@
 import { Expose, Type } from 'class-transformer';
-import { ValidateNested } from 'class-validator';
+import { IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 
 export class MessageType {
+  @Expose()
+  @IsUUID()
   sender_id: string;
+  @Expose()
+  @IsString()
   payload: string;
+  @IsOptional()
   created: string;
 }
 
 export class ChatRoomMessageDto {
+  @Expose()
+  @IsUUID()
   room_id: string;
 
   @Expose()
