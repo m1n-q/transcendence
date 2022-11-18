@@ -89,11 +89,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       user = this.getUser(clientSocket);
+      console.log('handle disconnect:', user);
     } catch (e) {
       clientSocket.disconnect(true);
       return;
     }
 
+    //BUG: Cannot read properties of undefined (reading 'user_id')
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'chat_sock');
     await this.amqpConnection.channel.deleteQueue(this.userQ(user.user_id));
   }
@@ -140,19 +142,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() message: ChatMessageFromClient,
     @ConnectedSocket() clientSocket: Socket,
   ) {
-    /* To all WS instances */
-
     const sender = this.getUser(clientSocket);
+
+    /* To Database */
     const toStore: MessageType = {
       sender_id: sender.user_id,
       payload: message.payload,
       created: null,
     };
+    /* NOTE: sync or async? */
     await this.chatService.storeRoomMessages({
       room_id: message.room,
       messages: [toStore],
     });
 
+    /* To all WS instances */
     this.amqpConnection.publish(
       this.roomTX(message.room),
       this.roomRK('message', message.room),

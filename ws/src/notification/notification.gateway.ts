@@ -111,11 +111,13 @@ export class NotificationGateway
 
     try {
       user = this.getUser(clientSocket);
+      console.log('handle disconnect:', user);
     } catch (e) {
       clientSocket.disconnect(true);
       return;
     }
 
+    //BUG: Cannot read properties of undefined (reading 'user_id')
     this.logger.debug(`< ${user.user_id} > disconnected`);
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'ntf_sock');
     await this.amqpConnection.channel.deleteQueue(

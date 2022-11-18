@@ -17,11 +17,11 @@ export class AuthService {
         payload: { access_token: accessToken },
       });
     } catch (e) {
-      throw new RmqError(
-        408,
-        'Request Time Out (to auth-serivice)',
-        'Websocket',
-      );
+      throw new RmqError({
+        code: 500,
+        message: 'Request Time Out (to auth-serivice)',
+        where: 'Websocket',
+      });
     }
     if (!response.success) throw response.error;
     return response.data;
