@@ -302,7 +302,7 @@ export class AuthService {
       if (e.code === 404)
         return {
           provider,
-          third_party_id,
+          third_party_id: third_party_id.toString(),
           prof_img,
           locale,
         };
@@ -342,7 +342,7 @@ export class AuthService {
       if (e.code === 404)
         return {
           provider,
-          third_party_id,
+          third_party_id: third_party_id.toString(),
           prof_img,
           locale: 'ko',
         };
@@ -377,7 +377,7 @@ export class AuthService {
       if (e.code === 404)
         return {
           provider,
-          third_party_id,
+          third_party_id: third_party_id.toString(),
           prof_img,
           locale,
         };
