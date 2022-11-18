@@ -7,13 +7,14 @@ export class MatchMaking {
   constructor() {
     this.matchingQueue = new Map();
   }
-  matchingQueue;
+  //
+  matchingQueue: Map<string, number>;
 
   leaveMatchingQueue(socketId) {
     this.matchingQueue.delete(socketId);
   }
 
-  findUser(socketId, differenceScore, mmr) {
+  findUser(socketId, differenceScore, mmr): string {
     let matchingPlayerId = '';
     let min = differenceScore;
     this.matchingQueue.forEach((v, k) => {
@@ -30,7 +31,7 @@ export class MatchMaking {
     return socketId;
   }
 
-  matchMaking(clientSocket: Socket) {
+  matchMaking(clientSocket: Socket): string | object {
     const userInfo = clientSocket['user_info'];
     this.matchingQueue.set(clientSocket.id, userInfo.user.mmr);
     clientSocket['user_info'].waiting++;

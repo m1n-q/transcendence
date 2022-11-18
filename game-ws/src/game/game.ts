@@ -5,6 +5,7 @@ const CANVARS_WIDTH = 800;
 const CANVARS_HEIGHT = 600;
 const BALL_SPEED = 7;
 const BAR_SIZE = 100;
+const BAR_MOVE_SPEED = 5;
 
 class Ball {
   constructor(speed: number) {
@@ -26,19 +27,19 @@ class Ball {
   height: number;
   width: number;
 
-  update(speed: number) {
+  update(speed: number): void {
     this.speed = speed;
   }
-  move() {
+  move(): void {
     this.x += this.velocityX;
     this.y += this.velocityY;
   }
-  collidesTopBottom() {
+  collidesTopBottom(): void {
     if (this.y - this.radius < 0 || this.y + this.radius > this.height) {
       this.velocityY *= -1;
     }
   }
-  collidesBar(player: Player) {
+  collidesBar(player: Player): void {
     let collidePoint = this.y - (player.y + player.height / 2);
     collidePoint /= player.height / 2;
 
@@ -49,8 +50,7 @@ class Ball {
     this.velocityY = this.speed * Math.sin(angleRad);
     this.speed += 0.1;
   }
-
-  resetBall(speed) {
+  resetBall(speed): void {
     this.x = this.width / 2;
     this.y = this.height / 2;
     this.velocityX *= -1;
@@ -68,11 +68,6 @@ class Player {
     this.barUp = false;
     this.barDown = false;
   }
-
-  update(barSize: number) {
-    this.height = barSize;
-    this.y = (CANVARS_HEIGHT - barSize) / 2;
-  }
   x: number;
   y: number;
   width: number;
@@ -80,6 +75,11 @@ class Player {
   score: number;
   barUp: boolean;
   barDown: boolean;
+
+  update(barSize: number): void {
+    this.height = barSize;
+    this.y = (CANVARS_HEIGHT - barSize) / 2;
+  }
 }
 
 export class Game {
@@ -93,7 +93,6 @@ export class Game {
     this.isRank = rank;
     this.renderReady = false;
   }
-
   ball: Ball;
   lPlayerId: string;
   rPlayerId: string;
@@ -110,7 +109,7 @@ export class Game {
   height: number;
   isRank: boolean;
 
-  public init(difficulty) {
+  public init(difficulty): void {
     if (difficulty === 1) {
       this.speed = 5;
       this.ball.update(5);
@@ -128,8 +127,7 @@ export class Game {
       this.rPlayer.update(80);
     }
   }
-
-  public isCollision(player) {
+  public isCollision(player): boolean {
     const playerTop = player.y;
     const playerBottom = player.y + player.height;
     const playerLeft = player.x;
@@ -147,8 +145,7 @@ export class Game {
       playerBottom > ballTop
     );
   }
-
-  public update() {
+  public update(): void {
     if (this.lPlayer.score === 10) {
       this.loser = this.rPlayerId;
       this.isFinished = true;
@@ -185,8 +182,7 @@ export class Game {
       this.ball.collidesBar(player);
     }
   }
-
-  finishGame() {
+  finishGame(): void {
     // 여기서 유저 정보의 점수의 차이에 따라 점수를 다르게 주면 될 듯
     if (this.lPlayerId === this.loser) {
       this.rPlayerInfo.mmr += REFERENCE_SCORE;
@@ -204,8 +200,7 @@ export class Game {
       }
     }
   }
-
-  public renderInfo() {
+  public renderInfo(): object {
     return {
       width: this.width,
       height: this.height,
@@ -216,8 +211,7 @@ export class Game {
       rPlayerX: this.rPlayer.x,
     };
   }
-
-  public renderData() {
+  public renderData(): object {
     return {
       lPlayerY: this.lPlayer.y,
       lPlayerScore: this.lPlayer.score,
@@ -227,40 +221,38 @@ export class Game {
       bally: this.ball.y,
     };
   }
-  public lPlayerInput(key, input) {
+  public lPlayerInput(key, input): void {
     if (key === 'up') {
       this.lPlayer.barUp = input;
     } else if (key === 'down') {
       this.lPlayer.barDown = input;
     }
   }
-
-  public rPlayerInput(key, input) {
+  public rPlayerInput(key, input): void {
     if (key === 'up') {
       this.rPlayer.barUp = input;
     } else if (key === 'down') {
       this.rPlayer.barDown = input;
     }
   }
-
-  public lPlayerBarUp() {
+  public lPlayerBarUp(): void {
     if (this.lPlayer.y !== (this.lPlayer.height / 2) * -1) {
-      this.lPlayer.y -= 5;
+      this.lPlayer.y -= BAR_MOVE_SPEED;
     }
   }
-  public lPlayerBarDown() {
+  public lPlayerBarDown(): void {
     if (this.lPlayer.y !== this.height - this.lPlayer.height / 2) {
-      this.lPlayer.y += 5;
+      this.lPlayer.y += BAR_MOVE_SPEED;
     }
   }
-  public rPlayerBarUp() {
+  public rPlayerBarUp(): void {
     if (this.rPlayer.y !== (this.rPlayer.height / 2) * -1) {
-      this.rPlayer.y -= 5;
+      this.rPlayer.y -= BAR_MOVE_SPEED;
     }
   }
-  public rPlayerBarDown() {
+  public rPlayerBarDown(): void {
     if (this.rPlayer.y !== this.height - this.lPlayer.height / 2) {
-      this.rPlayer.y += 5;
+      this.rPlayer.y += BAR_MOVE_SPEED;
     }
   }
 }

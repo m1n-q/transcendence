@@ -24,6 +24,7 @@ import { UserService } from './user/user.service';
           type: 'direct',
         },
       ],
+      defaultRpcTimeout: 20000,
     }),
   ],
   controllers: [AppController],

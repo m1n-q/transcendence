@@ -20,7 +20,7 @@ import { WsExceptionsFilter } from 'src/common/ws/ws-exceptions.filter';
 
 const FPS = 60;
 @UseFilters(new WsExceptionsFilter())
-@WebSocketGateway(9990, {
+@WebSocketGateway(9998, {
   cors: true,
 })
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -70,7 +70,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('user_join_queue')
   userJoinQueue(@ConnectedSocket() clientSocket: Socket) {
-    this.updateUser(clientSocket);
+    try {
+      this.updateUser(clientSocket);
+    } catch (e) {
+      clientSocket.disconnect(true);
+      return;
+    }
     clientSocket.emit('user_is_in_queue');
     this.matchingInterval[clientSocket.id] = setInterval(() => {
       const matchedId = this.matchMaking.matchMaking(clientSocket);
@@ -139,7 +144,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.games[roomName].renderReady = true;
     } else {
       this.server.to(`${roomName}`).emit('game_started');
-      this.startGame(roomName);
+      try {
+        this.startGame(roomName);
+      } catch (e) {
+        clientSocket.disconnect(true);
+        return;
+      }
     }
   }
 
@@ -147,7 +157,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   userLeaveRoom(@ConnectedSocket() clientSocket: Socket) {
     const roomName = clientSocket['room_name'];
     clientSocket.leave(roomName);
-    this.updateUser(clientSocket);
+    try {
+      this.updateUser(clientSocket);
+    } catch (e) {
+      clientSocket.disconnect(true);
+      return;
+    }
     clientSocket.emit('game_result', {
       loser: this.games[roomName].loser,
       lPlayer: this.games[roomName].lPlayerInfo,
@@ -204,7 +219,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.server.to(`${roomName}`).emit('game_finished');
         if (this.games[roomName].isRank === true) {
           this.games[roomName].finishGame();
-          this.updateGameResult(this.games[roomName]);
+          try {
+            this.updateGameResult(this.games[roomName]);
+          } catch (e) {
+            new WsException(e);
+          }
         }
         clearInterval(this.renderInterval[roomName]);
       }
@@ -225,7 +244,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async updateUser(clientSocket: Socket) {
     if (clientSocket['user_info'] === undefined) {
-      await this.bindUser(clientSocket);
+      try {
+        await this.bindUser(clientSocket);
+      } catch (e) {
+        throw new WsException(e);
+      }
     }
     const nickname = clientSocket['user_info'].user.nickname;
     let user;
