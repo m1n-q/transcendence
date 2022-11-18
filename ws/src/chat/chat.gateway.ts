@@ -18,6 +18,8 @@ import { RedisService } from '../redis-module/services/redis.service';
 import { UserInfo } from '../auth/dto/user-info.dto';
 import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { v4 } from 'uuid';
+import { ChatService } from './services/chat.service';
+import { MessageType } from './dto/chat-room-message.dto';
 
 class ChatMessageFromClient {
   room: string;
@@ -43,6 +45,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly authService: AuthService,
     private readonly amqpConnection: AmqpConnection,
     private readonly redisService: RedisService,
+    private readonly chatService: ChatService,
   ) {
     /* gen UUID to distinguish same room name queue */
     this.serverId = v4();
@@ -138,12 +141,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() clientSocket: Socket,
   ) {
     /* To all WS instances */
+
+    const sender = this.getUser(clientSocket);
+    const toStore: MessageType = {
+      sender_id: sender.user_id,
+      payload: message.payload,
+      created: null,
+    };
+    await this.chatService.storeRoomMessages({
+      room_id: message.room,
+      messages: [toStore],
+    });
+
     this.amqpConnection.publish(
       this.roomTX(message.room),
       this.roomRK('message', message.room),
-      new RmqEvent(
-        new ChatMessageFromServer(this.getUser(clientSocket), message.payload),
-      ),
+      new RmqEvent(new ChatMessageFromServer(sender, message.payload)),
     );
   }
 
