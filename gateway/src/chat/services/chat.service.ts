@@ -149,6 +149,13 @@ export class ChatService {
     });
   }
 
+  async searchAllRooms() {
+    return this.requestToChatService(
+      this.RK('req', 'chat.search.all.rooms'),
+      {},
+    );
+  }
+
   async setRoomAccessibility(
     chatRoomAccessibilityDto: ChatRoomAccessibilityDto,
   ) {

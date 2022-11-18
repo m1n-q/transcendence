@@ -179,4 +179,9 @@ export class ChatController {
   async searchRooms(@Req() req, @Query('room-name') roomName: string) {
     return this.chatService.searchRooms(roomName);
   }
+
+  @Get('rooms/all')
+  async searchAllRooms(@Req() req) {
+    return this.chatService.searchAllRooms();
+  }
 }
