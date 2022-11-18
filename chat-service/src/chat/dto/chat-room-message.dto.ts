@@ -1,9 +1,14 @@
 import { Expose, Type } from 'class-transformer';
-import { IsUUID, ValidateNested } from 'class-validator';
+import { IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 
 export class MessageType {
+  @Expose()
+  @IsUUID()
   sender_id: string;
+  @Expose()
+  @IsString()
   payload: string;
+  @IsOptional()
   created: string;
 }
 

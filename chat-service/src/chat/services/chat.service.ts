@@ -605,9 +605,20 @@ export class ChatService {
       where: {
         roomId,
       },
+      relations: ['messages'],
     });
 
-    return room.messages;
+    return {
+      messages: room.messages.map((message) => {
+        return {
+          room_msg_id: message.roomMsgId,
+          sender_id: message.senderId,
+          room_id: message.roomId,
+          payload: message.payload,
+          created: message.created,
+        };
+      }),
+    };
   }
 
   async getJoinedRooms(userId: string) {
@@ -615,7 +626,7 @@ export class ChatService {
       where: {
         userId,
       },
-      relations: ['ChatRoom'],
+      relations: ['room'],
     });
 
     return {
