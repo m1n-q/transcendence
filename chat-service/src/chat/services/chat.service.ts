@@ -585,12 +585,14 @@ export class ChatService {
     return {
       messages: result.map((message) => {
         const {
+          roomMsgId: room_msg_id,
           roomId: room_id,
           senderId: sender_id,
           payload,
           created,
         } = message;
         return {
+          room_msg_id,
           room_id,
           sender_id,
           payload,
