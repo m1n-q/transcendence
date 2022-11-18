@@ -69,9 +69,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('user_join_queue')
-  userJoinQueue(@ConnectedSocket() clientSocket: Socket) {
+  async userJoinQueue(@ConnectedSocket() clientSocket: Socket) {
     try {
-      this.updateUser(clientSocket);
+      await this.updateUser(clientSocket);
     } catch (e) {
       clientSocket.disconnect(true);
       return;
@@ -138,14 +138,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('client_ready_to_start')
-  clientReadyToStart(@ConnectedSocket() clientSocket: Socket) {
+  async clientReadyToStart(@ConnectedSocket() clientSocket: Socket) {
     const roomName = clientSocket['room_name'];
     if (this.games[roomName].renderReady === false) {
       this.games[roomName].renderReady = true;
     } else {
       this.server.to(`${roomName}`).emit('game_started');
       try {
-        this.startGame(roomName);
+        await this.startGame(roomName);
       } catch (e) {
         clientSocket.disconnect(true);
         return;
@@ -154,11 +154,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('user_leave_room')
-  userLeaveRoom(@ConnectedSocket() clientSocket: Socket) {
+  async userLeaveRoom(@ConnectedSocket() clientSocket: Socket) {
     const roomName = clientSocket['room_name'];
     clientSocket.leave(roomName);
     try {
-      this.updateUser(clientSocket);
+      await this.updateUser(clientSocket);
     } catch (e) {
       clientSocket.disconnect(true);
       return;
@@ -209,7 +209,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  startGame(roomName: string) {
+  async startGame(roomName: string) {
     this.renderInterval[roomName] = setInterval(() => {
       this.games[roomName].update();
       this.server
@@ -219,11 +219,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.server.to(`${roomName}`).emit('game_finished');
         if (this.games[roomName].isRank === true) {
           this.games[roomName].finishGame();
-          try {
-            this.updateGameResult(this.games[roomName]);
-          } catch (e) {
-            throw new WsException(e);
-          }
+          // try {
+          // await this.updateGameResult(this.games[roomName]);
+          // } catch (e) {
+          // throw new WsException(e);
+          // }
         }
         clearInterval(this.renderInterval[roomName]);
       }
