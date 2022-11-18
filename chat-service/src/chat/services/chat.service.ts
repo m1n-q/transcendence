@@ -30,7 +30,7 @@ import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
  *
  * distributed DB?
  * cron-job on ban/mute list?
- * 초대 기능 어떻게?
+ * 초대 기능
  */
 
 @Injectable()
@@ -572,16 +572,63 @@ export class ChatService {
 
   /*             TODO             */
 
-  async storeMessages(chatRoomMessageDto: ChatRoomMessageDto) {
-    // may need to sort message by created time
-    return chatRoomMessageDto;
+  async storeRoomMessages(chatRoomMessageDto: ChatRoomMessageDto) {
+    //NOTE: may need to sort message by created time : 일단 어디 기준으로 할지도 중요
+
+    const { room_id: roomId, messages } = chatRoomMessageDto;
+
+    const toSave = messages.map((message) => {
+      return { roomId, senderId: message.sender, payload: message.payload };
+    });
+    const result = await this.chatRoomMessageRepo.save(toSave);
+
+    return {
+      messages: result.map((message) => {
+        const {
+          roomId: room_id,
+          senderId: sender_id,
+          payload,
+          created,
+        } = message;
+        return {
+          room_id,
+          sender_id,
+          payload,
+          created,
+        };
+      }),
+    };
   }
 
-  async getAllMessages(roomId: string) {
-    const room = await this.chatRoomRepo.findOneBy({
-      roomId,
+  async getAllRoomMessages(roomId: string) {
+    const room = await this.chatRoomRepo.findOne({
+      where: {
+        roomId,
+      },
     });
 
     return room.messages;
+  }
+
+  async getJoinedRooms(userId: string) {
+    const userInRooms = await this.chatRoomUserRepo.find({
+      where: {
+        userId,
+      },
+      relations: ['ChatRoom'],
+    });
+
+    return {
+      rooms: userInRooms.map((userInRoom) => {
+        const room = userInRoom.room;
+        return {
+          room_id: room.roomId,
+          room_name: room.roomName,
+          room_owner_id: room.roomOwnerId,
+          room_access: room.roomAccess,
+          created: room.created,
+        };
+      }),
+    };
   }
 }

@@ -250,14 +250,39 @@ export class ChatRmqController {
     return this.chatService.searchAllRooms();
   }
 
-  /*             TODO             */
-  async storeMessages(
+  @RabbitRPC({
+    exchange: 'chat.d.x',
+    queue: 'chat.store.room.messages.q',
+    routingKey: 'req.to.chat.store.room.messages.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async storeRoomMessages(
     @RabbitRequest() req,
     @RabbitPayload() chatRoomMessageDto: ChatRoomMessageDto,
   ) {
-    return this.chatService.storeMessages(chatRoomMessageDto);
+    return this.chatService.storeRoomMessages(chatRoomMessageDto);
   }
-  async getAllMessages(@RabbitRequest() req, @RabbitPayload() roomId: string) {
-    return this.chatService.getAllMessages(roomId);
+
+  @RabbitRPC({
+    exchange: 'chat.d.x',
+    queue: 'chat.get.all.room.messages.q',
+    routingKey: 'req.to.chat.get.all.room.messages.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async getAllRoomMessages(
+    @RabbitRequest() req,
+    @RabbitPayload() roomId: string,
+  ) {
+    return this.chatService.getAllRoomMessages(roomId);
+  }
+
+  @RabbitRPC({
+    exchange: 'chat.d.x',
+    queue: 'chat.get.joined.rooms.q',
+    routingKey: 'req.to.chat.get.joined.rooms.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async getJoinedRooms(userId: string) {
+    return this.chatService.getJoinedRooms(userId);
   }
 }
