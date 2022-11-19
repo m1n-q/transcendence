@@ -20,11 +20,16 @@ import { RmqError } from '../../common/rmq/types/rmq-error';
 import { ChatRoomSetPasswordDto } from '../dto/chat-room-set-password.dto';
 import { ChatRoomUserDto } from '../dto/chat-room-user.dto';
 import { toRmqError } from '../../common/rmq/errors/to-rmq-error';
-import { UserNotInScopeError } from '../../common/rmq/errors/user-not-in-room.error';
+import { UserNotInScopeError } from '../../common/rmq/errors/user-not-in-scope.error';
 import { OwnerPrivileageError } from '../../common/rmq/errors/owner-privileage.error';
 import { ChatRoomSearchDto } from '../dto/chat-room-search.dto';
 import { ChatRoomAccessibilityDto } from '../dto/chat-room-accessibility.dto';
 import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { RmqEvent } from '../../common/rmq/types/rmq-event';
+import { BannedUserError } from '../../common/rmq/errors/banned-user.error';
+import { MutedUserError } from '../../common/rmq/errors/muted-user.error';
+import { InvalidPasswordError } from '../../common/rmq/errors/invalid-password.error';
 
 /*  TODO:
  *
@@ -38,6 +43,7 @@ export class ChatService {
   static readonly SALT = 10;
 
   constructor(
+    private readonly amqpConnection: AmqpConnection,
     private readonly dbConnection: DataSource,
     @InjectRepository(ChatRoom)
     private readonly chatRoomRepo: Repository<ChatRoom>,
@@ -50,6 +56,32 @@ export class ChatService {
     @InjectRepository(ChatRoomMuteList)
     private readonly chatRoomMuteListRepo: Repository<ChatRoomMuteList>,
   ) {}
+
+  roomTX(roomId: string) {
+    return `chat.${roomId}.t.x`;
+  }
+
+  roomRK(eventName: string, roomId: string) {
+    return `event.on.chat.${eventName}.${roomId}.rk`;
+  }
+
+  publishEvent(
+    roomId: string,
+    evType: string,
+    recvUsers: string[],
+    payload: string,
+  ) {
+    const event: RmqEvent = {
+      recvUsers,
+      payload,
+      created: new Date(),
+    };
+    this.amqpConnection.publish(
+      this.roomTX(roomId),
+      this.roomRK(evType, roomId),
+      event,
+    );
+  }
 
   async findRoom(roomId: string) {
     const room = await this.chatRoomRepo.findOneBy({
@@ -211,21 +243,11 @@ export class ChatService {
       roomId,
       userId,
     });
-    if (bannedUser)
-      throw new RmqError({
-        code: 403,
-        message: 'banned user',
-        where: 'chat-service',
-      });
+    if (bannedUser) throw new BannedUserError();
 
     if (room.roomAccess == 'protected') {
       const matches = bcrypt.compareSync(roomPassword, room.roomPassword);
-      if (!matches)
-        throw new RmqError({
-          code: 401,
-          message: 'invalid password',
-          where: 'chat-service',
-        });
+      if (!matches) throw new InvalidPasswordError();
     }
 
     try {
@@ -414,6 +436,7 @@ export class ChatService {
       await q.release();
     }
 
+    this.publishEvent(roomId, 'ban', [userId], `You've been BANNED!`);
     return { affected: 1 };
   }
 
@@ -568,18 +591,13 @@ export class ChatService {
 
   async storeRoomMessage(chatRoomMessageDto: ChatRoomMessageDto) {
     const { room_id: roomId, message } = chatRoomMessageDto;
-    console.log(message);
-
-    const muted = await this.chatRoomMuteListRepo.findOneBy({
+    const userInRoom = await this.chatRoomUserRepo.findOneBy({
       roomId,
       userId: message.sender_id,
     });
-    if (muted)
-      throw new RmqError({
-        code: 403,
-        message: 'muted user',
-        where: 'chat-service',
-      });
+    if (!userInRoom) throw new UserNotInScopeError();
+    if (await this.chatRoomMuteListRepo.findOneBy(userInRoom))
+      throw new MutedUserError();
 
     const result = await this.chatRoomMessageRepo.save({
       roomId,
