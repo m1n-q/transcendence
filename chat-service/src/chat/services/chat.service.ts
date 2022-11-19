@@ -371,8 +371,6 @@ export class ChatService {
     return { affected: 1 };
   }
 
-  /* NOTE: may go to in-memory DB */
-
   //XXX: RoomExistsGuard, AdminGuard
   async banUser(room: ChatRoom, chatRoomPenaltyDto: ChatRoomPenaltyDto) {
     const {
@@ -568,37 +566,19 @@ export class ChatService {
     };
   }
 
-  /*           NOTE END           */
+  async storeRoomMessage(chatRoomMessageDto: ChatRoomMessageDto) {
+    const { room_id: roomId, message } = chatRoomMessageDto;
+    const result = await this.chatRoomMessageRepo.save(message);
 
-  /*             TODO             */
-
-  async storeRoomMessages(chatRoomMessageDto: ChatRoomMessageDto) {
-    //NOTE: may need to sort message by created time : 일단 어디 기준으로 할지도 중요
-
-    const { room_id: roomId, messages } = chatRoomMessageDto;
-
-    const toSave = messages.map((message) => {
-      return { roomId, senderId: message.sender_id, payload: message.payload };
-    });
-    const result = await this.chatRoomMessageRepo.save(toSave);
-
+    result;
     return {
-      messages: result.map((message) => {
-        const {
-          roomMsgId: room_msg_id,
-          roomId: room_id,
-          senderId: sender_id,
-          payload,
-          created,
-        } = message;
-        return {
-          room_msg_id,
-          room_id,
-          sender_id,
-          payload,
-          created,
-        };
-      }),
+      message: {
+        room_msg_id: result.roomMsgId,
+        room_id: result.roomId,
+        sender_id: result.senderId,
+        payload: result.payload,
+        created: result.created,
+      },
     };
   }
 

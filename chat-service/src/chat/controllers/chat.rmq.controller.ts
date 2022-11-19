@@ -252,15 +252,15 @@ export class ChatRmqController {
 
   @RabbitRPC({
     exchange: 'chat.d.x',
-    queue: 'chat.store.room.messages.q',
-    routingKey: 'req.to.chat.store.room.messages.rk',
+    queue: 'chat.store.room.message.q',
+    routingKey: 'req.to.chat.store.room.message.rk',
     errorHandler: RmqErrorHandler,
   })
-  async storeRoomMessages(
+  async storeRoomMessage(
     @RabbitRequest() req,
     @RabbitPayload() chatRoomMessageDto: ChatRoomMessageDto,
   ) {
-    return this.chatService.storeRoomMessages(chatRoomMessageDto);
+    return this.chatService.storeRoomMessage(chatRoomMessageDto);
   }
 
   @RabbitRPC({
