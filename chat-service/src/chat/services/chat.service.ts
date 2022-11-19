@@ -213,7 +213,7 @@ export class ChatService {
     });
     if (bannedUser)
       throw new RmqError({
-        code: 401,
+        code: 403,
         message: 'banned user',
         where: 'chat-service',
       });
@@ -568,6 +568,7 @@ export class ChatService {
 
   async storeRoomMessage(chatRoomMessageDto: ChatRoomMessageDto) {
     const { room_id: roomId, message } = chatRoomMessageDto;
+    console.log(message);
 
     const muted = await this.chatRoomMuteListRepo.findOneBy({
       roomId,
@@ -575,12 +576,16 @@ export class ChatService {
     });
     if (muted)
       throw new RmqError({
-        code: 401,
+        code: 403,
         message: 'muted user',
         where: 'chat-service',
       });
 
-    const result = await this.chatRoomMessageRepo.save(message);
+    const result = await this.chatRoomMessageRepo.save({
+      roomId,
+      senderId: message.sender_id,
+      payload: message.payload,
+    });
     return {
       message: {
         room_msg_id: result.roomMsgId,
