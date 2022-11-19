@@ -22,22 +22,17 @@ import { v4 } from 'uuid';
 import { ChatService } from './services/chat.service';
 import { MessageType } from './dto/chat-room-message.dto';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-
-class ChatMessageFromClient {
-  room: string;
-  payload: string;
-}
-
-class ChatMessageFromServer {
-  constructor(
-    private readonly sender: UserInfo,
-    private readonly payload: string,
-  ) {}
-}
-
-class ChatAnnouncementFromServer {
-  constructor(private readonly payload: string) {}
-}
+import {
+  EventCommand,
+  CommandFactory,
+  RoutingKeyParams,
+} from './types/chat-event-command';
+import {
+  ChatAnnouncementFromServer,
+  ChatMessageFormat,
+  ChatMessageFromClient,
+  ChatMessageFromServer,
+} from './types/chat-message-format';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9999, { cors: true })
@@ -45,7 +40,8 @@ export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer()
-  private server: Server;
+  public server: Server;
+  public commandFactory: CommandFactory;
   private serverId: string;
   private logger = new Logger('ChatGateway');
 
@@ -57,6 +53,7 @@ export class ChatGateway
   ) {
     /* gen UUID to distinguish same roomId queue at other WS */
     this.serverId = v4();
+    this.commandFactory = new CommandFactory(this);
   }
 
   //@======================================================================@//
@@ -102,6 +99,14 @@ export class ChatGateway
   //*======================================================================*//
   //*                         socket.io message emitter                    *//
   //*======================================================================*//
+
+  send(
+    evName: string,
+    socket: Socket | BroadcastOperator<DefaultEventsMap, null>,
+    payload: ChatMessageFormat,
+  ) {
+    socket.emit(evName, payload);
+  }
 
   announce(
     socket: Socket | BroadcastOperator<DefaultEventsMap, null>,
@@ -218,45 +223,11 @@ export class ChatGateway
   /* handler for room queue */
   async chatRoomEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
     const re = /(?<=event.on.chat.)(.*)(?=.rk)/;
-    const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
-    const { 0: evType, 1: room } = params;
+    const parsed = re.exec(rawMsg.fields.routingKey)[0].split('.');
+    const params: RoutingKeyParams = { evType: parsed[0], roomId: parsed[1] };
 
-    const clientSockets: any[] = await this.server.in(room).fetchSockets();
-    switch (evType) {
-      /* handle room message from other instances */
-      case 'message':
-        const senderId = ev.payload['sender']['user_id'];
-        for (const clientSocket of clientSockets) {
-          if (this.getUser(clientSocket).user_id == senderId)
-            this.echoMessage(clientSocket, ev.payload);
-          else this.sendMessage(clientSocket, ev.payload);
-        }
-        break;
-
-      case 'announcement':
-        this.announce(
-          this.server.in(room),
-          new ChatAnnouncementFromServer(ev.payload),
-        );
-        break;
-
-      case 'ban':
-        const userId = ev.recvUsers[0];
-        const sockId = await this.getConnSocketId(userId);
-        const clientSocket = this.getClientSocket(sockId);
-        if (clientSocket) {
-          this.announce(
-            clientSocket,
-            new ChatAnnouncementFromServer(ev.payload),
-          );
-          clientSocket.leave(room);
-          clientSocket.disconnect(true);
-        }
-        break;
-
-      default:
-        this.logger.warn(`UNKNOWN ROOM EVENT: ${evType}`);
-    }
+    const command: EventCommand = this.commandFactory.getCommand(ev, params);
+    if (command) await command.execute(this);
   }
 
   //#======================================================================#//
