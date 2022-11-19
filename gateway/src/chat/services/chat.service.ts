@@ -151,9 +151,9 @@ export class ChatService {
     );
   }
 
-  async storeRoomMessages(chatRoomMessageDto: ChatRoomMessageDto) {
+  async storeRoomMessage(chatRoomMessageDto: ChatRoomMessageDto) {
     return this.requestToChatService(
-      this.RK('req', 'chat.store.messages'),
+      this.RK('req', 'chat.store.message'),
       chatRoomMessageDto,
     );
   }

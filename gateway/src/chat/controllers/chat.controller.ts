@@ -146,14 +146,14 @@ export class ChatController {
     });
   }
 
-  @Post('room/:roomId/messages')
-  async storeMessages(
+  @Post('room/:roomId/message')
+  async storeMessage(
     @Req() req,
     @Param('roomId', new ParseUUIDPipe()) roomId,
     @Body() chatRoomMessageDto: ChatRoomMessageDto,
   ) {
     chatRoomMessageDto.room_id = roomId;
-    return this.chatService.storeRoomMessages(chatRoomMessageDto);
+    return this.chatService.storeRoomMessage(chatRoomMessageDto);
   }
 
   @Get('room/:roomId/messages')
