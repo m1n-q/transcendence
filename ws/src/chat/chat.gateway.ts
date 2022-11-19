@@ -40,8 +40,7 @@ export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer()
-  public server: Server;
-  public commandFactory: CommandFactory;
+  private server: Server;
   private serverId: string;
   private logger = new Logger('ChatGateway');
 
@@ -50,10 +49,10 @@ export class ChatGateway
     private readonly amqpConnection: AmqpConnection,
     private readonly redisService: RedisService,
     private readonly chatService: ChatService,
+    private readonly commandFactory: CommandFactory,
   ) {
     /* gen UUID to distinguish same roomId queue at other WS */
     this.serverId = v4();
-    this.commandFactory = new CommandFactory(this);
   }
 
   //@======================================================================@//
@@ -280,5 +279,9 @@ export class ChatGateway
     /* bind user info to socket */
     clientSocket['user_info'] = user;
     return user;
+  }
+
+  getServer() {
+    return this.server;
   }
 }

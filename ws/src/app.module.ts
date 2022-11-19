@@ -6,6 +6,7 @@ import { NotificationGateway } from './notification/notification.gateway';
 import { ChatGateway } from './chat/chat.gateway';
 import { RedisModule } from './redis-module/redis.module';
 import { ChatService } from './chat/services/chat.service';
+import { CommandFactory } from './chat/types/chat-event-command';
 
 @Module({
   imports: [
@@ -25,6 +26,12 @@ import { ChatService } from './chat/services/chat.service';
     RedisModule,
   ],
   controllers: [],
-  providers: [AuthService, NotificationGateway, ChatGateway, ChatService],
+  providers: [
+    AuthService,
+    NotificationGateway,
+    ChatGateway,
+    ChatService,
+    CommandFactory,
+  ],
 })
 export class AppModule {}

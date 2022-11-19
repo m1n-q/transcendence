@@ -2,13 +2,6 @@ import { RmqEvent } from '../../common/rmq/types/rmq-event';
 import { ChatGateway } from '../chat.gateway';
 import { ChatAnnouncementFromServer } from './chat-message-format';
 
-/* TODO
- *
- * Separate chat message format classes
- * instead dependency on chatGateway
- *
- */
-
 export type RoutingKeyParams = { evType: string; roomId: string };
 export interface EventCommand {
   ev: RmqEvent;
@@ -48,7 +41,7 @@ export class AnnouncementCommand implements EventCommand {
   }
   async execute(chatGateway: ChatGateway) {
     chatGateway.announce(
-      chatGateway.server.in(this.params.roomId),
+      chatGateway.getServer().in(this.params.roomId),
       new ChatAnnouncementFromServer(this.ev.payload),
     );
   }
@@ -62,7 +55,8 @@ export class MessageCommand implements EventCommand {
     this.params = params;
   }
   async execute(chatGateway: ChatGateway) {
-    const clientSockets: any[] = await chatGateway.server
+    const clientSockets: any[] = await chatGateway
+      .getServer()
       .in(this.params.roomId)
       .fetchSockets();
     /* handle room message from other instances */
@@ -76,8 +70,6 @@ export class MessageCommand implements EventCommand {
 }
 
 export class CommandFactory {
-  constructor(private readonly chatGateway: ChatGateway) {}
-
   getCommand(ev: RmqEvent, params: RoutingKeyParams): EventCommand {
     switch (params.evType) {
       case 'message':
