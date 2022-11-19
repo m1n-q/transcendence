@@ -568,9 +568,19 @@ export class ChatService {
 
   async storeRoomMessage(chatRoomMessageDto: ChatRoomMessageDto) {
     const { room_id: roomId, message } = chatRoomMessageDto;
-    const result = await this.chatRoomMessageRepo.save(message);
 
-    result;
+    const muted = await this.chatRoomMuteListRepo.findOneBy({
+      roomId,
+      userId: message.sender_id,
+    });
+    if (muted)
+      throw new RmqError({
+        code: 401,
+        message: 'muted user',
+        where: 'chat-service',
+      });
+
+    const result = await this.chatRoomMessageRepo.save(message);
     return {
       message: {
         room_msg_id: result.roomMsgId,
