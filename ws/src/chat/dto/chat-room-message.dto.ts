@@ -11,7 +11,7 @@ export class ChatRoomMessageDto {
   room_id: string;
 
   @Expose()
-  @ValidateNested({ each: true })
+  @ValidateNested()
   @Type(() => MessageType)
-  messages: MessageType[];
+  message: MessageType;
 }

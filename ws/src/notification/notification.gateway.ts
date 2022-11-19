@@ -31,43 +31,9 @@ export class NotificationGateway
     private readonly amqpConnection: AmqpConnection,
   ) {}
 
-  makeUserKey(user_id: string) {
-    return 'user:' + user_id;
-  }
-
-  getClientSocket(clientId: string): Socket {
-    return this.server.sockets.sockets.get(clientId);
-  }
-
-  getUser(clientSocket: Socket): UserInfo {
-    return clientSocket['user_info'];
-  }
-  async bindUser(clientSocket: Socket) {
-    /* get user info */
-    const access_token = clientSocket.handshake.auth['access_token'];
-    let user;
-    try {
-      user = await this.authService.verifyJwt(access_token);
-    } catch (e) {
-      // TODO: if e.code === 401, refresh
-      throw new WsException(e);
-    }
-
-    /* bind user info to socket */
-    clientSocket['user_info'] = user;
-    return user;
-  }
-
-  async ntfEventHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
-    const re = /(?<=event.on.notification.)(.*)(?=.rk)/;
-    const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
-    const { 0: evType, 1: userId } = params;
-
-    const clientSock: Socket = this.getClientSocket(
-      await this.redisService.hget(this.makeUserKey(userId), 'ntf_sock'),
-    );
-    clientSock.emit('notification', evType + ': ' + msg.payload);
-  }
+  //@======================================================================@//
+  //@                             Connection                               @//
+  //@======================================================================@//
 
   @UseFilters(new WsExceptionsFilter())
   async handleConnection(
@@ -85,17 +51,30 @@ export class NotificationGateway
 
     this.logger.debug(`< ${user.user_id} > connected`);
 
-    /* create queue per user and bind handler */
-    this.amqpConnection.createSubscriber(
-      this.ntfEventHandler,
+    /* queue per user */
+    const res = await this.amqpConnection.channel.assertQueue(
+      this.userQ(user.user_id),
       {
-        exchange: process.env.RMQ_NOTIFICATION_TOPIC,
-        queue: `notification.${user.user_id}.q`,
-        routingKey: `event.on.notification.*.${user.user_id}.rk`,
-        errorHandler: (c, m, e) => this.logger.error(e),
+        autoDelete: true /* delete if no handler */,
       },
-      'ntfEventHandler',
     );
+
+    /* only one consumer(handler) per room */
+    if (!res.consumerCount) {
+      this.amqpConnection.createSubscriber(
+        this.ntfEventHandler,
+        {
+          exchange: process.env.RMQ_NOTIFICATION_TOPIC,
+          queue: this.userQ(user.user_id),
+          routingKey: this.userRK(user.user_id),
+          errorHandler: (c, m, e) => this.logger.error(e),
+          queueOptions: {
+            autoDelete: true,
+          },
+        },
+        'ntfEventHandler',
+      );
+    }
 
     /* bind user info to socket */
     clientSocket['user_info'] = user;
@@ -107,12 +86,9 @@ export class NotificationGateway
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    let user: UserInfo;
+    const user: UserInfo = this.getUser(clientSocket);
 
-    try {
-      user = this.getUser(clientSocket);
-      console.log('handle disconnect:', user);
-    } catch (e) {
+    if (!user) {
       clientSocket.disconnect(true);
       return;
     }
@@ -120,8 +96,64 @@ export class NotificationGateway
     //BUG: Cannot read properties of undefined (reading 'user_id')
     this.logger.debug(`< ${user.user_id} > disconnected`);
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'ntf_sock');
-    await this.amqpConnection.channel.deleteQueue(
-      `notification.${user.user_id}.q`,
+    await this.amqpConnection.channel.deleteQueue(this.userQ(user.user_id));
+  }
+
+  //*======================================================================*//
+  //*                           socket.io handler                          *//
+  //*======================================================================*//
+
+  //'======================================================================'//
+  //'                           RabbitMQ handler                           '//
+  //'======================================================================'//
+
+  async ntfEventHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
+    const re = /(?<=event.on.notification.)(.*)(?=.rk)/;
+    const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
+    const { 0: evType, 1: userId } = params;
+
+    const clientSock: Socket = this.getClientSocket(
+      await this.redisService.hget(this.makeUserKey(userId), 'ntf_sock'),
     );
+    clientSock.emit('notification', evType + ': ' + msg.payload);
+  }
+
+  //#======================================================================#//
+  //#                                ETC                                   #//
+  //#======================================================================#//
+
+  makeUserKey(user_id: string) {
+    return 'user:' + user_id;
+  }
+
+  getClientSocket(clientId: string): Socket {
+    return this.server.sockets.sockets.get(clientId);
+  }
+
+  getUser(clientSocket: Socket): UserInfo {
+    return clientSocket['user_info'];
+  }
+
+  userQ(userId: string) {
+    return `notification.user.${userId}.q`;
+  }
+
+  userRK(userId: string) {
+    return `event.on.notification.*.${userId}.rk`;
+  }
+
+  async bindUser(clientSocket: Socket) {
+    /* get user info */
+    const access_token = clientSocket.handshake.auth['access_token'];
+    let user;
+    try {
+      user = await this.authService.verifyJwt(access_token);
+    } catch (e) {
+      throw new WsException(e);
+    }
+
+    /* bind user info to socket */
+    clientSocket['user_info'] = user;
+    return user;
   }
 }

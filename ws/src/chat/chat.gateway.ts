@@ -4,12 +4,13 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
   WsException,
 } from '@nestjs/websockets';
-import { Socket, Server } from 'socket.io';
+import { Socket, Server, BroadcastOperator } from 'socket.io';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { ConsumeMessage } from 'amqplib';
 import { RmqEvent } from '../common/rmq/types/rmq-event';
@@ -20,6 +21,7 @@ import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { v4 } from 'uuid';
 import { ChatService } from './services/chat.service';
 import { MessageType } from './dto/chat-room-message.dto';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
 class ChatMessageFromClient {
   room: string;
@@ -33,9 +35,15 @@ class ChatMessageFromServer {
   ) {}
 }
 
+class ChatAnnouncementFromServer {
+  constructor(private readonly payload: string) {}
+}
+
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9999, { cors: true })
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   private server: Server;
   private serverId: string;
@@ -47,13 +55,24 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly redisService: RedisService,
     private readonly chatService: ChatService,
   ) {
-    /* gen UUID to distinguish same room name queue */
+    /* gen UUID to distinguish same roomId queue at other WS */
     this.serverId = v4();
   }
 
   //@======================================================================@//
   //@                             Connection                               @//
   //@======================================================================@//
+
+  async afterInit(server: Server) {
+    /* when last user of chat-room on this ws-instance exit, delete room-queue */
+    server.of('/').adapter.on('delete-room', async (room) => {
+      try {
+        await this.amqpConnection.channel.deleteQueue(this.roomQ(room));
+      } catch (e) {
+        console.log(`Failed to delete ${this.roomQ(room)}`);
+      }
+    });
+  }
 
   async handleConnection(
     @ConnectedSocket() clientSocket: Socket,
@@ -66,42 +85,46 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       clientSocket.disconnect(true);
       return;
     }
-
-    //NOTE: UNUSED, may used for DM
-    /* create queue per user and bind handler */
-    this.amqpConnection.createSubscriber(
-      (msg: RmqEvent, rawMsg) => this.chatUserEventHandler(msg, rawMsg),
-      {
-        queue: this.userQ(user.user_id),
-        errorHandler: (c, m, e) => this.logger.error(e),
-      },
-      'chatUserEventHandler',
-    );
-
     /* map connected socket ID with user ID */
-    await this.redisService.hsetJson(this.makeUserKey(user.user_id), {
-      chat_sock: clientSocket.id,
-    });
+    await this.setConnSocketId(user.user_id, clientSocket.id);
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    let user: UserInfo;
+    const user: UserInfo = this.getUser(clientSocket);
 
-    try {
-      user = this.getUser(clientSocket);
-      console.log('handle disconnect:', user);
-    } catch (e) {
+    if (!user) {
       clientSocket.disconnect(true);
       return;
     }
-
-    //BUG: Cannot read properties of undefined (reading 'user_id')
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'chat_sock');
-    await this.amqpConnection.channel.deleteQueue(this.userQ(user.user_id));
   }
 
   //*======================================================================*//
-  //*                           socket.io handler                          *//
+  //*                         socket.io message emitter                    *//
+  //*======================================================================*//
+
+  announce(
+    socket: Socket | BroadcastOperator<DefaultEventsMap, null>,
+    payload: ChatAnnouncementFromServer,
+  ) {
+    socket.emit('announcement', payload);
+  }
+
+  sendMessage(
+    socket: Socket | BroadcastOperator<DefaultEventsMap, null>,
+    payload: ChatMessageFromServer,
+  ) {
+    socket.emit('subscribe', payload);
+  }
+  echoMessage(
+    socket: Socket | BroadcastOperator<DefaultEventsMap, null>,
+    payload: ChatMessageFromServer,
+  ) {
+    socket.emit('subscribe_self', payload);
+  }
+
+  //*======================================================================*//
+  //*                        socket.io message handler                     *//
   //*======================================================================*//
 
   @SubscribeMessage('join')
@@ -122,19 +145,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
 
     /* queue per room-event */
-    await this.amqpConnection.createSubscriber(
-      (msg: RmqEvent, rawMsg) => this.chatRoomEventHandler(msg, rawMsg), // to bind "this", need arrow function
+    const roomQueue = await this.amqpConnection.channel.assertQueue(
+      this.roomQ(room),
       {
-        exchange: this.roomTX(room),
-        queue: this.roomQ(room),
-        routingKey: [
-          this.roomRK('message', room),
-          /* other event may be added */
-        ],
-        errorHandler: (c, m, e) => this.logger.error(e),
+        autoDelete: true /* delete if no handler */,
       },
-      'chatRoomEventHandler',
     );
+    /* only one consumer(handler) per room */
+    if (!roomQueue.consumerCount) {
+      await this.amqpConnection.createSubscriber(
+        (msg: RmqEvent, rawMsg) => this.chatRoomEventHandler(msg, rawMsg), // to bind "this", need arrow function
+        {
+          exchange: this.roomTX(room),
+          queue: this.roomQ(room) /* subscriber */,
+          routingKey: [
+            this.roomRK('message', room),
+            this.roomRK('announcement', room),
+            this.roomRK('ban', room),
+          ],
+          errorHandler: (c, m, e) => this.logger.error(e),
+          queueOptions: {
+            autoDelete: true,
+          },
+        },
+        'chatRoomEventHandler',
+      );
+    }
   }
 
   @SubscribeMessage('publish')
@@ -150,11 +186,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       payload: message.payload,
       created: null,
     };
+
     /* NOTE: sync or async? */
-    await this.chatService.storeRoomMessages({
-      room_id: message.room,
-      messages: [toStore],
-    });
+    try {
+      await this.chatService.storeRoomMessage({
+        room_id: message.room,
+        message: toStore,
+      });
+    } catch (e) {
+      if (e.status === 403)
+        this.announce(
+          clientSocket,
+          new ChatAnnouncementFromServer(`you've been muted`),
+        );
+
+      return;
+    }
 
     /* To all WS instances */
     this.amqpConnection.publish(
@@ -165,7 +212,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   //'======================================================================'//
-  //'                           RabbitMQ handler                           '//
+  //'                        RabbitMQ event handler                        '//
   //'======================================================================'//
 
   /* handler for room queue */
@@ -173,55 +220,68 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const re = /(?<=event.on.chat.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const { 0: evType, 1: room } = params;
-    const senderId = ev.payload['sender']['user_id'];
 
+    const clientSockets: any[] = await this.server.in(room).fetchSockets();
     switch (evType) {
       /* handle room message from other instances */
       case 'message':
-        const clientSockets: any[] = await this.server.in(room).fetchSockets();
+        const senderId = ev.payload['sender']['user_id'];
         for (const clientSocket of clientSockets) {
           if (this.getUser(clientSocket).user_id == senderId)
-            clientSocket.emit('subscribe_self', ev.payload);
-          else clientSocket.emit('subscribe', ev.payload);
+            this.echoMessage(clientSocket, ev.payload);
+          else this.sendMessage(clientSocket, ev.payload);
+        }
+        break;
+
+      case 'announcement':
+        this.announce(
+          this.server.in(room),
+          new ChatAnnouncementFromServer(ev.payload),
+        );
+        break;
+
+      case 'ban':
+        const userId = ev.recvUsers[0];
+        const sockId = await this.getConnSocketId(userId);
+        const clientSocket = this.getClientSocket(sockId);
+        if (clientSocket) {
+          this.announce(
+            clientSocket,
+            new ChatAnnouncementFromServer(ev.payload),
+          );
+          clientSocket.leave(room);
+          clientSocket.disconnect(true);
         }
         break;
 
       default:
-        this.logger.warn(`UNKNOWN ROOMT EVENT: ${evType}`);
+        this.logger.warn(`UNKNOWN ROOM EVENT: ${evType}`);
     }
-  }
-
-  //NOTE: UNUSED, may used for DM
-  /* handler for user queue */
-  async chatUserEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
-    const re = /(?<=event.on.chat.)(.*)(?=.rk)/;
-    const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
-    const { 0: evType, 1: userId } = params;
-
-    const clientSock: Socket = this.getClientSocket(
-      await this.redisService.hget(this.makeUserKey(userId), 'chat_sock'),
-    );
-    // clientSock.emit('subscribe', evType + ': ' + ev.payload);
   }
 
   //#======================================================================#//
   //#                                ETC                                   #//
   //#======================================================================#//
 
-  makeUserKey(user_id: string) {
-    return 'user:' + user_id;
+  makeUserKey(userId: string) {
+    return 'user:' + userId;
   }
 
-  getClientSocket(clientId: string): Socket {
-    return this.server.sockets.sockets.get(clientId);
+  async setConnSocketId(userId: string, sockId: string) {
+    await this.redisService.hsetJson(this.makeUserKey(userId), {
+      chat_sock: sockId,
+    });
+  }
+  async getConnSocketId(userId: string) {
+    return this.redisService.hget(this.makeUserKey(userId), 'chat_sock');
+  }
+
+  getClientSocket(sockId: string): Socket {
+    return this.server.sockets.sockets.get(sockId);
   }
 
   getUser(clientSocket: Socket): UserInfo {
     return clientSocket['user_info'];
-  }
-
-  userQ(userId: string) {
-    return `chat.user.${userId}.q`;
   }
 
   roomQ(roomId: string) {
