@@ -45,6 +45,11 @@ export class ChatController {
     });
   }
 
+  @Get('room/:roomId/user')
+  async getRoomUsers(@Req() req, @Param('roomId', new ParseUUIDPipe()) roomId) {
+    return this.chatService.getRoomUsers({ room_id: roomId });
+  }
+
   @Post('room/:roomId/join')
   async joinRoom(
     @Req() req,
@@ -161,7 +166,7 @@ export class ChatController {
     @Req() req,
     @Param('roomId', new ParseUUIDPipe()) roomId,
   ) {
-    return this.chatService.getAllRoomMessages(roomId);
+    return this.chatService.getAllRoomMessages({ room_id: roomId });
   }
 
   @Put('room/:roomId/access')

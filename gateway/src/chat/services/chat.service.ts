@@ -17,6 +17,7 @@ import { ChatRoomUserDto } from '../dto/chat-room-user.dto';
 import { ChatUserRoleDto } from '../dto/chat-user-role.dto';
 import { ChatRoomAdminCommandDto } from '../dto/chat-room-admin-command.dto';
 import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
+import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
 
 @Injectable()
 export class ChatService {
@@ -158,10 +159,10 @@ export class ChatService {
     );
   }
 
-  async getAllRoomMessages(roomId: string) {
+  async getAllRoomMessages(chatRoomIdDto: ChatRoomIdDto) {
     return this.requestToChatService(
       this.RK('req', 'chat.get.all.room.messages'),
-      roomId,
+      chatRoomIdDto,
     );
   }
 
@@ -169,6 +170,13 @@ export class ChatService {
     return this.requestToChatService(
       this.RK('req', 'chat.get.joined.rooms'),
       userId,
+    );
+  }
+
+  async getRoomUsers(chatRoomIdDto: ChatRoomIdDto) {
+    return this.requestToChatService(
+      this.RK('req', 'chat.get.room.users'),
+      chatRoomIdDto,
     );
   }
 }
