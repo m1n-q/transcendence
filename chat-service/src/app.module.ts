@@ -26,6 +26,8 @@ import { ChatRoomMuteList } from './common/entities/chat-room-mute-list.entity';
         },
       ],
       enableControllerDiscovery: true,
+      connectionInitOptions: { timeout: 20000 },
+      defaultRpcTimeout: 20000,
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
