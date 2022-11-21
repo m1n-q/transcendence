@@ -57,6 +57,7 @@ export class ChatRmqController {
     return await this.chatService.createRoom(chatRoomCreationDto);
   }
 
+  @UseGuards(RoomExistsGuard)
   @RabbitRPC({
     exchange: 'chat.d.x',
     queue: 'chat.get.room.users.q',
@@ -285,9 +286,9 @@ export class ChatRmqController {
   })
   async getAllRoomMessages(
     @RabbitRequest() req,
-    @RabbitPayload() roomId: string,
+    @RabbitPayload() chatRoomIdDto: ChatRoomIdDto,
   ) {
-    return this.chatService.getAllRoomMessages(roomId);
+    return this.chatService.getAllRoomMessages(chatRoomIdDto);
   }
 
   @RabbitRPC({

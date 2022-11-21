@@ -31,6 +31,10 @@ import { BannedUserError } from '../../common/rmq/errors/banned-user.error';
 import { MutedUserError } from '../../common/rmq/errors/muted-user.error';
 import { InvalidPasswordError } from '../../common/rmq/errors/invalid-password.error';
 import { ChatEventType } from '../chat-event.type';
+import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
+import { UserInfo, UserProfile } from '../../user-info';
+import { plainToClass, plainToInstance } from 'class-transformer';
+import { User } from '../../common/entities/user.entity';
 
 /*  TODO:
  *
@@ -166,12 +170,25 @@ export class ChatService {
   }
 
   async getRoomUsers(room: ChatRoom) {
-    const usersInRoom = await this.chatRoomUserRepo.findBy({
-      room,
+    const usersInRoom = await this.chatRoomUserRepo.find({
+      where: {
+        roomId: room.roomId,
+      },
+      relations: ['user'],
     });
 
+    const userProfiles = usersInRoom.map((userInRoom) => {
+      const userProfile = plainToInstance(UserProfile, userInRoom.user, {
+        excludeExtraneousValues: true,
+      });
+      if (room.roomOwnerId === userProfile.user_id) userInRoom.role = 'owner';
+      return {
+        role: userInRoom.role,
+        user: userProfile,
+      };
+    });
     return {
-      users: usersInRoom,
+      users: userProfiles,
     };
   }
 
@@ -632,10 +649,10 @@ export class ChatService {
     };
   }
 
-  async getAllRoomMessages(roomId: string) {
+  async getAllRoomMessages(chatRoomIdDto: ChatRoomIdDto) {
     const room = await this.chatRoomRepo.findOne({
       where: {
-        roomId,
+        roomId: chatRoomIdDto.room_id,
       },
       relations: ['messages'],
     });
