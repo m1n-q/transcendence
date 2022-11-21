@@ -28,6 +28,7 @@ import { ChatRoomSearchDto } from '../dto/chat-room-search.dto';
 import { ChatRoomAccessibilityDto } from '../dto/chat-room-accessibility.dto';
 import { ChatRoomAdminCommandDto } from '../dto/chat-room-admin-command.dto';
 import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
+import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
 
 @UseInterceptors(RmqResponseInterceptor)
 @UsePipes(
@@ -54,6 +55,19 @@ export class ChatRmqController {
     @RabbitPayload() chatRoomCreationDto: ChatRoomCreationDto,
   ) {
     return await this.chatService.createRoom(chatRoomCreationDto);
+  }
+
+  @RabbitRPC({
+    exchange: 'chat.d.x',
+    queue: 'chat.get.room.users.q',
+    routingKey: 'req.to.chat.get.room.users.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async getRoomUsers(
+    @RabbitRequest() req,
+    @RabbitPayload() chatRoomIdDto: ChatRoomIdDto,
+  ) {
+    return await this.chatService.getRoomUsers(req.room);
   }
 
   @UseGuards(RoomExistsGuard, OwnerGuard)

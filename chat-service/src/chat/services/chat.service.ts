@@ -30,6 +30,7 @@ import { RmqEvent } from '../../common/rmq/types/rmq-event';
 import { BannedUserError } from '../../common/rmq/errors/banned-user.error';
 import { MutedUserError } from '../../common/rmq/errors/muted-user.error';
 import { InvalidPasswordError } from '../../common/rmq/errors/invalid-password.error';
+import { ChatEventType } from '../chat-event.type';
 
 /*  TODO:
  *
@@ -67,7 +68,7 @@ export class ChatService {
 
   publishEvent(
     roomId: string,
-    evType: string,
+    evType: ChatEventType,
     recvUsers: string[],
     payload: string,
   ) {
@@ -161,6 +162,16 @@ export class ChatService {
           created: room.created,
         };
       }),
+    };
+  }
+
+  async getRoomUsers(room: ChatRoom) {
+    const usersInRoom = await this.chatRoomUserRepo.findBy({
+      room,
+    });
+
+    return {
+      users: usersInRoom,
     };
   }
 
@@ -364,6 +375,12 @@ export class ChatService {
     } catch (e) {
       throw toRmqError(e);
     }
+    this.publishEvent(
+      room.roomId,
+      'announcement',
+      [],
+      `room accessibility changed to ${room.roomAccess}`,
+    );
     return { affected: 1 };
   }
 
