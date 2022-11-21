@@ -25,7 +25,7 @@ export class RmqResponseInterceptor<T>
         let res;
         if (data instanceof RmqError) res = new RmqResponse(data, false);
         else res = new RmqResponse(data);
-        console.log('IN RmqResponseInterceptor: ', res);
+        // console.log('IN RmqResponseInterceptor: ', res);
         return res;
       }),
     );
