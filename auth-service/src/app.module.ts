@@ -31,6 +31,8 @@ import { AuthRmqController } from './auth/controllers/auth.rmq.controller';
         },
       ],
       enableControllerDiscovery: true,
+      connectionInitOptions: { timeout: 20000 },
+      defaultRpcTimeout: 20000,
     }),
   ],
   providers: [
