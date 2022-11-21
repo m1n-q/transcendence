@@ -41,6 +41,8 @@ import { BlockService } from './block/block.service';
       ],
       uri: process.env.RMQ_URI,
       enableControllerDiscovery: true,
+      connectionInitOptions: { timeout: 20000 },
+      defaultRpcTimeout: 20000,
     }),
   ],
   controllers: [UserController, FriendController, BlockController],
