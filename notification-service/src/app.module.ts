@@ -22,6 +22,8 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
         },
       ],
       enableControllerDiscovery: true,
+      connectionInitOptions: { timeout: 20000 },
+      defaultRpcTimeout: 20000,
     }),
   ],
   controllers: [NotificationRmqController],
