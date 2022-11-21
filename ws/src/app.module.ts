@@ -16,6 +16,8 @@ import { CommandFactory } from './chat/types/chat-event-command';
     RabbitMQModule.forRoot(RabbitMQModule, {
       uri: process.env.RMQ_HOST,
       enableControllerDiscovery: true,
+      connectionInitOptions: { timeout: 20000 },
+      defaultRpcTimeout: 20000,
       exchanges: [
         {
           name: process.env.RMQ_NOTIFICATION_TOPIC,
