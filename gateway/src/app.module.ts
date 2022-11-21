@@ -27,6 +27,8 @@ import { ChatController } from './chat/controllers/chat.controller';
         },
       ],
       uri: 'amqp://guest:guest@localhost:5672',
+      connectionInitOptions: { timeout: 20000 },
+      defaultRpcTimeout: 20000,
     }),
     ConfigModule.forRoot({
       isGlobal: true,
