@@ -39,7 +39,6 @@ export class User {
   @Column()
   mmr: number;
 
-  // @CreateDateColumn()
   @Column({
     type: 'timestamp with time zone',
     default: () => 'CURRENT_TIMESTAMP',

@@ -5,8 +5,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { GameInfo } from './common/entities/game-info.entity';
 import { GameResult } from './common/entities/game-result.entity';
 import { RankHistory } from './common/entities/rank-history';
@@ -48,7 +46,7 @@ import { MatchHistoryService } from './match-history/match-history.service';
       enableControllerDiscovery: true,
     }),
   ],
-  controllers: [AppController, MatchHistoryController],
-  providers: [AppService, MatchHistoryService, UserService],
+  controllers: [MatchHistoryController],
+  providers: [MatchHistoryService, UserService],
 })
 export class AppModule {}
