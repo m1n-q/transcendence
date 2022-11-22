@@ -12,6 +12,8 @@ import { TestController } from './test.controller';
 import { BlockService } from './block/block.service';
 import { ChatService } from './chat/services/chat.service';
 import { ChatController } from './chat/controllers/chat.controller';
+import { MatchHistoryController } from './match-history/match-history.controller';
+import { MatchHistoryService } from './match-history/match-history.service';
 
 @Module({
   imports: [
@@ -24,6 +26,10 @@ import { ChatController } from './chat/controllers/chat.controller';
         {
           name: 'user.t.x',
           type: 'topic',
+        },
+        {
+          name: 'match-history.d.x',
+          type: 'direct',
         },
       ],
       uri: 'amqp://guest:guest@localhost:5672',
@@ -42,6 +48,7 @@ import { ChatController } from './chat/controllers/chat.controller';
     BlockController,
     TestController,
     ChatController,
+    MatchHistoryController,
   ],
   providers: [
     AuthService,
@@ -49,6 +56,7 @@ import { ChatController } from './chat/controllers/chat.controller';
     FriendService,
     BlockService,
     ChatService,
+    MatchHistoryService,
   ],
 })
 export class AppModule {}
