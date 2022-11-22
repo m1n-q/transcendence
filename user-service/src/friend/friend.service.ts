@@ -110,7 +110,8 @@ export class FriendService {
     let friendRequestList;
     try {
       friendRequestList = await this.friendRequestRepository.find({
-        where: [{ requester: payload.user_id }],
+        where: { requester: payload.user_id },
+        relations: { receiver_info: true },
       });
     } catch (e) {
       throw new RmqError({
@@ -126,14 +127,23 @@ export class FriendService {
         where: `${WHERE}#readSentFriendRequest()`,
       });
     }
-    return friendRequestList;
+    const reFormattingList = friendRequestList.map((request) => {
+      const user_info = this.deleteUserInfo(request.receiver_info);
+      delete request.receiver_info;
+      delete request.receiver;
+      delete request.requester;
+      request['user_info'] = user_info;
+      return request;
+    });
+    return reFormattingList;
   }
 
   async readRecvFriendRequest(payload: RmqUserId) {
     let friendRequestList;
     try {
       friendRequestList = await this.friendRequestRepository.find({
-        where: [{ receiver: payload.user_id }],
+        where: { receiver: payload.user_id },
+        relations: { requester_info: true },
       });
     } catch (e) {
       throw new RmqError({
@@ -149,7 +159,15 @@ export class FriendService {
         where: `${WHERE}#readRecvFriendRequest()`,
       });
     }
-    return friendRequestList;
+    const reFormattingList = friendRequestList.map((request) => {
+      const user_info = this.deleteUserInfo(request.requester_info);
+      delete request.requester_info;
+      delete request.receiver;
+      delete request.requester;
+      request['user_info'] = user_info;
+      return request;
+    });
+    return reFormattingList;
   }
 
   async createFriendRequest(payload: RmqRequestFriend): Promise<any> {
@@ -353,5 +371,15 @@ export class FriendService {
         where: WHERE,
       });
     }
+  }
+
+  deleteUserInfo(user) {
+    delete user.provider;
+    delete user.third_party_id;
+    delete user.two_factor_authentication_key;
+    delete user.two_factor_authentication_type;
+    delete user.deleted;
+    user.created = user.created.toString();
+    return user;
   }
 }

@@ -1,9 +1,7 @@
 import { User } from './User';
 import {
   Entity,
-  CreateDateColumn,
   ManyToOne,
-  PrimaryColumn,
   JoinColumn,
   PrimaryGeneratedColumn,
   Column,
@@ -14,10 +12,10 @@ export class Friend {
   @PrimaryGeneratedColumn('uuid')
   friend_id: string;
 
-  @PrimaryColumn()
+  @Column()
   requester: string;
 
-  @PrimaryColumn()
+  @Column()
   receiver: string;
 
   @Column({
@@ -28,9 +26,9 @@ export class Friend {
 
   @ManyToOne(() => User, (user) => user.user_id)
   @JoinColumn({ name: 'requester' })
-  requesters: User;
+  user_requester: User;
 
   @ManyToOne(() => User, (user) => user.user_id)
   @JoinColumn({ name: 'receiver' })
-  receivers: User;
+  user_receiver: User;
 }

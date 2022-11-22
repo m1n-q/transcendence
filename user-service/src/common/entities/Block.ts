@@ -14,10 +14,10 @@ export class Block {
   @PrimaryGeneratedColumn('uuid')
   block_id: string;
 
-  @PrimaryColumn()
+  @Column()
   blocker: string;
 
-  @PrimaryColumn()
+  @Column()
   blocked: string;
 
   @Column({
@@ -28,9 +28,9 @@ export class Block {
 
   @ManyToOne(() => User, (user) => user.user_id)
   @JoinColumn({ name: 'blocker' })
-  requester: User;
+  user_blocker: User;
 
   @ManyToOne(() => User, (user) => user.user_id)
   @JoinColumn({ name: 'blocked' })
-  receiver: User;
+  user_blocked: User;
 }
