@@ -1,7 +1,7 @@
+import { MatchHistoryService } from './match-history/match-history.service';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller';
 import { AuthService } from './auth/auth.service';
 import { GameGateway } from './game/game.gateway';
 import { UserService } from './user/user.service';
@@ -23,11 +23,14 @@ import { UserService } from './user/user.service';
           name: 'user.d.x',
           type: 'direct',
         },
+        {
+          name: 'match-history.d.x',
+          type: 'direct',
+        },
       ],
       defaultRpcTimeout: 20000,
     }),
   ],
-  controllers: [AppController],
-  providers: [AuthService, UserService, GameGateway],
+  providers: [AuthService, UserService, MatchHistoryService, GameGateway],
 })
 export class AppModule {}

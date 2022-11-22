@@ -1,7 +1,7 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
-import { RmqError } from '../common/rmq/types/rmq-error';
-import { RmqResponse } from '../common/rmq/types/rmq-response';
+import { RmqError } from 'src/common/rmq-module/types/rmq-error';
+import { RmqResponse } from 'src/common/rmq-module/types/rmq-response';
 import { UserInfo } from './dto/user-info.dto';
 
 @Injectable()
@@ -17,11 +17,11 @@ export class AuthService {
         payload: { access_token: accessToken },
       });
     } catch (e) {
-      throw new RmqError(
-        500,
-        'Request Time Out (to auth-service)',
-        'gameWebsocket',
-      );
+      throw new RmqError({
+        code: 500,
+        message: 'Request Time Out (to auth-service)',
+        where: 'gameWebsocket',
+      });
     }
     if (!response.success) throw response.error;
     return response.data;

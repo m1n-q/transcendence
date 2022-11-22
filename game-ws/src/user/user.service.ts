@@ -1,7 +1,7 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
-import { RmqError } from '../common/rmq/types/rmq-error';
-import { RmqResponse } from '../common/rmq/types/rmq-response';
+import { RmqError } from 'src/common/rmq-module/types/rmq-error';
+import { RmqResponse } from 'src/common/rmq-module/types/rmq-response';
 import { UserProfile } from './dto/user-info.dto';
 
 @Injectable()
@@ -17,30 +17,11 @@ export class UserService {
         payload: { nickname },
       });
     } catch (e) {
-      throw new RmqError(
-        500,
-        'Request Time Out (to user-service)',
-        'gameWebsocket',
-      );
-    }
-    if (!response.success) throw response.error;
-    return response.data;
-  }
-
-  async updateUserMmrById(user_id, mmr) {
-    let response;
-    try {
-      response = await this.amqpConnection.request<RmqResponse>({
-        exchange: 'user.d.x',
-        routingKey: 'req.to.user.update.mmr.rk',
-        payload: { user_id, mmr },
+      throw new RmqError({
+        code: 500,
+        message: 'Request Time Out (to user-service)',
+        where: 'gameWebsocket',
       });
-    } catch (e) {
-      throw new RmqError(
-        500,
-        'Request Time Out (to user-service)',
-        'gameWebsocket',
-      );
     }
     if (!response.success) throw response.error;
     return response.data;

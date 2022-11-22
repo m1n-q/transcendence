@@ -1,4 +1,4 @@
-import { UserInfo } from './../auth/dto/user-info.dto';
+import { MatchHistoryService } from './../match-history/match-history.service';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import {
   ConnectedSocket,
@@ -34,6 +34,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly matchHistoryService: MatchHistoryService,
     private readonly amqpConnection: AmqpConnection,
   ) {
     this.serverId = v4();
@@ -41,9 +42,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async handleConnection(@ConnectedSocket() clientSocket: Socket) {
-    let user: UserInfo;
     try {
-      user = await this.bindUser(clientSocket);
+      await this.bindUser(clientSocket);
     } catch (e) {
       clientSocket.disconnect(true);
       return;
@@ -70,6 +70,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('user_join_queue')
   async userJoinQueue(@ConnectedSocket() clientSocket: Socket) {
+    this.matchMaking.leaveMatchingQueue(clientSocket.id);
+    clearInterval(this.matchingInterval[clientSocket.id]);
     try {
       await this.updateUser(clientSocket);
     } catch (e) {
@@ -120,7 +122,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('player_ready')
-  playerReady(@ConnectedSocket() clientSocket: Socket) {
+  async playerReady(@ConnectedSocket() clientSocket: Socket) {
     const roomName = clientSocket['room_name'];
     if (this.games[roomName].playerReady === undefined) {
       this.games[roomName].playerReady = clientSocket.id;
@@ -131,6 +133,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.games[roomName].playerReady !== roomName
     ) {
       this.games[roomName].playerReady = roomName;
+      try {
+        this.games[roomName].game_id =
+          await this.matchHistoryService.createGameInfo(
+            this.games[roomName].gameInfo(),
+          );
+      } catch (e) {
+        clientSocket.disconnect(true);
+        return;
+      }
       this.server
         .to(`${roomName}`)
         .emit('server_ready_to_start', this.games[roomName].renderInfo());
@@ -153,21 +164,39 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('save_game_data')
+  async saveGameData(@ConnectedSocket() clientSocket: Socket) {
+    const roomName = clientSocket['room_name'];
+    if (
+      this.games[roomName].isRank === true &&
+      this.games[roomName].isSaveData === false
+    ) {
+      this.games[roomName].isSaveData = true;
+      this.games[roomName].finishGame();
+      try {
+        await this.updateGameResult(this.games[roomName]);
+      } catch (e) {
+        clientSocket.disconnect(true);
+        return;
+      }
+      this.server.to(`${roomName}`).emit('saved_game_data');
+    }
+  }
+
   @SubscribeMessage('user_leave_room')
   async userLeaveRoom(@ConnectedSocket() clientSocket: Socket) {
     const roomName = clientSocket['room_name'];
     clientSocket.leave(roomName);
+    let result;
     try {
-      await this.updateUser(clientSocket);
+      result = await this.matchHistoryService.readGameResult(
+        this.games[roomName].game_id,
+      );
     } catch (e) {
       clientSocket.disconnect(true);
       return;
     }
-    clientSocket.emit('game_result', {
-      loser: this.games[roomName].loser,
-      lPlayer: this.games[roomName].lPlayerInfo,
-      rPlayer: this.games[roomName].rPlayerInfo,
-    });
+    clientSocket.emit('game_result', result);
   }
 
   @SubscribeMessage('up_key_pressed')
@@ -210,33 +239,24 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async startGame(roomName: string) {
-    this.renderInterval[roomName] = setInterval(() => {
+    this.renderInterval[roomName] = setInterval(async () => {
       this.games[roomName].update();
       this.server
         .to(`${roomName}`)
         .emit('game_render_data', this.games[roomName].renderData());
       if (this.games[roomName].isFinished === true) {
         this.server.to(`${roomName}`).emit('game_finished');
-        if (this.games[roomName].isRank === true) {
-          this.games[roomName].finishGame();
-          // try {
-          // await this.updateGameResult(this.games[roomName]);
-          // } catch (e) {
-          // throw new WsException(e);
-          // }
-        }
         clearInterval(this.renderInterval[roomName]);
       }
     }, (1 / FPS) * 1000);
   }
 
   async updateGameResult(game: Game) {
-    const lPlayer = game.lPlayerInfo;
-    const rPlayer = game.rPlayerInfo;
+    const rankInfo = game.changeRankInfo();
     try {
-      // 이부을 트렌젝션 처리 해야할지 개별의 사항으로 봐야할지
-      await this.userService.updateUserMmrById(lPlayer.user_id, lPlayer.mmr);
-      await this.userService.updateUserMmrById(rPlayer.user_id, rPlayer.mmr);
+      await this.matchHistoryService.createGameResult(game.gameResult());
+      await this.matchHistoryService.createRankHistory(rankInfo.l_player);
+      await this.matchHistoryService.createRankHistory(rankInfo.r_player);
     } catch (e) {
       throw new WsException(e);
     }

@@ -1,6 +1,6 @@
 import * as amqplib from 'amqplib';
-import { RmqError } from './types/rmq-error';
-import { RmqResponse } from './types/rmq-response';
+import { RmqError } from 'src/common/rmq-module/types/rmq-error';
+import { RmqResponse } from 'src/common/rmq-module/types/rmq-response';
 
 export function RmqErrorHandler(
   channel: amqplib.Channel,
@@ -15,6 +15,7 @@ export function RmqErrorHandler(
   const { replyTo, correlationId } = msg.properties;
   if (replyTo) {
     error = Buffer.from(JSON.stringify(errorResponse));
+
     channel.publish('', replyTo, error, { correlationId });
     channel.ack(msg);
   } else {

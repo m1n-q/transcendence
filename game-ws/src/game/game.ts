@@ -1,3 +1,4 @@
+import { RmqMatchHistoryGameInfo } from 'src/match-history/dto/match-info.dto';
 import { UserProfile } from 'src/user/dto/user-info.dto';
 
 const REFERENCE_SCORE = 20;
@@ -90,37 +91,50 @@ export class Game {
     this.ball = new Ball(BALL_SPEED);
     this.lPlayer = new Player(true, BAR_SIZE);
     this.rPlayer = new Player(false, BAR_SIZE);
+    this.lPlayerMmr = 0;
+    this.rPlayerMmr = 0;
     this.isRank = rank;
     this.renderReady = false;
+    this.isSaveData = false;
+    this.saveDone = false;
   }
+  game_id: string;
   ball: Ball;
   lPlayerId: string;
   rPlayerId: string;
   lPlayer: Player;
   rPlayer: Player;
+  lPlayerMmr: number;
+  rPlayerMmr: number;
   lPlayerInfo: UserProfile;
   rPlayerInfo: UserProfile;
   playerReady: string;
   renderReady: boolean;
   loser: string;
   isFinished: boolean;
+  isSaveData: boolean;
   speed: number;
+  difficulty: string;
   width: number;
   height: number;
   isRank: boolean;
+  saveDone: boolean;
 
   public init(difficulty): void {
     if (difficulty === 1) {
+      this.difficulty = 'easy';
       this.speed = 5;
       this.ball.update(5);
       this.lPlayer.update(120);
       this.rPlayer.update(120);
     } else if (difficulty === 2) {
+      this.difficulty = 'normal';
       this.speed = 7;
       this.ball.update(7);
       this.lPlayer.update(100);
       this.rPlayer.update(100);
     } else {
+      this.difficulty = 'hard';
       this.speed = 9;
       this.ball.update(9);
       this.lPlayer.update(80);
@@ -147,10 +161,10 @@ export class Game {
   }
   public update(): void {
     if (this.lPlayer.score === 10) {
-      this.loser = this.rPlayerId;
+      this.loser = this.rPlayerInfo.user_id;
       this.isFinished = true;
     } else if (this.rPlayer.score === 10) {
-      this.loser = this.lPlayerId;
+      this.loser = this.lPlayerInfo.user_id;
       this.isFinished = true;
     }
 
@@ -185,19 +199,11 @@ export class Game {
   finishGame(): void {
     // 여기서 유저 정보의 점수의 차이에 따라 점수를 다르게 주면 될 듯
     if (this.lPlayerId === this.loser) {
-      this.rPlayerInfo.mmr += REFERENCE_SCORE;
-      if (this.lPlayerInfo.mmr - REFERENCE_SCORE > 0) {
-        this.lPlayerInfo.mmr -= REFERENCE_SCORE;
-      } else {
-        this.lPlayerInfo.mmr = 0;
-      }
+      this.rPlayerMmr += REFERENCE_SCORE;
+      this.lPlayerMmr -= REFERENCE_SCORE;
     } else {
-      this.lPlayerInfo.mmr += REFERENCE_SCORE;
-      if (this.rPlayerInfo.mmr - REFERENCE_SCORE > 0) {
-        this.rPlayerInfo.mmr -= REFERENCE_SCORE;
-      } else {
-        this.rPlayerInfo.mmr = 0;
-      }
+      this.rPlayerMmr -= REFERENCE_SCORE;
+      this.lPlayerMmr += REFERENCE_SCORE;
     }
   }
   public renderInfo(): object {
@@ -254,5 +260,42 @@ export class Game {
     if (this.rPlayer.y !== this.height - this.lPlayer.height / 2) {
       this.rPlayer.y += BAR_MOVE_SPEED;
     }
+  }
+  public gameInfo(): RmqMatchHistoryGameInfo {
+    let mode: string;
+    if (this.isRank === true) mode = 'rank';
+    else mode = 'friendly';
+    return {
+      l_player_id: this.lPlayerInfo.user_id,
+      r_player_id: this.rPlayerInfo.user_id,
+      difficulty: this.difficulty,
+      mode,
+    };
+  }
+  public gameResult() {
+    const winner_id: string =
+      this.lPlayerInfo.user_id !== this.loser
+        ? this.lPlayerInfo.user_id
+        : this.rPlayerInfo.user_id;
+    return {
+      game_id: this.game_id,
+      winner_id,
+      l_player_score: this.lPlayer.score,
+      r_player_score: this.rPlayer.score,
+    };
+  }
+  public changeRankInfo() {
+    return {
+      l_player: {
+        user_id: this.lPlayerInfo.user_id,
+        game_id: this.game_id,
+        delta: this.lPlayerMmr,
+      },
+      r_player: {
+        user_id: this.rPlayerInfo.user_id,
+        game_id: this.game_id,
+        delta: this.rPlayerMmr,
+      },
+    };
   }
 }

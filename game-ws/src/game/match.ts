@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
 
-const DIFFERENCE_SCORE = 100;
+const DIFFERENCE_SCORE = 200;
 const WAITING_TIME = 30;
 
 export class MatchMaking {
@@ -42,7 +42,6 @@ export class MatchMaking {
     ) {
       return clientSocket.id;
     } else {
-      // clientSocket['user_info'].waiting++;
       if (userInfo.waiting < WAITING_TIME) {
         return this.findUser(
           clientSocket.id,
