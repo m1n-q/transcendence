@@ -92,6 +92,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('user_join_room')
   userJoinRoom(@ConnectedSocket() clientSocket: Socket, @Body() roomName) {
+    clearInterval(this.matchingInterval[clientSocket.id]);
     clientSocket.join(roomName);
     clientSocket['room_name'] = roomName;
     if (this.games[roomName] === undefined) {
