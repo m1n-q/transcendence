@@ -110,7 +110,7 @@ export class Game {
   rPlayerInfo: UserProfile;
   playerReady: string;
   renderReady: boolean;
-  loser: string;
+  winner: string;
   isFinished: boolean;
   isSaveData: boolean;
   speed: number;
@@ -161,10 +161,10 @@ export class Game {
   }
   public update(): void {
     if (this.lPlayer.score === 10) {
-      this.loser = this.rPlayerInfo.user_id;
+      this.winner = this.lPlayerInfo.user_id;
       this.isFinished = true;
     } else if (this.rPlayer.score === 10) {
-      this.loser = this.lPlayerInfo.user_id;
+      this.winner = this.rPlayerInfo.user_id;
       this.isFinished = true;
     }
 
@@ -198,12 +198,12 @@ export class Game {
   }
   finishGame(): void {
     // 여기서 유저 정보의 점수의 차이에 따라 점수를 다르게 주면 될 듯
-    if (this.lPlayerId === this.loser) {
-      this.rPlayerMmr += REFERENCE_SCORE;
-      this.lPlayerMmr -= REFERENCE_SCORE;
-    } else {
+    if (this.lPlayerId === this.winner) {
       this.rPlayerMmr -= REFERENCE_SCORE;
       this.lPlayerMmr += REFERENCE_SCORE;
+    } else {
+      this.rPlayerMmr += REFERENCE_SCORE;
+      this.lPlayerMmr -= REFERENCE_SCORE;
     }
   }
   public renderInfo(): object {
@@ -273,13 +273,9 @@ export class Game {
     };
   }
   public gameResult() {
-    const winner_id: string =
-      this.lPlayerInfo.user_id !== this.loser
-        ? this.lPlayerInfo.user_id
-        : this.rPlayerInfo.user_id;
     return {
       game_id: this.game_id,
-      winner_id,
+      winner_id: this.winner,
       l_player_score: this.lPlayer.score,
       r_player_score: this.rPlayer.score,
     };

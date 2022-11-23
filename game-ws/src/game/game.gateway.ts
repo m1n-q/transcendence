@@ -28,9 +28,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
   serverId: string;
   matchMaking;
-  games = [];
+  games = new Map();
   matchingInterval = [];
   renderInterval = [];
+  waitingInterval = [];
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
@@ -45,6 +46,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       await this.bindUser(clientSocket);
     } catch (e) {
+      clientSocket.emit('game_error', e);
       clientSocket.disconnect(true);
       return;
     }
@@ -57,15 +59,24 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (roomName !== undefined) {
       clientSocket.leave(roomName);
       if (this.games[roomName].lPlayerId === clientSocket.id) {
-        this.games[roomName].loser = clientSocket.id;
+        this.games[roomName].winner = this.games[roomName].rPlayerInfo.user_id;
       } else {
-        this.games[roomName].loser = this.games[roomName].rPlayerId;
+        this.games[roomName].winner = this.games[roomName].lPlayerInfo.user_id;
       }
       this.games[roomName].isFinished = true;
+      if (this.games[roomName].gameResult().game_id === undefined) {
+        this.server.to(`${roomName}`).emit('user_exit_room');
+      }
     } else {
       clearInterval(this.matchingInterval[clientSocket.id]);
       this.matchMaking.leaveMatchingQueue(clientSocket.id);
     }
+  }
+
+  @SubscribeMessage('user_left_queue')
+  async userLeftQueue(@ConnectedSocket() clientSocket: Socket) {
+    clearInterval(this.matchingInterval[clientSocket.id]);
+    this.matchMaking.leaveMatchingQueue(clientSocket.id);
   }
 
   @SubscribeMessage('user_join_queue')
@@ -75,6 +86,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       await this.updateUser(clientSocket);
     } catch (e) {
+      clientSocket.emit('game_error', e);
       clientSocket.disconnect(true);
       return;
     }
@@ -100,7 +112,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.games[roomName].lPlayerId = clientSocket.id;
       this.games[roomName].lPlayerInfo = clientSocket['user_info'].user;
       clientSocket['isOwner'] = true;
+      clientSocket['waiting'] = 0;
+      this.waitingInterval[roomName] = setInterval(() => {
+        if (clientSocket['waiting'] === 10) {
+          clientSocket.leave(roomName);
+          clientSocket.emit('user_exit_room');
+          clearInterval(this.waitingInterval[roomName]);
+        }
+        clientSocket['waiting']++;
+      }, 1000);
     } else {
+      clearInterval(this.waitingInterval[roomName]);
       this.games[roomName].rPlayerId = clientSocket.id;
       this.games[roomName].rPlayerInfo = clientSocket['user_info'].user;
       clientSocket['isOwner'] = false;
@@ -118,6 +140,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @Body() difficulty,
   ) {
     const roomName = clientSocket['room_name'];
+    if (this.games[roomName].isFinished === true) {
+      this.server.to(`${roomName}`).emit('user_exit_room');
+    }
     this.games[roomName].init(difficulty);
     this.server.to(`${roomName}`).emit('difficulty_changed', difficulty);
   }
@@ -125,6 +150,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('player_ready')
   async playerReady(@ConnectedSocket() clientSocket: Socket) {
     const roomName = clientSocket['room_name'];
+    if (this.games[roomName].isFinished === true) {
+      this.server.to(`${roomName}`).emit('user_exit_room');
+    }
     if (this.games[roomName].playerReady === undefined) {
       this.games[roomName].playerReady = clientSocket.id;
       this.server.to(`${roomName}`).emit('counterpart_ready', clientSocket.id);
@@ -140,6 +168,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             this.games[roomName].gameInfo(),
           );
       } catch (e) {
+        clientSocket.emit('game_error', e);
         clientSocket.disconnect(true);
         return;
       }
@@ -152,6 +181,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('client_ready_to_start')
   async clientReadyToStart(@ConnectedSocket() clientSocket: Socket) {
     const roomName = clientSocket['room_name'];
+    if (this.games[roomName].isFinished === true) {
+      this.server.to(`${roomName}`).emit('user_exit_room');
+    }
     if (this.games[roomName].renderReady === false) {
       this.games[roomName].renderReady = true;
     } else {
@@ -159,6 +191,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       try {
         await this.startGame(roomName);
       } catch (e) {
+        clientSocket.emit('game_error', e);
         clientSocket.disconnect(true);
         return;
       }
@@ -177,9 +210,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       try {
         await this.updateGameResult(this.games[roomName]);
       } catch (e) {
+        clientSocket.emit('game_error', e);
         clientSocket.disconnect(true);
         return;
       }
+      this.games.delete(roomName);
       this.server.to(`${roomName}`).emit('saved_game_data');
     }
   }
@@ -194,6 +229,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.games[roomName].game_id,
       );
     } catch (e) {
+      clientSocket.emit('game_error', e);
       clientSocket.disconnect(true);
       return;
     }
