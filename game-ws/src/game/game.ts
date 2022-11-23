@@ -97,6 +97,7 @@ export class Game {
     this.renderReady = false;
     this.isSaveData = false;
     this.saveDone = false;
+    this.speed = BALL_SPEED;
   }
   game_id: string;
   ball: Ball;
