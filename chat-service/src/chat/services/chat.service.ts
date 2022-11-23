@@ -654,14 +654,14 @@ export class ChatService {
       where: {
         roomId: chatRoomIdDto.room_id,
       },
-      relations: ['messages'],
+      relations: ['messages', 'messages.sender'],
     });
-
     return {
       messages: room.messages.map((message) => {
         return {
           room_msg_id: message.roomMsgId,
-          sender_id: message.senderId,
+          // sender_id: message.senderId,
+          sender: message.sender.nickname,
           room_id: message.roomId,
           payload: message.payload,
           created: message.created,
