@@ -11,9 +11,13 @@ import {
   HttpCode,
   UseGuards,
   Req,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { CreateUserRequestDto } from './dto/user.request.dto';
 import { TwoFactorAuthenticationInfo } from './user-info';
+import { FileInterceptor } from '@nestjs/platform-express/multer/interceptors';
+import { AwsService } from '../common/aws/aws.service';
 
 @Controller('user')
 export class UserController {
@@ -46,12 +50,14 @@ export class UserController {
 
   //NOTE: nullable (instead of delete)
   @Put('/prof-img')
+  @UseInterceptors(FileInterceptor('prof_img')) // multipart/form-data's key
   @UseGuards(AuthGuard)
   async updateProfileImgById(
     @Req() req,
-    @Body('prof_img') profileImage: string,
+    // @Body('prof_img') profileImage: string,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.userService.updateProfImgById(req.user.user_id, profileImage);
+    return this.userService.updateProfImgById(req.user.user_id, file);
   }
 
   //NOTE: nullable (instead of delete)

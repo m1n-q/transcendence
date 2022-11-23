@@ -14,6 +14,7 @@ import { ChatService } from './chat/services/chat.service';
 import { ChatController } from './chat/controllers/chat.controller';
 import { MatchHistoryController } from './match-history/match-history.controller';
 import { MatchHistoryService } from './match-history/match-history.service';
+import { AwsModule } from './common/aws/aws.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { MatchHistoryService } from './match-history/match-history.service';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    AwsModule,
   ],
   controllers: [
     AuthController,

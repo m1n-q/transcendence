@@ -7,10 +7,14 @@ import {
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RmqResponseUser } from './dto/user.response.dto';
 import { UserInfo, UserProfile } from './user-info';
+import { AwsService } from '../common/aws/aws.service';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly amqpConnection: AmqpConnection) {}
+  constructor(
+    private readonly amqpConnection: AmqpConnection,
+    private readonly awsService: AwsService,
+  ) {}
 
   async requestSignUp(data) {
     let response: RmqResponse;
@@ -123,7 +127,14 @@ export class UserService {
   }
 
   //NOTE: nullable
-  async updateProfImgById(user_id: string, newProfileImage: string) {
+  async updateProfImgById(user_id: string, file: Express.Multer.File) {
+    const profImgUrl = await this.awsService.uploadFileToS3(
+      file,
+      process.env.AWS_S3_PROFILE_PATH,
+      process.env.AWS_S3_BUCKET,
+      process.env.AWS_S3_REGION,
+    );
+
     let response;
     try {
       response = await this.amqpConnection.request<
@@ -133,7 +144,7 @@ export class UserService {
         routingKey: 'req.to.user.update.profImg.rk',
         payload: {
           user_id,
-          prof_img: newProfileImage,
+          prof_img: profImgUrl,
         },
       });
     } catch (e) {
