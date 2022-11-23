@@ -128,7 +128,7 @@ dist
 .tern-port
 
 # secret keys
-.key
+.*.key
 
 # media files
 media/
