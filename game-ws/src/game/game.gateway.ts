@@ -141,6 +141,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const roomName = clientSocket['room_name'];
     if (this.games[roomName].isFinished === true) {
+      clientSocket.leave(roomName);
       this.server.to(`${roomName}`).emit('user_exit_room');
     }
     this.games[roomName].init(difficulty);
@@ -151,6 +152,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async playerReady(@ConnectedSocket() clientSocket: Socket) {
     const roomName = clientSocket['room_name'];
     if (this.games[roomName].isFinished === true) {
+      clientSocket.leave(roomName);
       this.server.to(`${roomName}`).emit('user_exit_room');
     }
     if (this.games[roomName].playerReady === undefined) {
@@ -182,6 +184,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async clientReadyToStart(@ConnectedSocket() clientSocket: Socket) {
     const roomName = clientSocket['room_name'];
     if (this.games[roomName].isFinished === true) {
+      clientSocket.leave(roomName);
       this.server.to(`${roomName}`).emit('user_exit_room');
     }
     if (this.games[roomName].renderReady === false) {
