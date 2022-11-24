@@ -1,29 +1,32 @@
 import { Socket } from 'socket.io';
 
-const DIFFERENCE_SCORE = 200;
-const WAITING_TIME = 30;
+const DIFFERENCE_SCORE = +process.env.DIFFERENCE_SCORE || 200;
+const WAITING_TIME = +process.env.WAITING_TIME || 30;
 
 export class MatchMaking {
   constructor() {
     this.matchingQueue = new Map();
   }
-  //
   matchingQueue: Map<string, number>;
 
-  leaveMatchingQueue(socketId) {
+  leaveMatchingQueue(socketId: string): void {
     this.matchingQueue.delete(socketId);
   }
 
-  findUser(socketId, differenceScore, mmr): string {
-    let matchingPlayerId = '';
-    let min = differenceScore;
+  joinMatchingQueue(socketId: string, mmr: number): void {
+    this.matchingQueue.set(socketId, mmr);
+  }
+
+  findUser(socketId: string, differenceScore: number, mmr: number): string {
+    let matchingPlayerId: string;
+    let min: number = differenceScore;
     this.matchingQueue.forEach((v, k) => {
       if (Math.abs(mmr - v) < min && k !== socketId) {
         min = Math.abs(mmr - v);
         matchingPlayerId = k;
       }
     });
-    if (matchingPlayerId !== '') {
+    if (matchingPlayerId !== undefined) {
       this.matchingQueue.delete(matchingPlayerId);
       this.matchingQueue.delete(socketId);
       return matchingPlayerId;
@@ -31,9 +34,8 @@ export class MatchMaking {
     return socketId;
   }
 
-  matchMaking(clientSocket: Socket): string | object {
+  matchMaking(clientSocket: Socket): string {
     const userInfo = clientSocket['user_info'];
-    this.matchingQueue.set(clientSocket.id, userInfo.user.mmr);
     clientSocket['user_info'].waiting++;
     if (
       this.matchingQueue.size === 0 ||

@@ -1,12 +1,13 @@
 import { RmqMatchHistoryGameInfo } from 'src/match-history/dto/match-info.dto';
 import { UserProfile } from 'src/user/dto/user-info.dto';
 
-const REFERENCE_SCORE = 20;
-const CANVARS_WIDTH = 800;
-const CANVARS_HEIGHT = 600;
-const BALL_SPEED = 7;
-const BAR_SIZE = 100;
-const BAR_MOVE_SPEED = 5;
+const REFERENCE_SCORE = +process.env.REFERENCE_SCORE || 20;
+const CANVARS_WIDTH = +process.env.CANVARS_WIDTH || 800;
+const CANVARS_HEIGHT = +process.env.CANVARS_HEIGHT || 600;
+const BALL_SPEED = +process.env.BALL_SPEED || 7;
+const BAR_SIZE = +process.env.BAR_SIZE || 100;
+const BAR_MOVE_SPEED = +process.env.BAR_MOVE_SPEED || 5;
+const WINNING_SCORE = +process.env.WINNING_SCORE || 10;
 
 class Ball {
   constructor(speed: number) {
@@ -28,7 +29,7 @@ class Ball {
   height: number;
   width: number;
 
-  update(speed: number): void {
+  setBallSpeed(speed: number): void {
     this.speed = speed;
   }
   move(): void {
@@ -77,7 +78,7 @@ class Player {
   barUp: boolean;
   barDown: boolean;
 
-  update(barSize: number): void {
+  setBarSize(barSize: number): void {
     this.height = barSize;
     this.y = (CANVARS_HEIGHT - barSize) / 2;
   }
@@ -97,51 +98,65 @@ export class Game {
     this.renderReady = false;
     this.isSaveData = false;
     this.saveDone = false;
-    this.speed = BALL_SPEED;
+    this.ballSpeed = BALL_SPEED;
   }
+  //* GAME SETTING DATA
   game_id: string;
-  ball: Ball;
-  lPlayerId: string;
-  rPlayerId: string;
-  lPlayer: Player;
-  rPlayer: Player;
-  lPlayerMmr: number;
-  rPlayerMmr: number;
-  lPlayerInfo: UserProfile;
-  rPlayerInfo: UserProfile;
-  playerReady: string;
-  renderReady: boolean;
-  winner: string;
-  isFinished: boolean;
-  isSaveData: boolean;
-  speed: number;
-  difficulty: string;
+  ballSpeed: number;
   width: number;
   height: number;
+  difficulty: string;
   isRank: boolean;
+
+  //* GAME RENDER DATA
+  ball: Ball;
+  lPlayer: Player;
+  rPlayer: Player;
+
+  //* GAME USER DATA
+  lPlayerProfile: UserProfile;
+  rPlayerProfile: UserProfile;
+  lPlayerSocketId: string;
+  rPlayerSocketId: string;
+  lPlayerMmr: number;
+  rPlayerMmr: number;
+
+  //* GAME RESULT DATA
+  winner: string;
+
+  //* GAME CHECK DATA
+  playerReady: string;
+  renderReady: boolean;
+  isFinished: boolean;
+  isSaveData: boolean;
   saveDone: boolean;
 
   public init(difficulty): void {
-    if (difficulty === 1) {
-      this.difficulty = 'easy';
-      this.speed = 5;
-      this.ball.update(5);
-      this.lPlayer.update(120);
-      this.rPlayer.update(120);
-    } else if (difficulty === 2) {
-      this.difficulty = 'normal';
-      this.speed = 7;
-      this.ball.update(7);
-      this.lPlayer.update(100);
-      this.rPlayer.update(100);
-    } else {
-      this.difficulty = 'hard';
-      this.speed = 9;
-      this.ball.update(9);
-      this.lPlayer.update(80);
-      this.rPlayer.update(80);
+    switch (difficulty) {
+      case 1:
+        this.difficulty = 'easy';
+        this.ballSpeed = 5;
+        this.ball.setBallSpeed(BALL_SPEED - 2);
+        this.lPlayer.setBarSize(BAR_SIZE + 20);
+        this.rPlayer.setBarSize(BAR_SIZE + 20);
+        break;
+      case 3:
+        this.difficulty = 'hard';
+        this.ballSpeed = 9;
+        this.ball.setBallSpeed(BALL_SPEED + 2);
+        this.lPlayer.setBarSize(BAR_SIZE - 20);
+        this.rPlayer.setBarSize(BAR_SIZE - 20);
+        break;
+      default:
+        this.difficulty = 'normal';
+        this.ballSpeed = 7;
+        this.ball.setBallSpeed(BALL_SPEED);
+        this.lPlayer.setBarSize(BAR_SIZE);
+        this.rPlayer.setBarSize(BAR_SIZE);
+        break;
     }
   }
+
   public isCollision(player): boolean {
     const playerTop = player.y;
     const playerBottom = player.y + player.height;
@@ -160,21 +175,22 @@ export class Game {
       playerBottom > ballTop
     );
   }
+
   public update(): void {
-    if (this.lPlayer.score === 10) {
-      this.winner = this.lPlayerInfo.user_id;
+    if (this.lPlayer.score === WINNING_SCORE) {
+      this.winner = this.lPlayerProfile.user_id;
       this.isFinished = true;
-    } else if (this.rPlayer.score === 10) {
-      this.winner = this.rPlayerInfo.user_id;
+    } else if (this.rPlayer.score === WINNING_SCORE) {
+      this.winner = this.rPlayerProfile.user_id;
       this.isFinished = true;
     }
 
     if (this.ball.x - this.ball.radius < 0) {
       this.rPlayer.score++;
-      this.ball.resetBall(this.speed);
+      this.ball.resetBall(this.ballSpeed);
     } else if (this.ball.x + this.ball.radius > this.width) {
       this.lPlayer.score++;
-      this.ball.resetBall(this.speed);
+      this.ball.resetBall(this.ballSpeed);
     }
 
     if (this.lPlayer.barUp === true) this.lPlayerBarUp();
@@ -185,10 +201,6 @@ export class Game {
     this.ball.move();
     this.ball.collidesTopBottom();
 
-    // 테스트를 위한 simple AI
-    // this.rPlayer.y +=
-    //   (this.ball.y - (this.rPlayer.y + this.rPlayer.height / 2)) * 0.1;
-
     const player =
       this.ball.x + this.ball.radius < this.width / 2
         ? this.lPlayer
@@ -198,8 +210,7 @@ export class Game {
     }
   }
   finishGame(): void {
-    // 여기서 유저 정보의 점수의 차이에 따라 점수를 다르게 주면 될 듯
-    if (this.lPlayerId === this.winner) {
+    if (this.lPlayerProfile.user_id === this.winner) {
       this.rPlayerMmr -= REFERENCE_SCORE;
       this.lPlayerMmr += REFERENCE_SCORE;
     } else {
@@ -207,6 +218,7 @@ export class Game {
       this.lPlayerMmr -= REFERENCE_SCORE;
     }
   }
+
   public renderInfo(): object {
     return {
       width: this.width,
@@ -218,6 +230,7 @@ export class Game {
       rPlayerX: this.rPlayer.x,
     };
   }
+
   public renderData(): object {
     return {
       lPlayerY: this.lPlayer.y,
@@ -228,6 +241,7 @@ export class Game {
       bally: this.ball.y,
     };
   }
+
   public lPlayerInput(key, input): void {
     if (key === 'up') {
       this.lPlayer.barUp = input;
@@ -242,6 +256,7 @@ export class Game {
       this.rPlayer.barDown = input;
     }
   }
+
   public lPlayerBarUp(): void {
     if (this.lPlayer.y !== (this.lPlayer.height / 2) * -1) {
       this.lPlayer.y -= BAR_MOVE_SPEED;
@@ -262,17 +277,17 @@ export class Game {
       this.rPlayer.y += BAR_MOVE_SPEED;
     }
   }
+
   public gameInfo(): RmqMatchHistoryGameInfo {
-    let mode: string;
-    if (this.isRank === true) mode = 'rank';
-    else mode = 'friendly';
+    const mode = this.isRank === true ? 'rank' : 'friendly';
     return {
-      l_player_id: this.lPlayerInfo.user_id,
-      r_player_id: this.rPlayerInfo.user_id,
+      l_player_id: this.lPlayerProfile.user_id,
+      r_player_id: this.rPlayerProfile.user_id,
       difficulty: this.difficulty,
       mode,
     };
   }
+
   public gameResult() {
     return {
       game_id: this.game_id,
@@ -281,15 +296,16 @@ export class Game {
       r_player_score: this.rPlayer.score,
     };
   }
+
   public changeRankInfo() {
     return {
       l_player: {
-        user_id: this.lPlayerInfo.user_id,
+        user_id: this.lPlayerProfile.user_id,
         game_id: this.game_id,
         delta: this.lPlayerMmr,
       },
       r_player: {
-        user_id: this.rPlayerInfo.user_id,
+        user_id: this.rPlayerProfile.user_id,
         game_id: this.game_id,
         delta: this.rPlayerMmr,
       },

@@ -1,5 +1,4 @@
 import { MatchHistoryService } from './../match-history/match-history.service';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import {
   ConnectedSocket,
   OnGatewayConnection,
@@ -18,7 +17,7 @@ import { Body, UseFilters } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { WsExceptionsFilter } from 'src/common/ws/ws-exceptions.filter';
 
-const FPS = 60;
+const FPS = +process.env.FPS || 60;
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9998, {
   cors: true,
@@ -26,25 +25,34 @@ const FPS = 60;
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
-  serverId: string;
-  matchMaking;
-  games = new Map();
-  matchingInterval = [];
-  renderInterval = [];
-  waitingInterval = [];
+
+  matchMaking: MatchMaking;
+  games: Map<string, Game>;
+  clients: Map<string, string>;
+  matchingInterval: Map<string, any>;
+  renderInterval: Map<string, any>;
+  waitingInterval: Map<string, any>;
+
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly matchHistoryService: MatchHistoryService,
-    private readonly amqpConnection: AmqpConnection,
   ) {
-    this.serverId = v4();
     this.matchMaking = new MatchMaking();
+    this.games = new Map<string, Game>();
+    this.clients = new Map<string, string>();
+    this.matchingInterval = new Map<string, any>();
+    this.renderInterval = new Map<string, any>();
+    this.waitingInterval = new Map<string, any>();
   }
 
   async handleConnection(@ConnectedSocket() clientSocket: Socket) {
     try {
       await this.bindUser(clientSocket);
+      this.checkUserList(
+        clientSocket['user_info'].user.user_id,
+        clientSocket.id,
+      );
     } catch (e) {
       clientSocket.emit('game_error', e);
       clientSocket.disconnect(true);
@@ -54,35 +62,49 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
+    this.clients.delete(clientSocket.id);
     console.log(clientSocket.id, ' : game websocket disconnect');
-    const roomName = clientSocket['room_name'];
-    if (roomName !== undefined) {
+    const roomName: string = clientSocket['room_name'];
+    const game: Game = this.games.get(roomName);
+    if (game !== undefined) {
       clientSocket.leave(roomName);
-      if (this.games[roomName].lPlayerId === clientSocket.id) {
-        this.games[roomName].winner = this.games[roomName].rPlayerInfo.user_id;
-      } else {
-        this.games[roomName].winner = this.games[roomName].lPlayerInfo.user_id;
-      }
-      this.games[roomName].isFinished = true;
-      if (this.games[roomName].gameResult().game_id === undefined) {
+      if (game.gameResult().game_id === undefined) {
         this.server.to(`${roomName}`).emit('user_exit_room');
+        return;
       }
+      game.winner =
+        game.lPlayerSocketId === clientSocket.id
+          ? game.rPlayerProfile.user_id
+          : game.lPlayerProfile.user_id;
+      game.isFinished = true;
     } else {
-      clearInterval(this.matchingInterval[clientSocket.id]);
+      clearInterval(this.matchingInterval.get(clientSocket.id));
+      this.matchingInterval.delete(clientSocket.id);
       this.matchMaking.leaveMatchingQueue(clientSocket.id);
     }
   }
 
   @SubscribeMessage('user_left_queue')
   async userLeftQueue(@ConnectedSocket() clientSocket: Socket) {
-    clearInterval(this.matchingInterval[clientSocket.id]);
+    clearInterval(this.matchingInterval.get(clientSocket.id));
     this.matchMaking.leaveMatchingQueue(clientSocket.id);
+  }
+
+  @SubscribeMessage('user_checkout_room')
+  async userCheckoutRoom(@ConnectedSocket() clientSocket: Socket) {
+    const roomName: string = clientSocket['room_name'];
+    clientSocket.leave(roomName);
+    this.games.delete(roomName);
   }
 
   @SubscribeMessage('user_join_queue')
   async userJoinQueue(@ConnectedSocket() clientSocket: Socket) {
+    const roomName: string = clientSocket['room_name'];
+    if (roomName !== undefined && this.games.get(roomName) !== undefined) {
+      return;
+    }
     this.matchMaking.leaveMatchingQueue(clientSocket.id);
-    clearInterval(this.matchingInterval[clientSocket.id]);
+    clearInterval(this.matchingInterval.get(clientSocket.id));
     try {
       await this.updateUser(clientSocket);
     } catch (e) {
@@ -91,45 +113,51 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     clientSocket.emit('user_is_in_queue');
-    this.matchingInterval[clientSocket.id] = setInterval(() => {
-      const matchedId = this.matchMaking.matchMaking(clientSocket);
+    this.matchMaking.joinMatchingQueue(
+      clientSocket.id,
+      clientSocket['user_info'].user.mmr,
+    );
+    const interval: any = setInterval(() => {
+      const matchedId: string = this.matchMaking.matchMaking(clientSocket);
       if (matchedId !== clientSocket.id) {
-        const roomName = v4();
-        clientSocket.emit('player_matched', roomName);
-        this.server.to(`${matchedId}`).emit('player_matched', roomName);
-        clearInterval(this.matchingInterval[clientSocket.id]);
+        const newRoomName: string = v4();
+        clientSocket.emit('player_matched', newRoomName);
+        this.server.to(`${matchedId}`).emit('player_matched', newRoomName);
+        clearInterval(this.matchingInterval.get(clientSocket.id));
+        clearInterval(this.matchingInterval.get(matchedId));
       }
     }, 1000);
+    this.matchingInterval.set(clientSocket.id, interval);
   }
 
   @SubscribeMessage('user_join_room')
   userJoinRoom(@ConnectedSocket() clientSocket: Socket, @Body() roomName) {
-    clearInterval(this.matchingInterval[clientSocket.id]);
     clientSocket.join(roomName);
     clientSocket['room_name'] = roomName;
-    if (this.games[roomName] === undefined) {
-      this.games[roomName] = new Game(true);
-      this.games[roomName].lPlayerId = clientSocket.id;
-      this.games[roomName].lPlayerInfo = clientSocket['user_info'].user;
-      clientSocket['isOwner'] = true;
+    let game: Game = this.games.get(roomName);
+    if (game === undefined) {
+      game = new Game(true);
+      game.lPlayerSocketId = clientSocket.id;
+      game.lPlayerProfile = clientSocket['user_info'].user;
+      this.games.set(roomName, game);
       clientSocket['waiting'] = 0;
-      this.waitingInterval[roomName] = setInterval(() => {
+      const interval: any = setInterval(() => {
         if (clientSocket['waiting'] === 10) {
           clientSocket.leave(roomName);
           clientSocket.emit('user_exit_room');
-          clearInterval(this.waitingInterval[roomName]);
+          clearInterval(this.waitingInterval.get(roomName));
         }
         clientSocket['waiting']++;
       }, 1000);
+      this.waitingInterval.set(roomName, interval);
     } else {
-      clearInterval(this.waitingInterval[roomName]);
-      this.games[roomName].rPlayerId = clientSocket.id;
-      this.games[roomName].rPlayerInfo = clientSocket['user_info'].user;
-      clientSocket['isOwner'] = false;
+      clearInterval(this.waitingInterval.get(roomName));
+      game.rPlayerSocketId = clientSocket.id;
+      game.rPlayerProfile = clientSocket['user_info'].user;
       this.server.to(`${roomName}`).emit('user_joined_room', {
-        owner: this.games[roomName].lPlayerId,
-        lPlayerInfo: this.games[roomName].lPlayerInfo,
-        rPlayerInfo: this.games[roomName].rPlayerInfo,
+        owner: game.lPlayerSocketId,
+        lPlayerInfo: game.lPlayerProfile,
+        rPlayerInfo: game.rPlayerProfile,
       });
     }
   }
@@ -139,36 +167,29 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() clientSocket: Socket,
     @Body() difficulty,
   ) {
-    const roomName = clientSocket['room_name'];
-    if (this.games[roomName].isFinished === true) {
-      clientSocket.leave(roomName);
-      this.server.to(`${roomName}`).emit('user_exit_room');
-    }
-    this.games[roomName].init(difficulty);
+    const roomName: string = clientSocket['room_name'];
+    const game: Game = this.games.get(roomName);
+    game.init(difficulty);
     this.server.to(`${roomName}`).emit('difficulty_changed', difficulty);
   }
 
   @SubscribeMessage('player_ready')
   async playerReady(@ConnectedSocket() clientSocket: Socket) {
-    const roomName = clientSocket['room_name'];
-    if (this.games[roomName].isFinished === true) {
-      clientSocket.leave(roomName);
-      this.server.to(`${roomName}`).emit('user_exit_room');
-    }
-    if (this.games[roomName].playerReady === undefined) {
-      this.games[roomName].playerReady = clientSocket.id;
+    const roomName: string = clientSocket['room_name'];
+    const game: Game = this.games.get(roomName);
+    if (game.playerReady === undefined) {
+      game.playerReady = clientSocket.id;
       this.server.to(`${roomName}`).emit('counterpart_ready', clientSocket.id);
     } else if (
-      this.games[roomName].playerReady !== undefined &&
-      this.games[roomName].playerReady !== clientSocket.id &&
-      this.games[roomName].playerReady !== roomName
+      game.playerReady !== undefined &&
+      game.playerReady !== clientSocket.id &&
+      game.playerReady !== roomName
     ) {
-      this.games[roomName].playerReady = roomName;
+      game.playerReady = roomName;
       try {
-        this.games[roomName].game_id =
-          await this.matchHistoryService.createGameInfo(
-            this.games[roomName].gameInfo(),
-          );
+        game.game_id = await this.matchHistoryService.createGameInfo(
+          game.gameInfo(),
+        );
       } catch (e) {
         clientSocket.emit('game_error', e);
         clientSocket.disconnect(true);
@@ -176,19 +197,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
       this.server
         .to(`${roomName}`)
-        .emit('server_ready_to_start', this.games[roomName].renderInfo());
+        .emit('server_ready_to_start', game.renderInfo());
     }
   }
 
   @SubscribeMessage('client_ready_to_start')
   async clientReadyToStart(@ConnectedSocket() clientSocket: Socket) {
-    const roomName = clientSocket['room_name'];
-    if (this.games[roomName].isFinished === true) {
-      clientSocket.leave(roomName);
-      this.server.to(`${roomName}`).emit('user_exit_room');
-    }
-    if (this.games[roomName].renderReady === false) {
-      this.games[roomName].renderReady = true;
+    const roomName: string = clientSocket['room_name'];
+    const game: Game = this.games.get(roomName);
+    if (game.renderReady === false) {
+      game.renderReady = true;
     } else {
       this.server.to(`${roomName}`).emit('game_started');
       try {
@@ -203,96 +221,106 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('save_game_data')
   async saveGameData(@ConnectedSocket() clientSocket: Socket) {
-    const roomName = clientSocket['room_name'];
-    if (
-      this.games[roomName].isRank === true &&
-      this.games[roomName].isSaveData === false
-    ) {
-      this.games[roomName].isSaveData = true;
-      this.games[roomName].finishGame();
+    const roomName: string = clientSocket['room_name'];
+    const game: Game = this.games.get(roomName);
+    if (game.isRank === true && game.isSaveData === false) {
+      game.isSaveData = true;
+      game.finishGame();
       try {
-        await this.updateGameResult(this.games[roomName]);
+        await this.updateGameResult(game);
       } catch (e) {
         clientSocket.emit('game_error', e);
         clientSocket.disconnect(true);
         return;
       }
-      this.games.delete(roomName);
       this.server.to(`${roomName}`).emit('saved_game_data');
     }
   }
 
   @SubscribeMessage('user_leave_room')
   async userLeaveRoom(@ConnectedSocket() clientSocket: Socket) {
-    const roomName = clientSocket['room_name'];
+    const roomName: string = clientSocket['room_name'];
+    const game: Game = this.games.get(roomName);
     clientSocket.leave(roomName);
     let result;
     try {
-      result = await this.matchHistoryService.readGameResult(
-        this.games[roomName].game_id,
-      );
+      result = await this.matchHistoryService.readGameResult(game.game_id);
     } catch (e) {
       clientSocket.emit('game_error', e);
       clientSocket.disconnect(true);
       return;
     }
     clientSocket.emit('game_result', result);
+    this.games.delete(roomName);
   }
 
   @SubscribeMessage('up_key_pressed')
   keyDownBarUp(@ConnectedSocket() clientSocket: Socket) {
-    const roomName = clientSocket['room_name'];
-    if (clientSocket.id === this.games[roomName].lPlayerId) {
-      this.games[roomName].lPlayerInput('up', true);
-    } else if (clientSocket.id === this.games[roomName].rPlayerId) {
-      this.games[roomName].rPlayerInput('up', true);
+    const roomName: string = clientSocket['room_name'];
+    const game: Game = this.games.get(roomName);
+    if (game !== undefined) {
+      if (clientSocket.id === game.lPlayerSocketId) {
+        game.lPlayerInput('up', true);
+      } else if (clientSocket.id === game.rPlayerSocketId) {
+        game.rPlayerInput('up', true);
+      }
     }
   }
 
   @SubscribeMessage('down_key_pressed')
   keyDownBarDown(@ConnectedSocket() clientSocket: Socket) {
-    const roomName = clientSocket['room_name'];
-    if (clientSocket.id === this.games[roomName].lPlayerId) {
-      this.games[roomName].lPlayerInput('down', true);
-    } else if (clientSocket.id === this.games[roomName].rPlayerId) {
-      this.games[roomName].rPlayerInput('down', true);
+    const roomName: string = clientSocket['room_name'];
+    const game: Game = this.games.get(roomName);
+    if (game !== undefined) {
+      if (clientSocket.id === game.lPlayerSocketId) {
+        game.lPlayerInput('down', true);
+      } else if (clientSocket.id === game.rPlayerSocketId) {
+        game.rPlayerInput('down', true);
+      }
     }
   }
+
   @SubscribeMessage('up_key_released')
   keyUpBarUp(@ConnectedSocket() clientSocket: Socket) {
-    const roomName = clientSocket['room_name'];
-    if (clientSocket.id === this.games[roomName].lPlayerId) {
-      this.games[roomName].lPlayerInput('up', false);
-    } else if (clientSocket.id === this.games[roomName].rPlayerId) {
-      this.games[roomName].rPlayerInput('up', false);
+    const roomName: string = clientSocket['room_name'];
+    const game: Game = this.games.get(roomName);
+    if (game !== undefined) {
+      if (clientSocket.id === game.lPlayerSocketId) {
+        game.lPlayerInput('up', false);
+      } else if (clientSocket.id === game.rPlayerSocketId) {
+        game.rPlayerInput('up', false);
+      }
     }
   }
 
   @SubscribeMessage('down_key_released')
   keyUpBarDown(@ConnectedSocket() clientSocket: Socket) {
-    const roomName = clientSocket['room_name'];
-    if (clientSocket.id === this.games[roomName].lPlayerId) {
-      this.games[roomName].lPlayerInput('down', false);
-    } else if (clientSocket.id === this.games[roomName].rPlayerId) {
-      this.games[roomName].rPlayerInput('down', false);
+    const roomName: string = clientSocket['room_name'];
+    const game: Game = this.games.get(roomName);
+    if (game !== undefined) {
+      if (clientSocket.id === game.lPlayerSocketId) {
+        game.lPlayerInput('down', false);
+      } else if (clientSocket.id === game.rPlayerSocketId) {
+        game.rPlayerInput('down', false);
+      }
     }
   }
 
   async startGame(roomName: string) {
-    this.renderInterval[roomName] = setInterval(async () => {
-      this.games[roomName].update();
-      this.server
-        .to(`${roomName}`)
-        .emit('game_render_data', this.games[roomName].renderData());
-      if (this.games[roomName].isFinished === true) {
+    const game: Game = this.games.get(roomName);
+    const interval: any = setInterval(async () => {
+      game.update();
+      this.server.to(`${roomName}`).emit('game_render_data', game.renderData());
+      if (game.isFinished === true) {
         this.server.to(`${roomName}`).emit('game_finished');
-        clearInterval(this.renderInterval[roomName]);
+        clearInterval(this.renderInterval.get(roomName));
       }
     }, (1 / FPS) * 1000);
+    this.renderInterval.set(roomName, interval);
   }
 
   async updateGameResult(game: Game) {
-    const rankInfo = game.changeRankInfo();
+    const rankInfo: any = game.changeRankInfo();
     try {
       await this.matchHistoryService.createGameResult(game.gameResult());
       await this.matchHistoryService.createRankHistory(rankInfo.l_player);
@@ -300,6 +328,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (e) {
       throw new WsException(e);
     }
+  }
+
+  async bindUser(clientSocket: Socket) {
+    const access_token: string = clientSocket.handshake.auth['access_token'];
+    let user: any;
+    try {
+      user = await this.authService.verifyJwt(access_token);
+    } catch (e) {
+      throw new WsException(e);
+    }
+    clientSocket['user_info'] = { user, waiting: 0 };
+    return user;
   }
 
   async updateUser(clientSocket: Socket) {
@@ -310,8 +350,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new WsException(e);
       }
     }
-    const nickname = clientSocket['user_info'].user.nickname;
-    let user;
+    const nickname: string = clientSocket['user_info'].user.nickname;
+    let user: any;
     try {
       user = await this.userService.readUserByNickname(nickname);
     } catch (e) {
@@ -322,15 +362,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     clientSocket['user_info'] = { user, waiting: 0 };
   }
 
-  async bindUser(clientSocket: Socket) {
-    const access_token = clientSocket.handshake.auth['access_token'];
-    let user;
-    try {
-      user = await this.authService.verifyJwt(access_token);
-    } catch (e) {
-      throw new WsException(e);
+  checkUserList(userId: string, clientSocketId: string) {
+    const findUserSocketId = this.clients.get(userId);
+    if (findUserSocketId !== undefined) {
+      const findUserSocket = this.server.sockets.sockets.get(findUserSocketId);
+      try {
+        findUserSocket.emit('game_error', 'The same user logged in.');
+        findUserSocket.disconnect(true);
+      } catch (e) {}
+      this.clients.delete(userId);
     }
-    clientSocket['user_info'] = { user, waiting: 0 };
-    return user;
+    this.clients.set(userId, clientSocketId);
   }
 }
