@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         GH_REPO="https://github.com/m1n-q/transcendence.git"
-        BRANCH="user-service"
+        BRANCH="user"
         APP_DIR="app"
         IMAGE_NAME="user-service"
         SERVICE_NAME="user-service"
