@@ -20,11 +20,7 @@ import { RmqEvent } from '../common/rmq/types/rmq-event';
 import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { RedisService } from '../redis-module/services/redis.service';
 import { v4 } from 'uuid';
-import {
-  DMFormat,
-  DMFromClient,
-  DMFromServer,
-} from './types/chat-message-format';
+import { DMFormat, DMFromClient, DMFromServer } from './types/dm-format';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9992, { cors: true })
@@ -119,7 +115,6 @@ export class DMGateway
     @MessageBody() message,
     @ConnectedSocket() clientSocket: Socket,
   ) {
-    if (!this.getUser(clientSocket)) await this.bindUser(clientSocket);
     const oppoName = message.opponent;
     const userName = this.getUser(clientSocket).nickname; /* or user_id */
     const dmRoomName = this.makeDmRoomName(userName, oppoName);
@@ -165,7 +160,7 @@ export class DMGateway
     @ConnectedSocket() clientSocket: Socket,
   ) {
     const sender = this.getUser(clientSocket);
-    const dmRoomName = this.makeDmRoomName(sender.nickname, message.oppoName);
+    const dmRoomName = this.makeDmRoomName(sender.nickname, message.opponent);
 
     /* To Database */
     //TODO

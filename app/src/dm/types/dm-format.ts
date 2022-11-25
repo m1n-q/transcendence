@@ -5,7 +5,7 @@ export interface DMFormat {
 }
 
 export class DMFromClient implements DMFormat {
-  oppoName: string;
+  opponent: string;
   payload: string;
 }
 
