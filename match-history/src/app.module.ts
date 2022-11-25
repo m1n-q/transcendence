@@ -1,4 +1,3 @@
-import { UserService } from './user/user.service';
 import { MatchHistoryController } from './match-history/match-history.controller';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { Module } from '@nestjs/common';
@@ -47,6 +46,6 @@ import { MatchHistoryService } from './match-history/match-history.service';
     }),
   ],
   controllers: [MatchHistoryController],
-  providers: [MatchHistoryService, UserService],
+  providers: [MatchHistoryService],
 })
 export class AppModule {}

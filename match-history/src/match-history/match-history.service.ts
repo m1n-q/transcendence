@@ -1,4 +1,3 @@
-import { UserService } from './../user/user.service';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GameInfo } from 'src/common/entities/game-info.entity';
@@ -7,13 +6,20 @@ import { RankHistory } from 'src/common/entities/rank-history';
 import { User } from 'src/common/entities/user.entity';
 import { RmqError } from 'src/common/rmq-module/types/rmq-error';
 import { DataSource, Repository } from 'typeorm';
+import { RmqMatchHistoryGameIdDto } from './dto/rmq.match-history.game-id.dto';
 import {
   GameMode,
-  RmqMatchHistoryGameId,
+  RmqMatchHistoryGameInfoDto,
+} from './dto/rmq.match-history.game-info.dto';
+import { RmqMatchHistoryGameResultDto } from './dto/rmq.match-history.game-result.dto';
+import { RmqMatchHistoryRankHistoryDto } from './dto/rmq.match-history.rank-history.dto';
+import {
+  RmqMatchHistoryGame,
   RmqMatchHistoryGameInfo,
   RmqMatchHistoryGameResult,
   RmqMatchHistoryRankHistory,
-} from './dto/rmq.mh.request.dto';
+} from './match-history.response.info';
+import { RmqMatchHistoryReadByIdDto } from './dto/rmq.match-history.read-by-id.dto';
 
 const WHERE = 'match-history';
 
@@ -29,10 +35,11 @@ export class MatchHistoryService {
     @InjectRepository(RankHistory)
     private rankHistoryRepository: Repository<RankHistory>,
     private dataSource: DataSource,
-    private readonly userService: UserService,
   ) {}
 
-  async createGameInfo(payload: RmqMatchHistoryGameInfo) {
+  async createGameInfo(
+    payload: RmqMatchHistoryGameInfoDto,
+  ): Promise<RmqMatchHistoryGameInfo> {
     const gameInfo = this.gameInfoRepository.create(payload);
     let response;
     try {
@@ -44,10 +51,12 @@ export class MatchHistoryService {
         where: WHERE,
       });
     }
-    return response.game_id;
+    return response;
   }
 
-  async createGameResult(payload: RmqMatchHistoryGameResult) {
+  async createGameResult(
+    payload: RmqMatchHistoryGameResultDto,
+  ): Promise<RmqMatchHistoryGameResult> {
     const gameResult = this.gameResultRepository.create(payload);
     let response;
     try {
@@ -59,10 +68,12 @@ export class MatchHistoryService {
         where: WHERE,
       });
     }
-    return response.game_id;
+    return response;
   }
 
-  async createRankHistory(payload: RmqMatchHistoryRankHistory) {
+  async createRankHistory(
+    payload: RmqMatchHistoryRankHistoryDto,
+  ): Promise<RmqMatchHistoryRankHistory> {
     let user;
     try {
       user = await this.userRepository.findOne({
@@ -136,7 +147,9 @@ export class MatchHistoryService {
     };
   }
 
-  async readGameResult(payload: RmqMatchHistoryGameId) {
+  async readGameResult(
+    payload: RmqMatchHistoryGameIdDto,
+  ): Promise<RmqMatchHistoryGame> {
     let result;
     try {
       result = await this.gameResultRepository.findOne({
@@ -158,7 +171,7 @@ export class MatchHistoryService {
     return this.formattingGameResult(result);
   }
 
-  async readMatchHistoryById(payload) {
+  async readMatchHistoryById(payload: RmqMatchHistoryReadByIdDto) {
     let matchHistory;
     try {
       matchHistory = await this.gameResultRepository.find({
