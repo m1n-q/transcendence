@@ -63,11 +63,11 @@ export class ChatService {
   ) {}
 
   roomTX(roomId: string) {
-    return `chat.${roomId}.t.x`;
+    return `chat.room.${roomId}.t.x`;
   }
 
   roomRK(eventName: string, roomId: string) {
-    return `event.on.chat.${eventName}.${roomId}.rk`;
+    return `event.on.chat.room.${eventName}.${roomId}.rk`;
   }
 
   publishEvent(
