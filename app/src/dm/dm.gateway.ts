@@ -28,7 +28,7 @@ import {
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9992, { cors: true })
-export class DmGateway
+export class DMGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer()

@@ -4,6 +4,7 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { AuthService } from './auth/auth.service';
 import { NotificationGateway } from './notification/notification.gateway';
 import { ChatGateway } from './chat/chat.gateway';
+import { DMGateway } from './dm/dm.gateway';
 import { RedisModule } from './redis-module/redis.module';
 import { ChatService } from './chat/services/chat.service';
 import { CommandFactory } from './chat/types/chat-event-command';
@@ -32,6 +33,7 @@ import { CommandFactory } from './chat/types/chat-event-command';
     AuthService,
     NotificationGateway,
     ChatGateway,
+    DMGateway,
     ChatService,
     CommandFactory,
   ],
