@@ -221,7 +221,7 @@ export class ChatGateway
 
   /* handler for room queue */
   async chatRoomEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
-    const re = /(?<=event.on.chat.)(.*)(?=.rk)/;
+    const re = /(?<=event.on.chat.room.)(.*)(?=.rk)/;
     const parsed = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const params: RoutingKeyParams = { evType: parsed[0], roomId: parsed[1] };
 
@@ -259,11 +259,11 @@ export class ChatGateway
   }
 
   roomTX(roomId: string) {
-    return `chat.${roomId}.t.x`;
+    return `chat.room.${roomId}.t.x`;
   }
 
   roomRK(eventName: string, roomId: string) {
-    return `event.on.chat.${eventName}.${roomId}.rk`;
+    return `event.on.chat.room.${eventName}.${roomId}.rk`;
   }
 
   async bindUser(clientSocket: Socket) {
