@@ -1,5 +1,9 @@
-import { RmqMatchHistoryGameInfo } from 'src/match-history/dto/match-info.dto';
-import { UserProfile } from 'src/user/dto/user-info.dto';
+import {
+  Difficulty,
+  GameMode,
+  RmqRequestMatchHistoryGameInfoDto,
+} from 'src/match-history/dto/match-info.dto';
+import { UserProfile } from 'src/user/user.response.info';
 
 const REFERENCE_SCORE = +process.env.REFERENCE_SCORE || 20;
 const CANVARS_WIDTH = +process.env.CANVARS_WIDTH || 800;
@@ -105,7 +109,7 @@ export class Game {
   ballSpeed: number;
   width: number;
   height: number;
-  difficulty: string;
+  difficulty: Difficulty;
   isRank: boolean;
 
   //* GAME RENDER DATA
@@ -134,21 +138,21 @@ export class Game {
   public init(difficulty): void {
     switch (difficulty) {
       case 1:
-        this.difficulty = 'easy';
+        this.difficulty = Difficulty.EASY;
         this.ballSpeed = 5;
         this.ball.setBallSpeed(BALL_SPEED - 2);
         this.lPlayer.setBarSize(BAR_SIZE + 20);
         this.rPlayer.setBarSize(BAR_SIZE + 20);
         break;
       case 3:
-        this.difficulty = 'hard';
+        this.difficulty = Difficulty.HARD;
         this.ballSpeed = 9;
         this.ball.setBallSpeed(BALL_SPEED + 2);
         this.lPlayer.setBarSize(BAR_SIZE - 20);
         this.rPlayer.setBarSize(BAR_SIZE - 20);
         break;
       default:
-        this.difficulty = 'normal';
+        this.difficulty = Difficulty.NORMAL;
         this.ballSpeed = 7;
         this.ball.setBallSpeed(BALL_SPEED);
         this.lPlayer.setBarSize(BAR_SIZE);
@@ -278,8 +282,8 @@ export class Game {
     }
   }
 
-  public gameInfo(): RmqMatchHistoryGameInfo {
-    const mode = this.isRank === true ? 'rank' : 'friendly';
+  public gameInfo(): RmqRequestMatchHistoryGameInfoDto {
+    const mode = this.isRank === true ? GameMode.RANK : GameMode.FRIENDLY;
     return {
       l_player_id: this.lPlayerProfile.user_id,
       r_player_id: this.rPlayerProfile.user_id,

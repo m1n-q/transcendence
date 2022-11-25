@@ -2,13 +2,13 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
 import { RmqError } from 'src/common/rmq-module/types/rmq-error';
 import { RmqResponse } from 'src/common/rmq-module/types/rmq-response';
-import { UserProfile } from './dto/user-info.dto';
+import { UserProfile } from './user.response.info';
 
 @Injectable()
 export class UserService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
-  async readUserByNickname(nickname): Promise<UserProfile> {
+  async readUserByNickname(nickname: string): Promise<UserProfile> {
     let response: RmqResponse<UserProfile>;
     try {
       response = await this.amqpConnection.request<RmqResponse<UserProfile>>({

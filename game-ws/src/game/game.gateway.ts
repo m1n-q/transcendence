@@ -12,7 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { AuthService } from 'src/auth/auth.service';
 import { Game } from './game';
 import { v4 } from 'uuid';
-import { MatchMaking } from './match';
+import { MatchMaking } from './match-making';
 import { Body, UseFilters } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { WsExceptionsFilter } from 'src/common/ws/ws-exceptions.filter';
@@ -29,6 +29,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   matchMaking: MatchMaking;
   games: Map<string, Game>;
   clients: Map<string, string>;
+  playUserList: Set<string>;
   matchingInterval: Map<string, any>;
   renderInterval: Map<string, any>;
   waitingInterval: Map<string, any>;
@@ -44,6 +45,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.matchingInterval = new Map<string, any>();
     this.renderInterval = new Map<string, any>();
     this.waitingInterval = new Map<string, any>();
+    this.playUserList = new Set<string>();
   }
 
   async handleConnection(@ConnectedSocket() clientSocket: Socket) {
@@ -187,9 +189,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ) {
       game.playerReady = roomName;
       try {
-        game.game_id = await this.matchHistoryService.createGameInfo(
+        const gameInfo = await this.matchHistoryService.createGameInfo(
           game.gameInfo(),
         );
+        game.game_id = gameInfo.game_id;
       } catch (e) {
         clientSocket.emit('game_error', e);
         clientSocket.disconnect(true);
@@ -244,7 +247,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     clientSocket.leave(roomName);
     let result;
     try {
-      result = await this.matchHistoryService.readGameResult(game.game_id);
+      result = await this.matchHistoryService.readGameResult({
+        game_id: game.game_id,
+      });
     } catch (e) {
       clientSocket.emit('game_error', e);
       clientSocket.disconnect(true);
@@ -308,11 +313,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async startGame(roomName: string) {
     const game: Game = this.games.get(roomName);
+    this.playUserList.add(game.lPlayerProfile.user_id);
+    this.playUserList.add(game.rPlayerProfile.user_id);
     const interval: any = setInterval(async () => {
       game.update();
       this.server.to(`${roomName}`).emit('game_render_data', game.renderData());
       if (game.isFinished === true) {
         this.server.to(`${roomName}`).emit('game_finished');
+        this.playUserList.delete(game.lPlayerProfile.user_id);
+        this.playUserList.delete(game.rPlayerProfile.user_id);
         clearInterval(this.renderInterval.get(roomName));
       }
     }, (1 / FPS) * 1000);

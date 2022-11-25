@@ -1,18 +1,26 @@
-import { RmqMatchHistoryGameResult } from './dto/match-result.dto';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
-import { RmqMatchHistoryGameInfo } from './dto/match-info.dto';
-import { RmqMatchHistoryRankHistory } from './dto/match-rank-history.dto';
+import {
+  RmqMatchHistoryGameInfo,
+  RmqMatchHistoryGameResult,
+  RmqMatchHistoryRankHistory,
+  RmqMatchHistoryGame,
+} from './match-history.response.info';
 import { RmqMatchHistoryGameId } from './dto/match-game-id.dto';
 import { RmqResponse } from 'src/common/rmq-module/types/rmq-response';
 import { RmqError } from 'src/common/rmq-module/types/rmq-error';
+import { RmqRequestMatchHistoryGameInfoDto } from './dto/match-info.dto';
+import { RmqRequestMatchHistoryGameResultDto } from './dto/match-result.dto';
+import { RmqMatchHistoryRankHistoryDto } from './dto/match-rank-history.dto';
 
 @Injectable()
 export class MatchHistoryService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
-  async createGameInfo(gameInfo) {
-    let response;
+  async createGameInfo(
+    gameInfo: RmqRequestMatchHistoryGameInfoDto,
+  ): Promise<RmqMatchHistoryGameInfo> {
+    let response: RmqResponse<RmqMatchHistoryGameInfo>;
     try {
       response = await this.amqpConnection.request<
         RmqResponse<RmqMatchHistoryGameInfo>
@@ -32,8 +40,10 @@ export class MatchHistoryService {
     return response.data;
   }
 
-  async createGameResult(gameResult) {
-    let response;
+  async createGameResult(
+    gameResult: RmqRequestMatchHistoryGameResultDto,
+  ): Promise<RmqMatchHistoryGameResult> {
+    let response: RmqResponse<RmqMatchHistoryGameResult>;
     try {
       response = await this.amqpConnection.request<
         RmqResponse<RmqMatchHistoryGameResult>
@@ -53,8 +63,10 @@ export class MatchHistoryService {
     return response.data;
   }
 
-  async createRankHistory(rankHistory) {
-    let response;
+  async createRankHistory(
+    rankHistory: RmqMatchHistoryRankHistoryDto,
+  ): Promise<RmqMatchHistoryRankHistory> {
+    let response: RmqResponse<RmqMatchHistoryRankHistory>;
     try {
       response = await this.amqpConnection.request<
         RmqResponse<RmqMatchHistoryRankHistory>
@@ -74,36 +86,17 @@ export class MatchHistoryService {
     return response.data;
   }
 
-  async readGameResult(gameId) {
-    let response;
+  async readGameResult(
+    gameId: RmqMatchHistoryGameId,
+  ): Promise<RmqMatchHistoryGame> {
+    let response: RmqResponse<RmqMatchHistoryGame>;
     try {
       response = await this.amqpConnection.request<
-        RmqResponse<RmqMatchHistoryGameId>
+        RmqResponse<RmqMatchHistoryGame>
       >({
         exchange: 'match-history.d.x',
         routingKey: 'req.to.match-history.read.game-result.rk',
-        payload: { game_id: gameId },
-      });
-    } catch (e) {
-      throw new RmqError({
-        code: 500,
-        message: 'Request Time Out (to match-history)',
-        where: 'gameWebsocket',
-      });
-    }
-    if (!response.success) throw response.error;
-    return response.data;
-  }
-
-  async test(userId, take) {
-    let response;
-    try {
-      response = await this.amqpConnection.request<
-        RmqResponse<RmqMatchHistoryGameId>
-      >({
-        exchange: 'match-history.d.x',
-        routingKey: 'req.to.match-history.read.match-history.by.id.rk',
-        payload: { user_id: userId, take },
+        payload: gameId,
       });
     } catch (e) {
       throw new RmqError({
