@@ -58,7 +58,7 @@ import { ChatRoomMuteList } from './common/entities/chat-room-mute-list.entity';
     //     ChatRoomMuteList,
     //   ]),
   ],
-  controllers: [ChatRmqController],
-  providers: [ChatService, ChatRmqController],
+  // controllers: [ChatRmqController],
+  // providers: [ChatService, ChatRmqController],
 })
 export class AppModule {}
