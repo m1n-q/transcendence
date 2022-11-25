@@ -120,7 +120,8 @@ export class DMGateway
     @ConnectedSocket() clientSocket: Socket,
   ) {
     const oppoName = message.opponent;
-    const userName = this.getUser(clientSocket).nickname; /* or user_id */
+    let userName;
+    while ((userName = this.getUser(clientSocket).nickname)); /* or user_id */
     const dmRoomName = this.makeDmRoomName(userName, oppoName);
     await clientSocket.join(dmRoomName);
 
