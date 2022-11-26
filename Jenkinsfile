@@ -17,7 +17,7 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh "cd ${APP_DIR} && docker build -t ${IMAGE_NAME} ."
+                sh "cd ${APP_DIR} && docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
             }
         }
         stage('Deploy') {
@@ -26,14 +26,19 @@ pipeline {
                     aws ssm get-parameter --name /transcendence/production/${SERVICE_NAME} --query Parameter.Value --output text | jq -r 'to_entries[] | [.key, .value] | join("=")' > .env
                 '''
                 sh '''
-                    docker rm -f ${SERVICE_NAME}
+                    docker ps --filter name="${SERVICE_NAME}:*" --filter status=running | xargs --no-run-if-empty docker stop
 
-                    docker run -d --name ${SERVICE_NAME} --net=host \
+                    docker run -d --name ${SERVICE_NAME}:${BUILD_NUMBER} --net=host \
                     --env-file=".env" \
-                    ${IMAGE_NAME}
+                    ${IMAGE_NAME}:${BUILD_NUMBER}
                 '''
+            }
+        }
+        stage('Clean-up') {
+            steps {
                 sh '''
                     rm .env
+                    docker images --quiet --filter=dangling=true | xargs --no-run-if-empty docker rmi
                 '''
             }
         }
