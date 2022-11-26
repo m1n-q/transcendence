@@ -28,7 +28,7 @@ pipeline {
                 sh '''
                     docker ps --filter name="${SERVICE_NAME}*" --filter status=running -aq | xargs --no-run-if-empty docker stop
 
-                    docker run -d --name ${SERVICE_NAME}-${BUILD_NUMBER} --net=host \
+                    docker run -d --name ${SERVICE_NAME}_${BUILD_NUMBER} --net=host \
                     --env-file=".env" \
                     ${IMAGE_NAME}:${BUILD_NUMBER}
                 '''
