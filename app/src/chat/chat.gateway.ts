@@ -86,7 +86,7 @@ export class ChatGateway
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    const user: UserInfo = this.getUser(clientSocket);
+    const user: UserInfo = await this.getUser(clientSocket);
 
     if (!user) {
       clientSocket.disconnect(true);
@@ -182,7 +182,7 @@ export class ChatGateway
     @MessageBody() message: ChatMessageFromClient,
     @ConnectedSocket() clientSocket: Socket,
   ) {
-    const sender = this.getUser(clientSocket);
+    const sender = await this.getUser(clientSocket);
 
     /* To Database */
     const toStore: MessageType = {
@@ -250,8 +250,10 @@ export class ChatGateway
     return this.server.sockets.sockets.get(sockId);
   }
 
-  getUser(clientSocket: Socket): UserInfo {
-    return clientSocket['user_info'];
+  async getUser(clientSocket: Socket): Promise<UserInfo> {
+    return clientSocket['user_info']
+      ? clientSocket['user_info']
+      : await this.bindUser(clientSocket);
   }
 
   roomQ(roomId: string) {

@@ -67,7 +67,6 @@ export class DMGateway
     let user: UserInfo;
     try {
       user = await this.bindUser(clientSocket);
-      console.log('User binded!');
     } catch (e) {
       clientSocket.disconnect(true);
       return;

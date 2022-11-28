@@ -86,7 +86,7 @@ export class NotificationGateway
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    const user: UserInfo = this.getUser(clientSocket);
+    const user: UserInfo = await this.getUser(clientSocket);
 
     if (!user) {
       clientSocket.disconnect(true);
@@ -130,8 +130,10 @@ export class NotificationGateway
     return this.server.sockets.sockets.get(clientId);
   }
 
-  getUser(clientSocket: Socket): UserInfo {
-    return clientSocket['user_info'];
+  async getUser(clientSocket: Socket): Promise<UserInfo> {
+    return clientSocket['user_info']
+      ? clientSocket['user_info']
+      : await this.bindUser(clientSocket);
   }
 
   userQ(userId: string) {
