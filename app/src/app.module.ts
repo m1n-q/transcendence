@@ -16,6 +16,8 @@ import { MatchHistoryController } from './match-history/match-history.controller
 import { MatchHistoryService } from './match-history/match-history.service';
 import { AwsModule } from './common/aws/aws.module';
 import { AwsService } from './common/aws/aws.service';
+import { DmService } from './dm/services/dm.service';
+import { DmController } from './dm/controllers/dm.controller';
 
 @Module({
   imports: [
@@ -48,6 +50,7 @@ import { AwsService } from './common/aws/aws.service';
     TestController,
     ChatController,
     MatchHistoryController,
+    DmController,
   ],
   providers: [
     AuthService,
@@ -57,6 +60,7 @@ import { AwsService } from './common/aws/aws.service';
     BlockService,
     ChatService,
     MatchHistoryService,
+    DmService,
   ],
 })
 export class AppModule {}
