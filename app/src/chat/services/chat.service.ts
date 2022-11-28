@@ -167,7 +167,7 @@ export class ChatService {
     };
   }
 
-  async getRoomUsers(room: ChatRoom) {
+  async getRoomMembers(room: ChatRoom) {
     const usersInRoom = await this.chatRoomUserRepo.find({
       where: {
         roomId: room.roomId,
@@ -183,7 +183,7 @@ export class ChatService {
       return userProfile;
     });
     return {
-      users: userProfiles,
+      members: userProfiles,
     };
   }
 

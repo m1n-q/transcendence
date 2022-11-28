@@ -60,15 +60,15 @@ export class ChatRmqController {
   @UseGuards(RoomExistsGuard)
   @RabbitRPC({
     exchange: 'chat.d.x',
-    queue: 'chat.get.room.users.q',
-    routingKey: 'req.to.chat.get.room.users.rk',
+    queue: 'chat.get.room.members.q',
+    routingKey: 'req.to.chat.get.room.members.rk',
     errorHandler: RmqErrorHandler,
   })
-  async getRoomUsers(
+  async getRoomMembers(
     @RabbitRequest() req,
     @RabbitPayload() chatRoomIdDto: ChatRoomIdDto,
   ) {
-    return await this.chatService.getRoomUsers(req.room);
+    return await this.chatService.getRoomMembers(req.room);
   }
 
   @UseGuards(RoomExistsGuard, OwnerGuard)
