@@ -656,8 +656,7 @@ export class ChatService {
       messages: room.messages.map((message) => {
         return {
           room_msg_id: message.roomMsgId,
-          // sender_id: message.senderId,
-          sender: message.sender.nickname,
+          sender: toUserProfile(message.sender),
           room_id: message.roomId,
           payload: message.payload,
           created: message.created,
