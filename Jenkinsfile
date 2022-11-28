@@ -9,6 +9,7 @@ pipeline {
     }
 
     stages {
+        options { lock resource: 'build-lock' }
         stage('Pull') {
             steps {
                 // Get some code from a GitHub repository
