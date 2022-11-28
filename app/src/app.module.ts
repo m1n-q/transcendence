@@ -11,6 +11,9 @@ import { ChatRoomMessage } from './common/entities/chat-room-message.entity';
 import { ChatRoomUser } from './common/entities/chat-room-user.entity';
 import { ChatRoomBanList } from './common/entities/chat-room-ban-list.entity';
 import { ChatRoomMuteList } from './common/entities/chat-room-mute-list.entity';
+import { DmService } from './dm/services/dm.service';
+import { DM } from './common/entities/dm.entity';
+import { DmRmqController } from './dm/controllers/dm.rmq.controller';
 
 @Module({
   imports: [
@@ -21,7 +24,11 @@ import { ChatRoomMuteList } from './common/entities/chat-room-mute-list.entity';
       uri: process.env.RMQ_HOST,
       exchanges: [
         {
-          name: process.env.RMQ_CHAT_EXCHANGE,
+          name: process.env.RMQ_CHAT_DIRECT,
+          type: 'direct',
+        },
+        {
+          name: process.env.RMQ_DM_DIRECT,
           type: 'direct',
         },
       ],
@@ -38,6 +45,7 @@ import { ChatRoomMuteList } from './common/entities/chat-room-mute-list.entity';
       database: process.env.PG_DATABASE,
       entities: [
         User,
+        DM,
         ChatRoom,
         ChatRoomMessage,
         ChatRoomUser,
@@ -51,6 +59,7 @@ import { ChatRoomMuteList } from './common/entities/chat-room-mute-list.entity';
     }),
     TypeOrmModule.forFeature([
       User,
+      DM,
       ChatRoom,
       ChatRoomMessage,
       ChatRoomUser,
@@ -58,7 +67,7 @@ import { ChatRoomMuteList } from './common/entities/chat-room-mute-list.entity';
       ChatRoomMuteList,
     ]),
   ],
-  controllers: [ChatRmqController],
-  providers: [ChatService, ChatRmqController],
+  controllers: [ChatRmqController, DmRmqController],
+  providers: [ChatService, ChatRmqController, DmService, DmRmqController],
 })
 export class AppModule {}
