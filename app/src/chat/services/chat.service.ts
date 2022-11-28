@@ -19,7 +19,7 @@ export class ChatService {
     let response: RmqResponse;
     try {
       response = await this.amqpConnection.request<RmqResponse>({
-        exchange: 'chat.d.x',
+        exchange: process.env.RMQ_CHAT_DIRECT,
         routingKey,
         payload,
       });

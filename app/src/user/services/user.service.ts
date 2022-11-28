@@ -18,7 +18,7 @@ export class UserService {
     let response: RmqResponse<any>;
     try {
       response = await this.amqpConnection.request<RmqResponse>({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey,
         payload,
       });
