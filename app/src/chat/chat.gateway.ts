@@ -16,7 +16,6 @@ import { ConsumeMessage } from 'amqplib';
 import { RmqEvent } from '../common/rmq/types/rmq-event';
 import { AuthService } from '../auth/auth.service';
 import { RedisService } from '../redis-module/services/redis.service';
-import { UserInfo } from '../auth/dto/user-info.dto';
 import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { v4 } from 'uuid';
 import { ChatService } from './services/chat.service';
@@ -33,6 +32,7 @@ import {
   ChatMessageFromClient,
   ChatMessageFromServer,
 } from './types/chat-message-format';
+import { UserInfo } from '../user/types/user-info';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9999, { cors: true })

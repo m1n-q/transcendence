@@ -1,4 +1,4 @@
-import { UserInfo } from '../../auth/dto/user-info.dto';
+import { UserInfo } from '../../user/types/user-info';
 
 export interface ChatMessageFormat {
   payload: string;

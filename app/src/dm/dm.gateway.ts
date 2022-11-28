@@ -15,7 +15,6 @@ import { ConsumeMessage } from 'amqplib';
 import { Server, Socket, BroadcastOperator } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { AuthService } from '../auth/auth.service';
-import { UserInfo } from '../auth/dto/user-info.dto';
 import { RmqEvent } from '../common/rmq/types/rmq-event';
 import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { RedisService } from '../redis-module/services/redis.service';
@@ -23,6 +22,7 @@ import { v4 } from 'uuid';
 import { DMFormat, DMFromClient, DMFromServer } from './types/dm-format';
 import { DmService } from './services/dm.service';
 import { UserService } from '../user/services/user.service';
+import { UserInfo } from '../user/types/user-info';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9992, { cors: true })

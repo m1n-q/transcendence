@@ -1,10 +1,18 @@
 import { Expose } from 'class-transformer';
 
-export class UserProfile {
+export class UserInfo {
   @Expose()
   user_id: string;
   @Expose()
   nickname: string;
+  @Expose()
+  provider: string;
+  @Expose()
+  third_party_id: string;
+  @Expose()
+  two_factor_authentication_key: string;
+  @Expose()
+  two_factor_authentication_type: string;
   @Expose()
   prof_img: string;
   @Expose()

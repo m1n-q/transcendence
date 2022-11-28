@@ -13,8 +13,8 @@ import { ConsumeMessage } from 'amqplib';
 import { RmqEvent } from '../common/rmq/types/rmq-event';
 import { RedisService } from '../redis-module/services/redis.service';
 import { AuthService } from '../auth/auth.service';
-import { UserInfo } from '../auth/dto/user-info.dto';
 import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
+import { UserInfo } from '../user/types/user-info';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(1234, { cors: true })
