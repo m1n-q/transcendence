@@ -178,10 +178,9 @@ export class ChatService {
     const userProfiles = usersInRoom.map((userInRoom) => {
       const userProfile = toUserProfile(userInRoom.user);
       if (room.roomOwnerId === userProfile.user_id) userInRoom.role = 'owner';
-      return {
-        role: userInRoom.role,
-        user: userProfile,
-      };
+
+      userProfile['role'] = userInRoom.role;
+      return userProfile;
     });
     return {
       users: userProfiles,
