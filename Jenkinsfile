@@ -8,6 +8,7 @@ pipeline {
         SERVICE_NAME="ws"
     }
 
+    options { lock resource: 'build-lock' }
     stages {
         stage('Pull') {
             steps {
