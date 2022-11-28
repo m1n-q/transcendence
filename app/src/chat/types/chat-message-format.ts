@@ -1,4 +1,4 @@
-import { UserInfo } from '../../user/types/user-info';
+import { UserProfile } from '../../user/types/user-profile';
 
 export interface ChatMessageFormat {
   payload: string;
@@ -10,7 +10,7 @@ export class ChatMessageFromClient implements ChatMessageFormat {
 }
 
 export class ChatMessageFromServer implements ChatMessageFormat {
-  constructor(readonly sender: UserInfo, readonly payload: string) {}
+  constructor(readonly sender: UserProfile, readonly payload: string) {}
 }
 
 export class ChatAnnouncementFromServer implements ChatMessageFormat {

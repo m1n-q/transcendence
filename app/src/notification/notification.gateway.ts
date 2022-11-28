@@ -14,7 +14,8 @@ import { RmqEvent } from '../common/rmq/types/rmq-event';
 import { RedisService } from '../redis-module/services/redis.service';
 import { AuthService } from '../auth/auth.service';
 import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
-import { UserInfo } from '../user/types/user-info';
+import { UserProfile } from '../user/types/user-profile';
+import { toUserProfile } from '../common/utils/utils';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(1234, { cors: true })
@@ -40,7 +41,7 @@ export class NotificationGateway
     @ConnectedSocket() clientSocket: Socket,
     ...args: any[]
   ) {
-    let user: UserInfo;
+    let user: UserProfile;
 
     try {
       user = await this.bindUser(clientSocket);
@@ -76,9 +77,6 @@ export class NotificationGateway
       );
     }
 
-    /* bind user info to socket */
-    clientSocket['user_info'] = user;
-
     /* save connected socket per user */
     await this.redisService.hsetJson(this.makeUserKey(user.user_id), {
       ntf_sock: clientSocket.id,
@@ -86,7 +84,7 @@ export class NotificationGateway
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    const user: UserInfo = await this.getUser(clientSocket);
+    const user: UserProfile = await this.getUser(clientSocket);
 
     if (!user) {
       clientSocket.disconnect(true);
@@ -130,9 +128,9 @@ export class NotificationGateway
     return this.server.sockets.sockets.get(clientId);
   }
 
-  async getUser(clientSocket: Socket): Promise<UserInfo> {
-    return clientSocket['user_info']
-      ? clientSocket['user_info']
+  async getUser(clientSocket: Socket): Promise<UserProfile> {
+    return clientSocket['user_profile']
+      ? clientSocket['user_profile']
       : await this.bindUser(clientSocket);
   }
 
@@ -155,7 +153,7 @@ export class NotificationGateway
     }
 
     /* bind user info to socket */
-    clientSocket['user_info'] = user;
+    clientSocket['user_profile'] = toUserProfile(user);
     return user;
   }
 }

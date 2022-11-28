@@ -22,7 +22,8 @@ import { v4 } from 'uuid';
 import { DMFormat, DMFromClient, DMFromServer } from './types/dm-format';
 import { DmService } from './services/dm.service';
 import { UserService } from '../user/services/user.service';
-import { UserInfo } from '../user/types/user-info';
+import { UserProfile } from '../user/types/user-profile';
+import { toUserProfile } from '../common/utils/utils';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9992, { cors: true })
@@ -64,7 +65,7 @@ export class DMGateway
     @ConnectedSocket() clientSocket: Socket,
     ...args: any[]
   ) {
-    let user: UserInfo;
+    let user: UserProfile;
     try {
       user = await this.bindUser(clientSocket);
     } catch (e) {
@@ -76,7 +77,7 @@ export class DMGateway
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    const user: UserInfo = await this.getUser(clientSocket);
+    const user: UserProfile = await this.getUser(clientSocket);
 
     if (!user) {
       clientSocket.disconnect(true);
@@ -231,9 +232,9 @@ export class DMGateway
     return this.server.sockets.sockets.get(sockId);
   }
 
-  async getUser(clientSocket: Socket): Promise<UserInfo> {
-    return clientSocket['user_info']
-      ? clientSocket['user_info']
+  async getUser(clientSocket: Socket): Promise<UserProfile> {
+    return clientSocket['user_profile']
+      ? clientSocket['user_profile']
       : await this.bindUser(clientSocket);
   }
 
@@ -266,7 +267,7 @@ export class DMGateway
     }
 
     /* bind user info to socket */
-    clientSocket['user_info'] = user;
+    clientSocket['user_profile'] = toUserProfile(user);
     return user;
   }
 
