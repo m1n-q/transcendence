@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { DM } from '../../common/entities/dm.entity';
 import { toRmqError } from '../../common/rmq/errors/to-rmq-error';
-import { UserProfile } from '../../user-info';
+import { toUserProfile } from '../../common/utils/utils';
 import { DmGetMessagesDto } from '../dto/dm-get-messages.dto';
 import { DmDto } from '../dto/dm.dto';
 
@@ -43,19 +42,9 @@ export class DmService {
       });
     return {
       messages: messages.map((dm) => {
-        const sender: UserProfile = plainToInstance(UserProfile, dm.sender, {
-          excludeExtraneousValues: true,
-        });
-        const receiver: UserProfile = plainToInstance(
-          UserProfile,
-          dm.receiver,
-          {
-            excludeExtraneousValues: true,
-          },
-        );
         return {
-          sender,
-          receiver,
+          sender: toUserProfile(dm.sender),
+          receiver: toUserProfile(dm.receiver),
           payload: dm.payload,
           created: dm.created,
         };

@@ -32,9 +32,7 @@ import { MutedUserError } from '../../common/rmq/errors/muted-user.error';
 import { InvalidPasswordError } from '../../common/rmq/errors/invalid-password.error';
 import { ChatEventType } from '../chat-event.type';
 import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
-import { UserInfo, UserProfile } from '../../user-info';
-import { plainToClass, plainToInstance } from 'class-transformer';
-import { User } from '../../common/entities/user.entity';
+import { toUserProfile } from '../../common/utils/utils';
 
 /*  TODO:
  *
@@ -178,9 +176,7 @@ export class ChatService {
     });
 
     const userProfiles = usersInRoom.map((userInRoom) => {
-      const userProfile = plainToInstance(UserProfile, userInRoom.user, {
-        excludeExtraneousValues: true,
-      });
+      const userProfile = toUserProfile(userInRoom.user);
       if (room.roomOwnerId === userProfile.user_id) userInRoom.role = 'owner';
       return {
         role: userInRoom.role,
