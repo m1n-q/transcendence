@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '../../redis-module/services/redis.service';
-import { UserInfo } from '../dto/user-info';
 import { ThirdPartyInfo } from '../dto/third-party-info';
 import {
   Tokens,
@@ -12,6 +11,7 @@ import { RmqError } from '../../common/rmq/types/rmq-error';
 import { plainToInstance } from 'class-transformer';
 import { UserService } from '../../user/services/user.service';
 import { URLSearchParams } from 'url';
+import { UserInfo } from '../../user/types/user-info';
 
 const WHERE = 'auth-service';
 // const AT_EXPIRES_IN = 60 * 15;

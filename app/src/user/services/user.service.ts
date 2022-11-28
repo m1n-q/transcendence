@@ -4,7 +4,7 @@ import { CreateUserDto } from '../../auth/dto/create-user.dto';
 import { RmqError } from '../../common/rmq/types/rmq-error';
 import { RmqResponse } from '../../common/rmq/types/rmq-response';
 import { ThirdPartyInfo } from '../../auth/dto/third-party-info';
-import { UserInfo } from '../../auth/dto/user-info';
+import { UserInfo } from '../types/user-info';
 
 @Injectable()
 export class UserService {
