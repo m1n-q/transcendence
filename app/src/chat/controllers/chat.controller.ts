@@ -45,7 +45,7 @@ export class ChatController {
     });
   }
 
-  @Get('room/:roomId/user')
+  @Get('room/:roomId/members')
   async getRoomUsers(@Req() req, @Param('roomId', new ParseUUIDPipe()) roomId) {
     return this.chatService.getRoomUsers({ room_id: roomId });
   }
