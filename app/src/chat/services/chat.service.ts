@@ -173,9 +173,9 @@ export class ChatService {
     );
   }
 
-  async getRoomUsers(chatRoomIdDto: ChatRoomIdDto) {
+  async getRoomMembers(chatRoomIdDto: ChatRoomIdDto) {
     return this.requestToChatService(
-      this.RK('req', 'chat.get.room.users'),
+      this.RK('req', 'chat.get.room.members'),
       chatRoomIdDto,
     );
   }
