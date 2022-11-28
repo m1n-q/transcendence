@@ -8,8 +8,8 @@ pipeline {
         SERVICE_NAME="chat-service"
     }
 
+    options { lock resource: 'build-lock' }
     stages {
-        options { lock resource: 'build-lock' }
         stage('Pull') {
             steps {
                 // Get some code from a GitHub repository
