@@ -15,7 +15,7 @@ export class MatchHistoryService {
 
     try {
       response = await this.amqpConnection.request({
-        exchange: 'match-history.d.x',
+        exchange: process.env.RMQ_MATCH_HISTORY_DIRECT,
         routingKey: 'req.to.match-history.read.match-history.by.id.rk',
         payload: data,
       });

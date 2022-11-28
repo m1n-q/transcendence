@@ -14,7 +14,7 @@ export class BlockService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.read.block.rk',
         payload: {
           user_id: user_id,
@@ -35,7 +35,7 @@ export class BlockService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.create.block.rk',
         payload: {
           blocker: user_id,
@@ -57,7 +57,7 @@ export class BlockService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.delete.block.rk',
         payload: {
           block_id: block_id,

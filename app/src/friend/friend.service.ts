@@ -13,7 +13,7 @@ export class FriendService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.read.friend.rk',
         payload: {
           user_id: user_id,
@@ -34,7 +34,7 @@ export class FriendService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.delete.friend.rk',
         payload: {
           user_id: user_id,
@@ -56,7 +56,7 @@ export class FriendService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.read.friend.request.sent.list.rk',
         payload: {
           user_id: user_id,
@@ -77,7 +77,7 @@ export class FriendService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.read.friend.request.recv.list.rk',
         payload: {
           user_id: user_id,
@@ -98,7 +98,7 @@ export class FriendService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.create.friend.request.rk',
         payload: {
           requester: user_id,
@@ -120,7 +120,7 @@ export class FriendService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.cancel.friend.request.rk',
         payload: {
           requester: user_id,
@@ -142,7 +142,7 @@ export class FriendService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.accept.friend.request.rk',
         payload: {
           request_id: request_id,
@@ -167,7 +167,7 @@ export class FriendService {
     let response;
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.reject.friend.request.rk',
         payload: {
           receiver: user_id,

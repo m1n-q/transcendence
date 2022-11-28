@@ -21,7 +21,7 @@ export class UserService {
 
     try {
       response = await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.create.rk',
         payload: data,
       });
@@ -42,7 +42,7 @@ export class UserService {
 
     try {
       response = await this.amqpConnection.request<RmqResponse<UserProfile>>({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.read.by.nickname.rk',
         payload: { nickname },
       });
@@ -63,7 +63,7 @@ export class UserService {
 
     try {
       response = await this.amqpConnection.request<RmqResponse<UserInfo>>({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.read.by.id.rk',
         payload: { user_id },
       });
@@ -85,7 +85,7 @@ export class UserService {
       response = await this.amqpConnection.request<
         RmqResponse<RmqResponseUser>
       >({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.delete.rk',
         payload: {
           user_id,
@@ -108,7 +108,7 @@ export class UserService {
       response = await this.amqpConnection.request<
         RmqResponse<RmqResponseUser>
       >({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.update.nickname.rk',
         payload: {
           user_id,
@@ -140,7 +140,7 @@ export class UserService {
       response = await this.amqpConnection.request<
         RmqResponse<RmqResponseUser>
       >({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.update.profImg.rk',
         payload: {
           user_id,
@@ -169,7 +169,7 @@ export class UserService {
       response = await this.amqpConnection.request<
         RmqResponse<RmqResponseUser>
       >({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.update.2FA.rk',
         payload: {
           user_id,

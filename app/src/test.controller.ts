@@ -10,7 +10,7 @@ export class TestController {
   async getAllUser() {
     const response: RmqResponse<RmqResponseUser> =
       await this.amqpConnection.request({
-        exchange: 'user.d.x',
+        exchange: process.env.RMQ_USER_DIRECT,
         routingKey: 'req.to.user.read.list.rk',
         payload: {},
       });

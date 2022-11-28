@@ -15,7 +15,7 @@ export class AuthService {
     type Tokens = { access_token: string; refresh_token: string };
     try {
       response = await this.amqpConnection.request<RmqResponse<Tokens>>({
-        exchange: 'auth.d.x',
+        exchange: process.env.RMQ_AUTH_DIRECT,
         routingKey: `req.to.auth.signin.${provider}.rk`,
         payload: { authorization_code: code },
       });
@@ -35,7 +35,7 @@ export class AuthService {
     type Tokens = { access_token: string; refresh_token: string };
     try {
       response = await this.amqpConnection.request<RmqResponse<Tokens>>({
-        exchange: 'auth.d.x',
+        exchange: process.env.RMQ_AUTH_DIRECT,
         routingKey: 'req.to.auth.refresh.jwt.rk',
         payload: { refresh_token: token },
       });

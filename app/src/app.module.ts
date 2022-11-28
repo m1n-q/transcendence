@@ -19,27 +19,23 @@ import { AwsService } from './common/aws/aws.service';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     RabbitMQModule.forRoot(RabbitMQModule, {
       exchanges: [
         {
-          name: 'user.d.x',
+          name: process.env.RMQ_USER_DIRECT,
           type: 'direct',
         },
         {
-          name: 'user.t.x',
-          type: 'topic',
-        },
-        {
-          name: 'match-history.d.x',
+          name: process.env.RMQ_MATCH_HISTORY_DIRECT,
           type: 'direct',
         },
       ],
       uri: 'amqp://guest:guest@localhost:5672',
       connectionInitOptions: { timeout: 20000 },
       defaultRpcTimeout: 20000,
-    }),
-    ConfigModule.forRoot({
-      isGlobal: true,
     }),
     AwsModule,
   ],
