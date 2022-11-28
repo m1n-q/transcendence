@@ -12,6 +12,7 @@ import {
 import { RmqResponseInterceptor } from '../../common/rmq/interceptors/rmq-response.interceptor';
 import { RmqErrorFactory } from '../../common/rmq/rmq-error.factory';
 import { RmqErrorHandler } from '../../common/rmq/rmq-error.handler';
+import { DmGetMessagesDto } from '../dto/dm-get-messages.dto';
 import { DmDto } from '../dto/dm.dto';
 import { DmService } from '../services/dm.service';
 
@@ -45,7 +46,10 @@ export class DmRmqController {
     routingKey: 'req.to.dm.get.all.messages.rk',
     errorHandler: RmqErrorHandler,
   })
-  async getAllMessages(@RabbitRequest() req, @RabbitPayload() data) {
+  async getAllMessages(
+    @RabbitRequest() req,
+    @RabbitPayload() data: DmGetMessagesDto,
+  ) {
     return this.dmService.getAllMessages(data);
   }
 }

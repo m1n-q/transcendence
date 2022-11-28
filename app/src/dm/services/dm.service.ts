@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DM } from '../../common/entities/dm.entity';
 import { toRmqError } from '../../common/rmq/errors/to-rmq-error';
+import { DmGetMessagesDto } from '../dto/dm-get-messages.dto';
 import { DmDto } from '../dto/dm.dto';
 
 @Injectable()
@@ -24,10 +25,10 @@ export class DmService {
     return saved.dmId;
   }
 
-  async getAllMessages(data: { receiverId: string; senderId: string }) {
+  async getAllMessages(data: DmGetMessagesDto) {
     const messages = await this.dmRepository
       .find({
-        where: data,
+        where: { receiverId: data.receiver_id, senderId: data.sender_id },
         order: { created: 'DESC' },
       })
       .catch((e) => {
