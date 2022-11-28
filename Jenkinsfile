@@ -8,6 +8,7 @@ pipeline {
         SERVICE_NAME="gateway"
     }
 
+    options { lock resource: 'build-lock' }
     stages {
         stage('Pull') {
             steps {
