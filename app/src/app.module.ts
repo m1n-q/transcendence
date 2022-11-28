@@ -8,6 +8,8 @@ import { DMGateway } from './dm/dm.gateway';
 import { RedisModule } from './redis-module/redis.module';
 import { ChatService } from './chat/services/chat.service';
 import { CommandFactory } from './chat/types/chat-event-command';
+import { DmService } from './dm/services/dm.service';
+import { UserService } from './user/services/user.service';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { CommandFactory } from './chat/types/chat-event-command';
     ChatGateway,
     DMGateway,
     ChatService,
+    DmService,
+    UserService,
     CommandFactory,
   ],
 })

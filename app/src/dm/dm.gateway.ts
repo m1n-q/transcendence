@@ -21,6 +21,8 @@ import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { RedisService } from '../redis-module/services/redis.service';
 import { v4 } from 'uuid';
 import { DMFormat, DMFromClient, DMFromServer } from './types/dm-format';
+import { DmService } from './services/dm.service';
+import { UserService } from '../user/services/user.service';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9992, { cors: true })
@@ -30,12 +32,14 @@ export class DMGateway
   @WebSocketServer()
   private server: Server;
   private serverId: string;
-  private logger = new Logger('ChatGateway');
+  private logger = new Logger('DmGateway');
 
   constructor(
     private readonly authService: AuthService,
     private readonly amqpConnection: AmqpConnection,
     private readonly redisService: RedisService,
+    private readonly dmService: DmService,
+    private readonly userService: UserService,
   ) {
     /* gen UUID to distinguish same roomId queue at other WS */
     this.serverId = v4();
@@ -46,7 +50,7 @@ export class DMGateway
   //@======================================================================@//
 
   async afterInit(server: Server) {
-    /* when last user of chat-room on this ws-instance exit, delete room-queue */
+    /* when last user of dm-room on this ws-instance exit, delete room-queue */
     server.of('/').adapter.on('delete-room', async (dmRoom) => {
       try {
         await this.amqpConnection.channel.deleteQueue(this.dmRoomQ(dmRoom));
@@ -63,6 +67,7 @@ export class DMGateway
     let user: UserInfo;
     try {
       user = await this.bindUser(clientSocket);
+      console.log('User binded!');
     } catch (e) {
       clientSocket.disconnect(true);
       return;
@@ -72,7 +77,7 @@ export class DMGateway
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    const user: UserInfo = this.getUser(clientSocket);
+    const user: UserInfo = await this.getUser(clientSocket);
 
     if (!user) {
       clientSocket.disconnect(true);
@@ -116,7 +121,8 @@ export class DMGateway
     @ConnectedSocket() clientSocket: Socket,
   ) {
     const oppoName = message.opponent;
-    const userName = this.getUser(clientSocket).nickname; /* or user_id */
+    const userName = (await this.getUser(clientSocket))
+      .nickname; /* or user_id */
     const dmRoomName = this.makeDmRoomName(userName, oppoName);
     await clientSocket.join(dmRoomName);
 
@@ -139,7 +145,7 @@ export class DMGateway
     /* only one consumer(handler) per room */
     if (!roomQueue.consumerCount) {
       await this.amqpConnection.createSubscriber(
-        (msg: RmqEvent, rawMsg) => this.chatDmEventHandler(msg, rawMsg),
+        (msg: RmqEvent, rawMsg) => this.dmEventHandler(msg, rawMsg),
         {
           exchange: this.dmRoomTX(dmRoomName),
           queue: this.dmRoomQ(dmRoomName) /* subscriber */,
@@ -149,7 +155,7 @@ export class DMGateway
             autoDelete: true,
           },
         },
-        'chatDmEventHandler',
+        'dmEventHandler',
       );
     }
   }
@@ -159,11 +165,16 @@ export class DMGateway
     @MessageBody() message: DMFromClient,
     @ConnectedSocket() clientSocket: Socket,
   ) {
-    const sender = this.getUser(clientSocket);
+    const sender = await this.getUser(clientSocket);
     const dmRoomName = this.makeDmRoomName(sender.nickname, message.opponent);
+    const receiver = await this.userService.getUserProfile(message.opponent);
 
     /* To Database */
-    //TODO
+    await this.dmService.storeMessage({
+      sender_id: sender.user_id,
+      receiver_id: receiver.user_id,
+      payload: message.payload,
+    });
 
     /* To all WS instances */
     this.amqpConnection.publish(
@@ -178,8 +189,8 @@ export class DMGateway
   //'======================================================================'//
 
   /* handler for room queue */
-  async chatDmEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
-    const re = /(?<=event.on.chat.dm.)(.*)(?=.rk)/;
+  async dmEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
+    const re = /(?<=event.on.dm.)(.*)(?=.rk)/;
     const parsed = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const params = { evType: parsed[0], dmRoomName: parsed[1] };
 
@@ -191,7 +202,7 @@ export class DMGateway
     /* handle dm from other instances */
     const senderId = ev.payload['sender']['user_id'];
     for (const clientSocket of clientSockets) {
-      const receiver = this.getUser(clientSocket);
+      const receiver = await this.getUser(clientSocket);
       /* only two user can get message */
       if (!users.includes(receiver.nickname)) continue; // may warn
       const emit =
@@ -221,20 +232,22 @@ export class DMGateway
     return this.server.sockets.sockets.get(sockId);
   }
 
-  getUser(clientSocket: Socket): UserInfo {
-    return clientSocket['user_info'];
+  async getUser(clientSocket: Socket): Promise<UserInfo> {
+    return clientSocket['user_info']
+      ? clientSocket['user_info']
+      : await this.bindUser(clientSocket);
   }
 
   dmRoomQ(dmRoomId: string) {
-    return `chat.dm.${dmRoomId}.${this.serverId}.q`;
+    return `dm.${dmRoomId}.${this.serverId}.q`;
   }
 
   dmRoomTX(dmRoomId: string) {
-    return `chat.dm.${dmRoomId}.t.x`;
+    return `dm.${dmRoomId}.t.x`;
   }
 
   dmRoomRK(eventName: string, dmRoomId: string) {
-    return `event.on.chat.dm.${eventName}.${dmRoomId}.rk`;
+    return `event.on.dm.${eventName}.${dmRoomId}.rk`;
   }
 
   makeDmRoomName(userName: string, oppoName: string) {
