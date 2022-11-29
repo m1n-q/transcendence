@@ -140,15 +140,6 @@ export class ChatGateway
     const room = message.room;
     await clientSocket.join(room);
 
-    /* topic per room */
-    await this.amqpConnection.channel.assertExchange(
-      this.roomTX(room),
-      'topic',
-      {
-        autoDelete: true,
-      },
-    );
-
     /* queue per room-event */
     const roomQueue = await this.amqpConnection.channel.assertQueue(
       this.roomQ(room),
@@ -161,7 +152,7 @@ export class ChatGateway
       await this.amqpConnection.createSubscriber(
         (msg: RmqEvent, rawMsg) => this.chatRoomEventHandler(msg, rawMsg), // to bind "this", need arrow function
         {
-          exchange: this.roomTX(room),
+          exchange: this.roomTX(),
           queue: this.roomQ(room) /* subscriber */,
           routingKey: [
             this.roomRK('message', room),
@@ -210,7 +201,7 @@ export class ChatGateway
 
     /* To all WS instances */
     this.amqpConnection.publish(
-      this.roomTX(message.room),
+      this.roomTX(),
       this.roomRK('message', message.room),
       new RmqEvent(new ChatMessageFromServer(sender, message.payload)),
     );
@@ -257,12 +248,12 @@ export class ChatGateway
       : await this.bindUser(clientSocket);
   }
 
-  roomQ(roomId: string) {
-    return `chat.room.${roomId}.${this.serverId}.q`;
+  roomTX() {
+    return process.env.RMQ_CHAT_ROOM_TOPIC;
   }
 
-  roomTX(roomId: string) {
-    return `chat.room.${roomId}.t.x`;
+  roomQ(roomId: string) {
+    return `chat.room.${roomId}.${this.serverId}.q`;
   }
 
   roomRK(eventName: string, roomId: string) {

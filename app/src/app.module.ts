@@ -26,6 +26,14 @@ import { UserService } from './user/services/user.service';
           name: process.env.RMQ_NOTIFICATION_TOPIC,
           type: 'topic',
         },
+        {
+          name: process.env.RMQ_DM_TOPIC,
+          type: 'topic',
+        },
+        {
+          name: process.env.RMQ_CHAT_ROOM_TOPIC,
+          type: 'topic',
+        },
       ],
     }),
     RedisModule,

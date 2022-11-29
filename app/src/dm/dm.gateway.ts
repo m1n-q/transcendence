@@ -126,15 +126,6 @@ export class DMGateway
     const dmRoomName = this.makeDmRoomName(userName, oppoName);
     await clientSocket.join(dmRoomName);
 
-    /* topic per room */
-    await this.amqpConnection.channel.assertExchange(
-      this.dmRoomTX(dmRoomName),
-      'topic',
-      {
-        autoDelete: true,
-      },
-    );
-
     /* queue per room-event */
     const roomQueue = await this.amqpConnection.channel.assertQueue(
       this.dmRoomQ(dmRoomName),
@@ -147,7 +138,7 @@ export class DMGateway
       await this.amqpConnection.createSubscriber(
         (msg: RmqEvent, rawMsg) => this.dmEventHandler(msg, rawMsg),
         {
-          exchange: this.dmRoomTX(dmRoomName),
+          exchange: this.dmTX(),
           queue: this.dmRoomQ(dmRoomName) /* subscriber */,
           routingKey: [this.dmRoomRK('message', dmRoomName)],
           errorHandler: (c, m, e) => this.logger.error(e),
@@ -178,7 +169,7 @@ export class DMGateway
 
     /* To all WS instances */
     this.amqpConnection.publish(
-      this.dmRoomTX(dmRoomName),
+      this.dmTX(),
       this.dmRoomRK('message', dmRoomName),
       new RmqEvent(new DMFromServer(sender, message.payload)),
     );
@@ -238,12 +229,12 @@ export class DMGateway
       : await this.bindUser(clientSocket);
   }
 
-  dmRoomQ(dmRoomId: string) {
-    return `dm.${dmRoomId}.${this.serverId}.q`;
+  dmTX() {
+    return process.env.RMQ_DM_TOPIC;
   }
 
-  dmRoomTX(dmRoomId: string) {
-    return `dm.${dmRoomId}.t.x`;
+  dmRoomQ(dmRoomId: string) {
+    return `dm.${dmRoomId}.${this.serverId}.q`;
   }
 
   dmRoomRK(eventName: string, dmRoomId: string) {
