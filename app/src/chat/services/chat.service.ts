@@ -60,8 +60,8 @@ export class ChatService {
     private readonly chatRoomMuteListRepo: Repository<ChatRoomMuteList>,
   ) {}
 
-  roomTX(roomId: string) {
-    return `chat.room.${roomId}.t.x`;
+  roomTX() {
+    return process.env.RMQ_CHAT_ROOM_TOPIC;
   }
 
   roomRK(eventName: string, roomId: string) {
@@ -80,7 +80,7 @@ export class ChatService {
       created: new Date(),
     };
     this.amqpConnection.publish(
-      this.roomTX(roomId),
+      this.roomTX(),
       this.roomRK(evType, roomId),
       event,
     );
