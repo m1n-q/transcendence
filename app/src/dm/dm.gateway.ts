@@ -171,7 +171,9 @@ export class DMGateway
     this.amqpConnection.publish(
       this.dmTX(),
       this.dmRoomRK('message', dmRoomName),
-      new RmqEvent(new DMFromServer(sender, message.payload)),
+      new RmqEvent(new DMFromServer(sender, message.payload), [
+        receiver.user_id,
+      ]),
     );
   }
 

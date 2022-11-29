@@ -16,6 +16,7 @@ import { AuthService } from '../auth/auth.service';
 import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { UserProfile } from '../user/types/user-profile';
 import { toUserProfile } from '../common/utils/utils';
+import { NotificationFromUser } from './types/notifiaction-from-user';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(1234, { cors: true })
@@ -63,7 +64,7 @@ export class NotificationGateway
     /* only one consumer(handler) per room */
     if (!res.consumerCount) {
       this.amqpConnection.createSubscriber(
-        this.ntfEventHandler,
+        (ev: RmqEvent, rawMsg) => this.ntfEventHandler(ev, rawMsg),
         {
           exchange: process.env.RMQ_NOTIFICATION_TOPIC,
           queue: this.userQ(user.user_id),
@@ -105,7 +106,7 @@ export class NotificationGateway
   //'                           RabbitMQ handler                           '//
   //'======================================================================'//
 
-  async ntfEventHandler(msg: RmqEvent, rawMsg: ConsumeMessage) {
+  async ntfEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
     const re = /(?<=event.on.notification.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const { 0: evType, 1: userId } = params;
@@ -113,7 +114,31 @@ export class NotificationGateway
     const clientSock: Socket = this.getClientSocket(
       await this.redisService.hget(this.makeUserKey(userId), 'ntf_sock'),
     );
-    clientSock.emit('notification', evType + ': ' + msg.payload);
+
+    switch (evType) {
+      case 'message':
+        clientSock.emit(
+          'notification',
+          new NotificationFromUser(
+            evType,
+            ev.payload.sender,
+            ev.payload.payload,
+          ),
+        );
+        break;
+      case 'friend-request':
+        clientSock.emit(
+          'notification',
+          new NotificationFromUser(
+            evType,
+            ev.payload.sender,
+            ev.payload.payload,
+          ),
+        );
+        break;
+      default:
+        console.log(`unknown event : ${evType}`);
+    }
   }
 
   //#======================================================================#//
