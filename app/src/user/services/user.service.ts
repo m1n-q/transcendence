@@ -38,4 +38,10 @@ export class UserService {
       nickname,
     });
   }
+
+  async getFriends(userId: string): Promise<UserProfile[]> {
+    return this.requestToUserService(this.RK('req', 'user.read.friend.rk'), {
+      userId,
+    });
+  }
 }

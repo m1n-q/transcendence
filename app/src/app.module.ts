@@ -10,6 +10,7 @@ import { ChatService } from './chat/services/chat.service';
 import { CommandFactory } from './chat/types/chat-event-command';
 import { DmService } from './dm/services/dm.service';
 import { UserService } from './user/services/user.service';
+import { StateGateway } from './state/state.gateway';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { UserService } from './user/services/user.service';
     DmService,
     UserService,
     CommandFactory,
+    StateGateway,
   ],
 })
 export class AppModule {}

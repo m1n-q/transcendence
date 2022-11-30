@@ -16,21 +16,19 @@ import { AuthService } from '../auth/auth.service';
 import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { UserProfile } from '../user/types/user-profile';
 import { toUserProfile } from '../common/utils/utils';
-import { NotificationFromUser } from './types/notifiaction-from-user';
+import { UserService } from '../user/services/user.service';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(1234, { cors: true })
-export class NotificationGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   private server: Server;
-  private logger = new Logger('NotificationGateway');
 
   constructor(
     private readonly authService: AuthService,
     private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
+    private readonly userService: UserService,
   ) {}
 
   //@======================================================================@//
@@ -51,8 +49,6 @@ export class NotificationGateway
       return;
     }
 
-    this.logger.debug(`< ${user.user_id} > connected`);
-
     /* queue per user */
     const res = await this.amqpConnection.channel.assertQueue(
       this.userQ(user.user_id),
@@ -61,29 +57,31 @@ export class NotificationGateway
       },
     );
 
+    const users = await this.userService.getFriends(user.user_id);
+    const subject = [];
+    for (const user of users) subject.push(this.userRK('*', user.user_id));
+
     /* only one consumer(handler) per user-queue */
     if (!res.consumerCount) {
       this.amqpConnection.createSubscriber(
-        (ev: RmqEvent, rawMsg) => this.ntfEventHandler(ev, rawMsg),
+        (ev: RmqEvent, rawMsg) => this.stateEventHandler(ev, rawMsg),
         {
-          exchange: process.env.RMQ_NOTIFICATION_TOPIC,
+          exchange: process.env.RMQ_STATE_TOPIC,
           queue: this.userQ(user.user_id),
-          routingKey: this.userRK(user.user_id),
-          errorHandler: (c, m, e) => this.logger.error(e),
+          routingKey: subject,
+          errorHandler: (c, m, e) => console.error(e),
           queueOptions: {
             autoDelete: true,
           },
         },
-        'ntfEventHandler',
+        'stateEventHandler',
       );
     }
 
     /* save connected socket per user */
     await this.redisService.hsetJson(this.makeUserKey(user.user_id), {
-      ntf_sock: clientSocket.id,
+      state_sock: clientSocket.id,
     });
-
-    this.updateStatus(user.user_id, 'online');
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
@@ -94,11 +92,7 @@ export class NotificationGateway
       return;
     }
 
-    //BUG: Cannot read properties of undefined (reading 'user_id')
-    this.logger.debug(`< ${user.user_id} > disconnected`);
-    this.updateStatus(user.user_id, 'offline');
-    await this.redisService.hdel(this.makeUserKey(user.user_id), 'ntf_sock');
-    await this.amqpConnection.channel.deleteQueue(this.userQ(user.user_id));
+    await this.redisService.hdel(this.makeUserKey(user.user_id), 'state_sock');
   }
 
   //*======================================================================*//
@@ -109,38 +103,20 @@ export class NotificationGateway
   //'                           RabbitMQ handler                           '//
   //'======================================================================'//
 
-  async ntfEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
-    const re = /(?<=event.on.notification.)(.*)(?=.rk)/;
+  async stateEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
+    const re = /(?<=event.on.state.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const { 0: evType, 1: userId } = params;
 
     const clientSock: Socket = this.getClientSocket(
-      await this.redisService.hget(this.makeUserKey(userId), 'ntf_sock'),
+      await this.redisService.hget(this.makeUserKey(userId), 'state_sock'),
     );
-
     switch (evType) {
-      case 'message':
-        clientSock.emit(
-          'notification',
-          new NotificationFromUser(
-            evType,
-            ev.payload.sender,
-            ev.payload.payload,
-          ),
-        );
-        break;
-      case 'friend-request':
-        clientSock.emit(
-          'notification',
-          new NotificationFromUser(
-            evType,
-            ev.payload.sender,
-            ev.payload.payload,
-          ),
-        );
+      case 'update':
+        clientSock.emit('update', { user: userId, state: ev.payload });
         break;
       default:
-        console.log(`unknown event : ${evType}`);
+        console.log('unknown event');
     }
   }
 
@@ -160,12 +136,16 @@ export class NotificationGateway
     return clientSocket['user_profile'];
   }
 
-  userQ(userId: string) {
-    return `notification.user.${userId}.q`;
+  stateTX() {
+    return process.env.RMQ_STATE_TOPIC;
   }
 
-  userRK(userId: string) {
-    return `event.on.notification.*.${userId}.rk`;
+  userQ(userId: string) {
+    return `state.user.${userId}.q`;
+  }
+
+  userRK(evType: string, userId: string) {
+    return `event.on.state.${evType}.${userId}.rk`;
   }
 
   async bindUser(clientSocket: Socket) {
@@ -181,18 +161,5 @@ export class NotificationGateway
     /* bind user info to socket */
     clientSocket['user_profile'] = toUserProfile(user);
     return user;
-  }
-
-  updateStatus(userId: string, state: 'online' | 'offline') {
-    const event: RmqEvent = {
-      recvUsers: [],
-      payload: state,
-      created: new Date(),
-    };
-    this.amqpConnection.publish(
-      process.env.RMQ_STATE_TOPIC,
-      `event.on.state.update.${userId}.rk`,
-      event,
-    );
   }
 }
