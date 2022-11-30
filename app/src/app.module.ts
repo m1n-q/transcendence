@@ -35,6 +35,10 @@ import { StateGateway } from './state/state.gateway';
           name: process.env.RMQ_CHAT_ROOM_TOPIC,
           type: 'topic',
         },
+        {
+          name: process.env.RMQ_STATE_TOPIC,
+          type: 'topic',
+        },
       ],
     }),
     RedisModule,

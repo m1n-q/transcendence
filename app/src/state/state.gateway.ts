@@ -19,7 +19,7 @@ import { toUserProfile } from '../common/utils/utils';
 import { UserService } from '../user/services/user.service';
 
 @UseFilters(new WsExceptionsFilter())
-@WebSocketGateway(1234, { cors: true })
+@WebSocketGateway(9994, { cors: true })
 export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   private server: Server;
