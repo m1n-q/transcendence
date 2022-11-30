@@ -6,6 +6,9 @@ const WAITING_TIME = +process.env.WAITING_TIME || 30;
 export class MatchMaking {
   constructor() {
     this.matchingQueue = new Map();
+    setInterval(() => {
+      console.log('matching queue', this.matchingQueue);
+    }, 1000);
   }
   matchingQueue: Map<string, number>;
 
