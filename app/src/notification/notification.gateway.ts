@@ -154,9 +154,7 @@ export class NotificationGateway
   }
 
   async getUser(clientSocket: Socket): Promise<UserProfile> {
-    return clientSocket['user_profile']
-      ? clientSocket['user_profile']
-      : await this.bindUser(clientSocket);
+    return clientSocket['user_profile'];
   }
 
   userQ(userId: string) {
