@@ -271,7 +271,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     clientSocket.emit('game_result', result);
-    this.games.delete(roomName);
+    if (game.isEmitResult === false) {
+      game.isEmitResult = true;
+    } else {
+      this.games.delete(roomName);
+    }
   }
 
   @SubscribeMessage('up_key_pressed')
