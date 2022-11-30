@@ -33,12 +33,25 @@ export class NotificationRmqController {
     errorHandler: RmqErrorHandler,
   })
   handleUserEvent(
-    @RabbitRequest() rawMessage: ConsumeMessage,
+    @RabbitRequest() req: ConsumeMessage,
     @RabbitPayload() msg: RmqEvent,
   ): void {
-    return this.notificationService.handleUserEvent(
+    return this.notificationService.userEventHandler(
       msg,
-      rawMessage.fields.routingKey,
+      req.fields.routingKey,
     );
+  }
+
+  @RabbitSubscribe({
+    exchange: 'dm.t.x',
+    routingKey: 'event.on.dm.*.*.rk',
+    queue: 'event.on.dm.q',
+    errorHandler: RmqErrorHandler,
+  })
+  handleDmEvent(
+    @RabbitRequest() req: ConsumeMessage,
+    @RabbitPayload() msg: RmqEvent,
+  ): void {
+    return this.notificationService.dmEventHandler(msg, req.fields.routingKey);
   }
 }
