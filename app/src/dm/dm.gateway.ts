@@ -64,17 +64,7 @@ export class DMGateway
   async handleConnection(
     @ConnectedSocket() clientSocket: Socket,
     ...args: any[]
-  ) {
-    let user: UserProfile;
-    try {
-      user = await this.bindUser(clientSocket);
-    } catch (e) {
-      clientSocket.disconnect(true);
-      return;
-    }
-    /* map connected socket ID with user ID */
-    await this.setConnSocketId(user.user_id, clientSocket.id);
-  }
+  ) {}
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
     const user: UserProfile = await this.getUser(clientSocket);
@@ -120,6 +110,18 @@ export class DMGateway
     @MessageBody() message,
     @ConnectedSocket() clientSocket: Socket,
   ) {
+    /* FIXME: bind user here instead of connection temporarily  */
+    let user: UserProfile;
+    try {
+      user = await this.bindUser(clientSocket);
+    } catch (e) {
+      clientSocket.disconnect(true);
+      return;
+    }
+    /* map connected socket ID with user ID */
+    await this.setConnSocketId(user.user_id, clientSocket.id);
+    /* FIXME */
+
     const oppoName = message.opponent;
     const userName = (await this.getUser(clientSocket))
       .nickname; /* or user_id */

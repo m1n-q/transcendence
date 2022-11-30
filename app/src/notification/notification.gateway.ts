@@ -61,7 +61,7 @@ export class NotificationGateway
       },
     );
 
-    /* only one consumer(handler) per room */
+    /* only one consumer(handler) per user-queue */
     if (!res.consumerCount) {
       this.amqpConnection.createSubscriber(
         (ev: RmqEvent, rawMsg) => this.ntfEventHandler(ev, rawMsg),
