@@ -39,9 +39,9 @@ export class UserService {
     });
   }
 
-  async getFriends(userId: string): Promise<UserProfile[]> {
+  async getFriends(user_id: string): Promise<UserProfile[]> {
     return this.requestToUserService(this.RK('req', 'user.read.friend'), {
-      userId,
+      user_id,
     });
   }
 }
