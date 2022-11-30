@@ -29,9 +29,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   matchMaking: MatchMaking;
   games: Map<string, Game>;
   clients: Map<string, string>;
-  // 룸네임이랑 같이 묶어주고, 관전 및 게임 신청할 때 조회 용도로,
-  // 만약 관전이라면 룸네임이 필하고, 게임 신청은 게임중이 아니어야 하고,
-  // 유저의 상태 변화를 user-service로 보내주면, user-service는 디비에 저장하고, 알림서버로 요청을 보낸다.
   playUserList: Set<string>;
   matchingInterval: Map<string, any>;
   renderInterval: Map<string, any>;
@@ -49,9 +46,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.renderInterval = new Map<string, any>();
     this.waitingInterval = new Map<string, any>();
     this.playUserList = new Set<string>();
-    setInterval(() => {
-      console.log('clients list: ', this.clients);
-    }, 1000);
   }
 
   async handleConnection(@ConnectedSocket() clientSocket: Socket) {
