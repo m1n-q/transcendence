@@ -40,7 +40,7 @@ export class UserService {
   }
 
   async getFriends(userId: string): Promise<UserProfile[]> {
-    return this.requestToUserService(this.RK('req', 'user.read.friend.rk'), {
+    return this.requestToUserService(this.RK('req', 'user.read.friend'), {
       userId,
     });
   }
