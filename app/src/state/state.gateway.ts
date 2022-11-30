@@ -64,7 +64,7 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     /* only one consumer(handler) per user-queue */
     if (!res.consumerCount) {
-      const consumerTag = await this.amqpConnection.createSubscriber(
+      const result = await this.amqpConnection.createSubscriber(
         (ev: RmqEvent, rawMsg) => this.stateEventHandler(ev, rawMsg),
         {
           exchange: process.env.RMQ_STATE_TOPIC,
@@ -78,11 +78,13 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
         'stateEventHandler',
       );
       /* save consumerTag per user */
-      await this.redisService.hsetJson(`ct:${consumerTag}`, {
+      await this.redisService.hsetJson(`ct:${result.consumerTag}`, {
         state_sock: clientSocket.id,
       });
 
-      console.log(`new consumer tag ${consumerTag} on user ${user.user_id}`);
+      console.log(
+        `new consumer tag ${result.consumerTag} on user ${user.user_id}`,
+      );
     }
 
     /* save connected socket per user */
