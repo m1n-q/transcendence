@@ -64,7 +64,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    this.clients.delete(clientSocket.id);
+    this.clients.delete(clientSocket['user_info'].user.user_id);
     console.log(clientSocket.id, ' : game websocket disconnect');
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
@@ -171,6 +171,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
+    if (game === undefined) return;
     game.init(difficulty);
     this.server.to(`${roomName}`).emit('difficulty_changed', difficulty);
   }
@@ -179,6 +180,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async playerReady(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
+    if (game === undefined) return;
     if (game.playerReady === undefined) {
       game.playerReady = clientSocket.id;
       this.server.to(`${roomName}`).emit('counterpart_ready', clientSocket.id);
@@ -208,6 +210,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async clientReadyToStart(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
+    if (game === undefined) return;
     if (game.renderReady === false) {
       game.renderReady = true;
     } else {
@@ -226,6 +229,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async saveGameData(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
+    if (game === undefined) return;
     if (game.isRank === true && game.isSaveData === false) {
       game.isSaveData = true;
       game.finishGame();
@@ -244,6 +248,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async userLeaveRoom(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
+    if (game === undefined) return;
     clientSocket.leave(roomName);
     let result;
     try {
@@ -263,12 +268,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   keyDownBarUp(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
-    if (game !== undefined) {
-      if (clientSocket.id === game.lPlayerSocketId) {
-        game.lPlayerInput('up', true);
-      } else if (clientSocket.id === game.rPlayerSocketId) {
-        game.rPlayerInput('up', true);
-      }
+    if (game === undefined) return;
+
+    if (clientSocket.id === game.lPlayerSocketId) {
+      game.lPlayerInput('up', true);
+    } else if (clientSocket.id === game.rPlayerSocketId) {
+      game.rPlayerInput('up', true);
     }
   }
 
@@ -276,12 +281,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   keyDownBarDown(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
-    if (game !== undefined) {
-      if (clientSocket.id === game.lPlayerSocketId) {
-        game.lPlayerInput('down', true);
-      } else if (clientSocket.id === game.rPlayerSocketId) {
-        game.rPlayerInput('down', true);
-      }
+    if (game === undefined) return;
+
+    if (clientSocket.id === game.lPlayerSocketId) {
+      game.lPlayerInput('down', true);
+    } else if (clientSocket.id === game.rPlayerSocketId) {
+      game.rPlayerInput('down', true);
     }
   }
 
@@ -289,12 +294,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   keyUpBarUp(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
-    if (game !== undefined) {
-      if (clientSocket.id === game.lPlayerSocketId) {
-        game.lPlayerInput('up', false);
-      } else if (clientSocket.id === game.rPlayerSocketId) {
-        game.rPlayerInput('up', false);
-      }
+    if (game === undefined) return;
+    if (clientSocket.id === game.lPlayerSocketId) {
+      game.lPlayerInput('up', false);
+    } else if (clientSocket.id === game.rPlayerSocketId) {
+      game.rPlayerInput('up', false);
     }
   }
 
@@ -302,17 +306,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   keyUpBarDown(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
-    if (game !== undefined) {
-      if (clientSocket.id === game.lPlayerSocketId) {
-        game.lPlayerInput('down', false);
-      } else if (clientSocket.id === game.rPlayerSocketId) {
-        game.rPlayerInput('down', false);
-      }
+    if (game === undefined) return;
+
+    if (clientSocket.id === game.lPlayerSocketId) {
+      game.lPlayerInput('down', false);
+    } else if (clientSocket.id === game.rPlayerSocketId) {
+      game.rPlayerInput('down', false);
     }
   }
 
   async startGame(roomName: string) {
     const game: Game = this.games.get(roomName);
+    if (game === undefined) return;
     this.playUserList.add(game.lPlayerProfile.user_id);
     this.playUserList.add(game.rPlayerProfile.user_id);
     const interval: any = setInterval(async () => {
