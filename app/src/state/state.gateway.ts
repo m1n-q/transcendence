@@ -63,29 +63,31 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
     for (const user of users) subject.push(this.userRK('*', user.user_id));
 
     /* only one consumer(handler) per user-queue */
-    if (!res.consumerCount) {
-      const result = await this.amqpConnection.createSubscriber(
-        (ev: RmqEvent, rawMsg) => this.stateEventHandler(ev, rawMsg),
-        {
-          exchange: process.env.RMQ_STATE_TOPIC,
-          queue: this.userQ(user.user_id),
-          routingKey: subject,
-          errorHandler: (c, m, e) => console.error(e),
-          queueOptions: {
-            autoDelete: true,
-          },
+    // if (!res.consumerCount) {
+    const result = await this.amqpConnection.createSubscriber(
+      (ev: RmqEvent, rawMsg) => this.stateEventHandler(ev, rawMsg),
+      {
+        exchange: process.env.RMQ_STATE_TOPIC,
+        queue: this.userQ(user.user_id),
+        routingKey: subject,
+        errorHandler: (c, m, e) => console.error(e),
+        queueOptions: {
+          autoDelete: true,
         },
-        'stateEventHandler',
-      );
-      /* save consumerTag per user */
-      await this.redisService.hsetJson(`ct:${result.consumerTag}`, {
-        state_sock: clientSocket.id,
-      });
+      },
+      'stateEventHandler',
+    );
+    /* save consumerTag per user */
+    await this.redisService.hsetJson(`ct:${result.consumerTag}`, {
+      state_sock: clientSocket.id,
+    });
+    /* save consumerTag on socket */
+    clientSocket['consumer_tag'] = result.consumerTag;
 
-      console.log(
-        `new consumer tag ${result.consumerTag} on user ${user.user_id}`,
-      );
-    }
+    console.log(
+      `new consumer tag ${result.consumerTag} on user ${user.nickname} / ${user.user_id}`,
+    );
+    // }
 
     /* save connected socket per user */
     await this.redisService.hsetJson(this.makeUserKey(user.user_id), {
@@ -102,6 +104,11 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'state_sock');
+    await this.redisService.hdel(
+      `ct:${clientSocket['consumer_tag']}`,
+      'state_sock',
+    );
+    await this.amqpConnection.cancelConsumer(clientSocket['consumer_tag']);
   }
 
   //*======================================================================*//
@@ -119,6 +126,7 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { 0: evType, 1: userId } = params;
 
     console.log(`this consumer tag is ${rawMsg.fields.consumerTag}`);
+
     const clientSock: Socket = this.getClientSocket(
       await this.redisService.hget(
         `ct:${rawMsg.fields.consumerTag}`,
