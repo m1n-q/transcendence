@@ -81,6 +81,8 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.redisService.hsetJson(`ct:${consumerTag}`, {
         state_sock: clientSocket.id,
       });
+
+      console.log(`new consumer tag ${consumerTag} on user ${user.user_id}`);
     }
 
     /* save connected socket per user */
@@ -114,6 +116,7 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const { 0: evType, 1: userId } = params;
 
+    console.log(`this consumer tag is ${rawMsg.fields.consumerTag}`);
     const clientSock: Socket = this.getClientSocket(
       await this.redisService.hget(
         `ct:${rawMsg.fields.consumerTag}`,
