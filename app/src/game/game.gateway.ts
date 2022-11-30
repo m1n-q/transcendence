@@ -60,10 +60,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       clientSocket.disconnect(true);
       return;
     }
+    clientSocket.emit('websocket_connected');
     console.log(clientSocket.id, ' : game websocket connected');
   }
 
-  handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
+  async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
+    if (clientSocket['user_info'] === undefined) {
+      return;
+    }
     this.clients.delete(clientSocket['user_info'].user.user_id);
     console.log(clientSocket.id, ' : game websocket disconnect');
     const roomName: string = clientSocket['room_name'];
