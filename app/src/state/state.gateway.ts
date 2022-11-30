@@ -17,6 +17,7 @@ import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { UserProfile } from '../user/types/user-profile';
 import { toUserProfile } from '../common/utils/utils';
 import { UserService } from '../user/services/user.service';
+import { raw } from 'express';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9994, { cors: true })
@@ -63,7 +64,7 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     /* only one consumer(handler) per user-queue */
     if (!res.consumerCount) {
-      this.amqpConnection.createSubscriber(
+      const consumerTag = await this.amqpConnection.createSubscriber(
         (ev: RmqEvent, rawMsg) => this.stateEventHandler(ev, rawMsg),
         {
           exchange: process.env.RMQ_STATE_TOPIC,
@@ -76,6 +77,10 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
         },
         'stateEventHandler',
       );
+      /* save consumerTag per user */
+      await this.redisService.hsetJson(`ct:${consumerTag}`, {
+        state_sock: clientSocket.id,
+      });
     }
 
     /* save connected socket per user */
@@ -106,10 +111,14 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async stateEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
     const re = /(?<=event.on.state.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
+
     const { 0: evType, 1: userId } = params;
 
     const clientSock: Socket = this.getClientSocket(
-      await this.redisService.hget(this.makeUserKey(userId), 'state_sock'),
+      await this.redisService.hget(
+        `ct:${rawMsg.fields.consumerTag}`,
+        'state_sock',
+      ),
     );
     switch (evType) {
       case 'update':
