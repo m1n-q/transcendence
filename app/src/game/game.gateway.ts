@@ -29,7 +29,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   matchMaking: MatchMaking;
   games: Map<string, Game>;
   clients: Map<string, string>;
-  playUserList: Set<string>;
+  playUserList: Map<string, string>;
   matchingInterval: Map<string, any>;
   renderInterval: Map<string, any>;
   waitingInterval: Map<string, any>;
@@ -45,7 +45,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.matchingInterval = new Map<string, any>();
     this.renderInterval = new Map<string, any>();
     this.waitingInterval = new Map<string, any>();
-    this.playUserList = new Set<string>();
+    this.playUserList = new Map<string, string>();
   }
 
   async handleConnection(@ConnectedSocket() clientSocket: Socket) {
@@ -76,6 +76,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       clientSocket.leave(roomName);
       if (game.gameResult().game_id === undefined) {
         this.server.to(`${roomName}`).emit('user_exit_room');
+        return;
+      }
+      game.userCount--;
+      if (
+        game.lPlayerSocketId !== clientSocket.id &&
+        game.rPlayerSocketId !== clientSocket.id
+      ) {
         return;
       }
       game.winner =
@@ -229,6 +236,38 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('watch_game')
+  async getRoomName(@ConnectedSocket() clientSocket, @Body() nickname) {
+    let user;
+    try {
+      user = await this.userService.readUserByNickname(nickname);
+    } catch (e) {
+      clientSocket.emit('game_error', e);
+      return;
+    }
+    const roomName = this.playUserList.get(user.user_id);
+    const game = this.games.get(roomName);
+    if (roomName === undefined || game === undefined) {
+      clientSocket.emit('game_error', 'not found game');
+      clientSocket.emit('watch_game_ready_to_start', null);
+      return;
+    }
+    clientSocket['room_name'] = roomName;
+    clientSocket.emit('watch_game_ready_to_start', game.renderInfo());
+  }
+
+  @SubscribeMessage('client_ready_to_watch')
+  clientReadyToWatch(@ConnectedSocket() clientSocket) {
+    const roomName = clientSocket['room_name'];
+    const game = this.games.get(roomName);
+    if (game === undefined) {
+      clientSocket.emit('game_error', 'game is already over.');
+      return;
+    }
+    game.userCount++;
+    clientSocket.join(roomName);
+  }
+
   @SubscribeMessage('save_game_data')
   async saveGameData(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
@@ -265,10 +304,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     clientSocket.emit('game_result', result);
-    if (game.isEmitResult === false) {
-      game.isEmitResult = true;
-    } else {
+    if (game.userCount === 1) {
       this.games.delete(roomName);
+    } else {
+      game.userCount--;
     }
   }
 
@@ -326,8 +365,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async startGame(roomName: string) {
     const game: Game = this.games.get(roomName);
     if (game === undefined) return;
-    this.playUserList.add(game.lPlayerProfile.user_id);
-    this.playUserList.add(game.rPlayerProfile.user_id);
+    this.playUserList.set(game.lPlayerProfile.user_id, roomName);
+    this.playUserList.set(game.rPlayerProfile.user_id, roomName);
+    game.userCount += 2;
     const interval: any = setInterval(async () => {
       game.update();
       this.server.to(`${roomName}`).emit('game_render_data', game.renderData());

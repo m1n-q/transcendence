@@ -102,8 +102,8 @@ export class Game {
     this.renderReady = false;
     this.isSaveData = false;
     this.saveDone = false;
-    this.isEmitResult = false;
     this.ballSpeed = BALL_SPEED;
+    this.userCount = 0;
   }
   //* GAME SETTING DATA
   game_id: string;
@@ -134,8 +134,8 @@ export class Game {
   renderReady: boolean;
   isFinished: boolean;
   isSaveData: boolean;
-  isEmitResult: boolean;
   saveDone: boolean;
+  userCount: number;
 
   public init(difficulty): void {
     switch (difficulty) {
