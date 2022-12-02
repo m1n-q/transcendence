@@ -135,7 +135,7 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
     switch (evType) {
       case 'update':
-        clientSock.emit('update', { user: userId, state: ev.payload });
+        clientSock.emit('update', { user: userId, state: ev.data });
         break;
       default:
         console.log('unknown event');
