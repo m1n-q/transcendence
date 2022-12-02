@@ -18,6 +18,7 @@ import { UserService } from 'src/user/user.service';
 import { WsExceptionsFilter } from 'src/common/ws/ws-exceptions.filter';
 
 const FPS = +process.env.FPS || 60;
+const WAITING = 10;
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9998, {
   cors: true,
@@ -30,6 +31,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   games: Map<string, Game>;
   clients: Map<string, string>;
   playUserList: Map<string, string>;
+  friendlyRoom: Map<string, string>;
   matchingInterval: Map<string, any>;
   renderInterval: Map<string, any>;
   waitingInterval: Map<string, any>;
@@ -42,10 +44,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.matchMaking = new MatchMaking();
     this.games = new Map<string, Game>();
     this.clients = new Map<string, string>();
+    this.playUserList = new Map<string, string>();
+    this.friendlyRoom = new Map<string, string>();
     this.matchingInterval = new Map<string, any>();
     this.renderInterval = new Map<string, any>();
     this.waitingInterval = new Map<string, any>();
-    this.playUserList = new Map<string, string>();
   }
 
   async handleConnection(@ConnectedSocket() clientSocket: Socket) {
@@ -100,6 +103,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('user_left_queue')
   async userLeftQueue(@ConnectedSocket() clientSocket: Socket) {
     clearInterval(this.matchingInterval.get(clientSocket.id));
+    this.matchingInterval.delete(clientSocket.id);
     this.matchMaking.leaveMatchingQueue(clientSocket.id);
   }
 
@@ -118,6 +122,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     this.matchMaking.leaveMatchingQueue(clientSocket.id);
     clearInterval(this.matchingInterval.get(clientSocket.id));
+    this.matchingInterval.delete(clientSocket.id);
     try {
       await this.updateUser(clientSocket);
     } catch (e) {
@@ -138,6 +143,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.server.to(`${matchedId}`).emit('player_matched', newRoomName);
         clearInterval(this.matchingInterval.get(clientSocket.id));
         clearInterval(this.matchingInterval.get(matchedId));
+        this.matchingInterval.delete(clientSocket.id);
+        this.matchingInterval.delete(matchedId);
       }
     }, 1000);
     this.matchingInterval.set(clientSocket.id, interval);
@@ -155,16 +162,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.games.set(roomName, game);
       clientSocket['waiting'] = 0;
       const interval: any = setInterval(() => {
-        if (clientSocket['waiting'] === 10) {
+        if (clientSocket['waiting'] === WAITING) {
           clientSocket.leave(roomName);
           clientSocket.emit('user_exit_room');
           clearInterval(this.waitingInterval.get(roomName));
+          this.waitingInterval.delete(roomName);
         }
         clientSocket['waiting']++;
       }, 1000);
       this.waitingInterval.set(roomName, interval);
     } else {
       clearInterval(this.waitingInterval.get(roomName));
+      this.waitingInterval.delete(roomName);
       game.rPlayerSocketId = clientSocket.id;
       game.rPlayerProfile = clientSocket['user_info'].user;
       this.server.to(`${roomName}`).emit('user_joined_room', {
@@ -173,6 +182,57 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         rPlayerInfo: game.rPlayerProfile,
       });
     }
+  }
+
+  @SubscribeMessage('user_create_friendly_room')
+  async createFriendlyRoom(@ConnectedSocket() clientSocket: Socket) {
+    await this.updateUser(clientSocket);
+    const roomName: string = v4();
+    clientSocket.join(roomName);
+    clientSocket['room_name'] = roomName;
+    this.friendlyRoom.set(clientSocket['user_info'].user.user_id, roomName);
+    const game = new Game(false);
+    game.lPlayerSocketId = clientSocket.id;
+    game.lPlayerProfile = clientSocket['user_info'].user;
+    this.games.set(roomName, game);
+    clientSocket['waiting'] = 0;
+    const interval: any = setInterval(() => {
+      if (clientSocket['waiting'] === WAITING) {
+        clientSocket.leave(roomName);
+        clientSocket.emit('user_exit_room');
+        clearInterval(this.waitingInterval.get(roomName));
+        this.waitingInterval.delete(roomName);
+      }
+      clientSocket['waiting']++;
+    }, 1000);
+    this.waitingInterval.set(roomName, interval);
+  }
+
+  @SubscribeMessage('user_join_friendly_room')
+  async joinFriendlyRoom(
+    @ConnectedSocket() clientSocket: Socket,
+    @Body() nickname,
+  ) {
+    await this.updateUser(clientSocket);
+    const user = await this.userService.readUserByNickname(nickname);
+    const roomName: string = this.friendlyRoom.get(user.user_id);
+    const game = this.games.get(roomName);
+    if (roomName === undefined || game === undefined) {
+      clientSocket.emit('game_error', 'not found room');
+      return;
+    }
+    this.friendlyRoom.delete(user.user_id);
+    clearInterval(this.waitingInterval.get(roomName));
+    this.waitingInterval.delete(roomName);
+    clientSocket.join(roomName);
+    clientSocket['room_name'] = roomName;
+    game.rPlayerSocketId = clientSocket.id;
+    game.rPlayerProfile = clientSocket['user_info'].user;
+    this.server.to(`${roomName}`).emit('user_joined_room', {
+      owner: game.lPlayerSocketId,
+      lPlayerInfo: game.lPlayerProfile,
+      rPlayerInfo: game.rPlayerProfile,
+    });
   }
 
   @SubscribeMessage('player_change_difficulty')
@@ -274,12 +334,24 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     clientSocket.join(roomName);
   }
 
+  @SubscribeMessage('leave_watching_game')
+  leaveWatchingGame(@ConnectedSocket() clientSocket) {
+    const roomName = clientSocket['room_name'];
+    const game = this.games.get(roomName);
+    if (game === undefined) {
+      clientSocket.emit('game_error', 'game is already over.');
+      return;
+    }
+    game.userCount--;
+    clientSocket.leave(roomName);
+  }
+
   @SubscribeMessage('save_game_data')
   async saveGameData(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
     if (game === undefined) return;
-    if (game.isRank === true && game.isSaveData === false) {
+    if (game.isSaveData === false) {
       game.isSaveData = true;
       game.finishGame();
       try {
@@ -382,17 +454,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.playUserList.delete(game.lPlayerProfile.user_id);
         this.playUserList.delete(game.rPlayerProfile.user_id);
         clearInterval(this.renderInterval.get(roomName));
+        this.renderInterval.delete(roomName);
       }
     }, (1 / FPS) * 1000);
     this.renderInterval.set(roomName, interval);
   }
 
   async updateGameResult(game: Game) {
-    const rankInfo: any = game.changeRankInfo();
     try {
       await this.matchHistoryService.createGameResult(game.gameResult());
-      await this.matchHistoryService.createRankHistory(rankInfo.l_player);
-      await this.matchHistoryService.createRankHistory(rankInfo.r_player);
+      if (game.isRank === true) {
+        const rankInfo: any = game.changeRankInfo();
+        await this.matchHistoryService.createRankHistory(rankInfo.l_player);
+        await this.matchHistoryService.createRankHistory(rankInfo.r_player);
+      }
     } catch (e) {
       throw new WsException(e);
     }
