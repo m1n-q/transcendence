@@ -20,6 +20,14 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
           name: process.env.RMQ_NOTIFICATION_TOPIC,
           type: 'topic',
         },
+        {
+          name: process.env.RMQ_CHAT_TOPIC,
+          type: 'topic',
+        },
+        {
+          name: process.env.RMQ_GAME_TOPIC,
+          type: 'topic',
+        },
       ],
       enableControllerDiscovery: true,
       connectionInitOptions: { timeout: 20000 },
