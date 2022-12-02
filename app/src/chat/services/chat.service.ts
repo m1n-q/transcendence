@@ -30,9 +30,10 @@ import { RmqEvent } from '../../common/rmq/types/rmq-event';
 import { BannedUserError } from '../../common/rmq/errors/banned-user.error';
 import { MutedUserError } from '../../common/rmq/errors/muted-user.error';
 import { InvalidPasswordError } from '../../common/rmq/errors/invalid-password.error';
-import { ChatEventType } from '../chat-event.type';
+import { ChatEventType } from '../types/chat-event.type';
 import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
 import { toUserProfile } from '../../common/utils/utils';
+import { ChatAnnouncementFromServer } from '../types/chat-message-format';
 
 /*  TODO:
  *
@@ -74,9 +75,9 @@ export class ChatService {
     recvUsers: string[],
     payload: string,
   ) {
-    const event: RmqEvent = {
+    const event: RmqEvent<ChatAnnouncementFromServer> = {
       recvUsers,
-      payload,
+      data: { payload },
       created: new Date(),
     };
     this.amqpConnection.publish(
