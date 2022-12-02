@@ -1,17 +1,21 @@
 import { RmqEvent } from '../../common/rmq/types/rmq-event';
 import { ChatGateway } from '../chat.gateway';
-import { ChatAnnouncementFromServer } from './chat-message-format';
+import {
+  ChatAnnouncementFromServer,
+  ChatMessageFormat,
+  ChatMessageFromServer,
+} from './chat-message-format';
 
 export type RoutingKeyParams = { evType: string; roomId: string };
 export interface EventCommand {
-  ev: RmqEvent;
+  ev: RmqEvent<ChatMessageFormat>;
   params: RoutingKeyParams;
 
   execute(chatGateway: ChatGateway);
 }
 
 export class BanCommand implements EventCommand {
-  ev: RmqEvent;
+  ev: RmqEvent<ChatAnnouncementFromServer>;
   params: RoutingKeyParams;
   constructor(ev: RmqEvent, params: RoutingKeyParams) {
     this.ev = ev;
@@ -22,10 +26,7 @@ export class BanCommand implements EventCommand {
     const sockId = await chatGateway.getConnSocketId(userId);
     const clientSocket = chatGateway.getClientSocket(sockId);
     if (clientSocket) {
-      chatGateway.announce(
-        clientSocket,
-        new ChatAnnouncementFromServer(this.ev.payload),
-      );
+      chatGateway.announce(clientSocket, this.ev.data);
       clientSocket.leave(this.params.roomId);
       clientSocket.disconnect(true);
     }
@@ -42,13 +43,13 @@ export class AnnouncementCommand implements EventCommand {
   async execute(chatGateway: ChatGateway) {
     chatGateway.announce(
       chatGateway.getServer().in(this.params.roomId),
-      new ChatAnnouncementFromServer(this.ev.payload),
+      new ChatAnnouncementFromServer(this.ev.data),
     );
   }
 }
 
 export class MessageCommand implements EventCommand {
-  ev: RmqEvent;
+  ev: RmqEvent<ChatMessageFromServer>;
   params: RoutingKeyParams;
   constructor(ev: RmqEvent, params: RoutingKeyParams) {
     this.ev = ev;
@@ -59,12 +60,13 @@ export class MessageCommand implements EventCommand {
       .getServer()
       .in(this.params.roomId)
       .fetchSockets();
+
     /* handle room message from other instances */
-    const senderId = this.ev.payload['sender']['user_id'];
+    const senderId = this.ev.data.sender.user_id;
     for (const clientSocket of clientSockets) {
       if ((await chatGateway.getUser(clientSocket)).user_id == senderId)
-        chatGateway.echoMessage(clientSocket, this.ev.payload);
-      else chatGateway.sendMessage(clientSocket, this.ev.payload);
+        chatGateway.echoMessage(clientSocket, this.ev.data);
+      else chatGateway.sendMessage(clientSocket, this.ev.data);
     }
   }
 }

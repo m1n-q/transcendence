@@ -214,10 +214,16 @@ export class ChatGateway
   //'======================================================================'//
 
   /* handler for room queue */
-  async chatRoomEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
+  async chatRoomEventHandler(
+    ev: RmqEvent<ChatMessageFormat>,
+    rawMsg: ConsumeMessage,
+  ) {
     const re = /(?<=event.on.chat.room.)(.*)(?=.rk)/;
     const parsed = re.exec(rawMsg.fields.routingKey)[0].split('.');
-    const params: RoutingKeyParams = { evType: parsed[0], roomId: parsed[1] };
+    const params: RoutingKeyParams = {
+      evType: parsed[0],
+      roomId: parsed[1],
+    };
 
     const command: EventCommand = this.commandFactory.getCommand(ev, params);
     if (command) await command.execute(this);
