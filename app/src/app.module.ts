@@ -31,6 +31,10 @@ import { DmRmqController } from './dm/controllers/dm.rmq.controller';
           name: process.env.RMQ_DM_DIRECT,
           type: 'direct',
         },
+        {
+          name: process.env.RMQ_CHAT_TOPIC,
+          type: 'topic',
+        },
       ],
       enableControllerDiscovery: true,
       connectionInitOptions: { timeout: 20000 },
