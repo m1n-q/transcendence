@@ -17,24 +17,37 @@ import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { UserProfile } from '../user/types/user-profile';
 import { toUserProfile } from '../common/utils/utils';
 import { UserService } from '../user/services/user.service';
-import { raw } from 'express';
+import { v4 } from 'uuid';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9994, { cors: true })
 export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   private server: Server;
+  private serverId: string;
 
   constructor(
     private readonly authService: AuthService,
-    private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
     private readonly userService: UserService,
-  ) {}
+  ) {
+    this.serverId = v4();
+  }
 
   //@======================================================================@//
   //@                             Connection                               @//
   //@======================================================================@//
+  async afterInit(server: Server) {
+    /* when last user of dm-room on this ws-instance exit, delete room-queue */
+    server.of('/').adapter.on('delete-room', async (subjectRoom: string) => {
+      const subjectId = subjectRoom.replace('state-', '');
+      try {
+        await this.amqpConnection.channel.deleteQueue(this.subjectQ(subjectId));
+      } catch (e) {
+        console.log(`Failed to delete ${this.subjectQ(subjectId)}`);
+      }
+    });
+  }
 
   @UseFilters(new WsExceptionsFilter())
   async handleConnection(
@@ -50,70 +63,61 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    /* queue per user */
-    const res = await this.amqpConnection.channel.assertQueue(
-      this.userQ(user.user_id),
-      {
-        autoDelete: true /* delete if no handler */,
-      },
-    );
+    const friends = await this.userService.getFriends(user.user_id);
+    if (!friends) return;
 
-    const users = await this.userService.getFriends(user.user_id);
-    const subject = [];
-    for (const user of users) subject.push(this.userRK('*', user.user_id));
+    const subjects = friends.map((friend) => {
+      return friend.user_id;
+    });
 
-    /* only one consumer(handler) per user-queue */
-    // if (!res.consumerCount) {
-    const result = await this.amqpConnection.createSubscriber(
-      (ev: RmqEvent, rawMsg) => this.stateEventHandler(ev, rawMsg),
-      {
-        exchange: process.env.RMQ_STATE_TOPIC,
-        queue: this.userQ(user.user_id),
-        routingKey: subject,
-        errorHandler: (c, m, e) => console.error(e),
-        queueOptions: {
-          autoDelete: true,
+    clientSocket['consumer_tags'] = [];
+
+    /* only one consumer(handler) per subject-queue */
+    for (const subject of subjects) {
+      /* queue per subject */
+      const res = await this.amqpConnection.channel.assertQueue(
+        this.subjectQ(subject),
+        {
+          autoDelete: true /* delete if no handler */,
         },
-      },
-      'stateEventHandler',
-    );
-    /* save consumerTag per user */
-    await this.redisService.hsetJson(`ct:${result.consumerTag}`, {
-      state_sock: clientSocket.id,
-    });
-    /* save consumerTag on socket */
-    clientSocket['consumer_tag'] = result.consumerTag;
+      );
+      if (res.consumerCount) continue;
 
-    console.log(
-      `new consumer tag ${result.consumerTag} on user ${user.nickname} / ${user.user_id}`,
-    );
-    // }
-
-    /* save connected socket per user */
-    await this.redisService.hsetJson(this.makeUserKey(user.user_id), {
-      state_sock: clientSocket.id,
-    });
+      const result = await this.amqpConnection
+        .createSubscriber(
+          (ev: RmqEvent, rawMsg) => this.stateEventHandler(ev, rawMsg),
+          {
+            exchange: process.env.RMQ_STATE_TOPIC,
+            queue: this.subjectQ(subject),
+            routingKey: [this.subjectRK('update', subject)],
+            errorHandler: (c, m, e) => console.error(e),
+            queueOptions: {
+              autoDelete: true,
+            },
+          },
+          'stateEventHandler',
+        )
+        .catch((e) => console.log(e));
+      if (!result) return;
+      /* observers' room */
+      try {
+        await clientSocket.join(`state-${subject}`);
+      } catch (e) {
+        console.log(e);
+      }
+      clientSocket['consumer_tags'].push(result.consumerTag);
+    }
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
-    const user: UserProfile = await this.getUser(clientSocket);
+    if (!clientSocket['consumer_tags']) return;
+    for (const consumerTag of clientSocket['consumer_tags'])
+      await this.amqpConnection
+        .cancelConsumer(consumerTag)
+        .catch((e) => console.log(e));
 
-    if (!user) {
-      clientSocket.disconnect(true);
-      return;
-    }
-
-    await this.redisService.hdel(this.makeUserKey(user.user_id), 'state_sock');
-    await this.redisService.hdel(
-      `ct:${clientSocket['consumer_tag']}`,
-      'state_sock',
-    );
-    await this.amqpConnection.cancelConsumer(clientSocket['consumer_tag']);
+    /* NOTE: disconnect 되자마자 다시 connect하면, 아직 consumer가 다 안지워질수도..?! */
   }
-
-  //*======================================================================*//
-  //*                           socket.io handler                          *//
-  //*======================================================================*//
 
   //'======================================================================'//
   //'                           RabbitMQ handler                           '//
@@ -123,19 +127,13 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const re = /(?<=event.on.state.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
 
-    const { 0: evType, 1: userId } = params;
+    const { 0: evType, 1: subject } = params;
 
-    console.log(`this consumer tag is ${rawMsg.fields.consumerTag}`);
-
-    const clientSock: Socket = this.getClientSocket(
-      await this.redisService.hget(
-        `ct:${rawMsg.fields.consumerTag}`,
-        'state_sock',
-      ),
-    );
     switch (evType) {
       case 'update':
-        clientSock.emit('update', { user: userId, state: ev.data });
+        this.server
+          .in(`state-${subject}`)
+          .emit('update', { user: subject, state: ev.data });
         break;
       default:
         console.log('unknown event');
@@ -146,28 +144,16 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
   //#                                ETC                                   #//
   //#======================================================================#//
 
-  makeUserKey(user_id: string) {
-    return 'user:' + user_id;
-  }
-
-  getClientSocket(clientId: string): Socket {
-    return this.server.sockets.sockets.get(clientId);
-  }
-
-  async getUser(clientSocket: Socket): Promise<UserProfile> {
-    return clientSocket['user_profile'];
-  }
-
   stateTX() {
     return process.env.RMQ_STATE_TOPIC;
   }
 
-  userQ(userId: string) {
-    return `state.user.${userId}.q`;
+  subjectRK(evType: string, subUserId: string) {
+    return `event.on.state.${evType}.${subUserId}.rk`;
   }
 
-  userRK(evType: string, userId: string) {
-    return `event.on.state.${evType}.${userId}.rk`;
+  subjectQ(subUserId: string) {
+    return `state.subject.${subUserId}.${this.serverId}.q`;
   }
 
   async bindUser(clientSocket: Socket) {
