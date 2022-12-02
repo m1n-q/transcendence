@@ -218,7 +218,7 @@ export class ChatGateway
     ev: RmqEvent<ChatMessageFormat>,
     rawMsg: ConsumeMessage,
   ) {
-    const re = /(?<=event.on.chat.room.)(.*)(?=.rk)/;
+    const re = /(?<=event.on.chat-room.)(.*)(?=.rk)/;
     const parsed = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const params: RoutingKeyParams = {
       evType: parsed[0],
@@ -259,11 +259,11 @@ export class ChatGateway
   }
 
   roomQ(roomId: string) {
-    return `chat.room.${roomId}.${this.serverId}.q`;
+    return `chat-room.${roomId}.${this.serverId}.q`;
   }
 
   roomRK(eventName: string, roomId: string) {
-    return `event.on.chat.room.${eventName}.${roomId}.rk`;
+    return `event.on.chat-room.${eventName}.${roomId}.rk`;
   }
 
   async bindUser(clientSocket: Socket) {

@@ -121,14 +121,11 @@ export class NotificationGateway
     );
     switch (category) {
       case 'user':
-        clientSock.emit(
-          'notification-user',
-          new NotificationFromUser(type, ev.data),
-        );
-        break;
+      case 'chat':
+      case 'game':
       case 'dm':
         clientSock.emit(
-          'notification-dm',
+          `notification-${category}`,
           new NotificationFromUser(type, ev.data),
         );
         break;
