@@ -26,7 +26,7 @@ export class DmMessageCommand implements DmEventCommand {
       const userRk = `event.on.notification.${this.evType}.${
         user /* it has to be user_id */
       }.rk`;
-      const event = new RmqEvent(this.event.payload);
+      const event = new RmqEvent(this.event.data);
 
       //   this.amqpConnection.publish(
       //     process.env.RMQ_NOTIFICATION_TOPIC,
