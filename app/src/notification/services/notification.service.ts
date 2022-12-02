@@ -35,10 +35,9 @@ export class NotificationService {
     const re = /(?<=event.on.dm.)(.*)(?=.rk)/;
     const parsed = re.exec(rk)[0].split('.');
     const params = { evType: parsed[0], dmRoomName: parsed[1] };
-    const users = params.dmRoomName.split(':');
 
     switch (params.evType) {
-      case 'message' /* only if user not in dm websocket, */:
+      case 'message':
         break;
       default:
         console.log('unknown event');
@@ -47,6 +46,56 @@ export class NotificationService {
 
     for (const recvUser of ev.recvUsers) {
       const userRk = `event.on.notification.dm:${params.evType}.${recvUser}.rk`;
+      const event = new RmqEvent(ev.data, [recvUser]);
+
+      this.amqpConnection.publish(
+        process.env.RMQ_NOTIFICATION_TOPIC,
+        userRk,
+        event,
+      );
+    }
+  }
+
+  chatEventHandler(ev: RmqEvent, rk: string) {
+    const re = /(?<=event.on.chat.)(.*)(?=.rk)/;
+    const parsed = re.exec(rk)[0].split('.');
+    const params = { evType: parsed[0], dmRoomName: parsed[1] };
+
+    switch (params.evType) {
+      case 'invitation':
+        break;
+      default:
+        console.log('unknown event');
+        return;
+    }
+
+    for (const recvUser of ev.recvUsers) {
+      const userRk = `event.on.notification.chat:${params.evType}.${recvUser}.rk`;
+      const event = new RmqEvent(ev.data, [recvUser]);
+
+      this.amqpConnection.publish(
+        process.env.RMQ_NOTIFICATION_TOPIC,
+        userRk,
+        event,
+      );
+    }
+  }
+
+  gameEventHandler(ev: RmqEvent, rk: string) {
+    const re = /(?<=event.on.game.)(.*)(?=.rk)/;
+    const parsed = re.exec(rk)[0].split('.');
+    const params = { evType: parsed[0], dmRoomName: parsed[1] };
+
+    switch (params.evType) {
+      case 'invitation':
+        break;
+      default:
+        console.log('unknown event');
+        return;
+    }
+
+    for (const recvUser of ev.recvUsers) {
+      const userRk = `event.on.notification.game:${params.evType}.${recvUser}.rk`;
       const event = new RmqEvent(ev.data, [recvUser]);
 
       this.amqpConnection.publish(
