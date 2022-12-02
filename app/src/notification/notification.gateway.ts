@@ -64,19 +64,21 @@ export class NotificationGateway
 
     /* only one consumer(handler) per user-queue */
     if (!res.consumerCount) {
-      this.amqpConnection.createSubscriber(
-        (ev: RmqEvent, rawMsg) => this.ntfEventHandler(ev, rawMsg),
-        {
-          exchange: process.env.RMQ_NOTIFICATION_TOPIC,
-          queue: this.userQ(user.user_id),
-          routingKey: this.userRK(user.user_id),
-          errorHandler: (c, m, e) => this.logger.error(e),
-          queueOptions: {
-            autoDelete: true,
+      await this.amqpConnection
+        .createSubscriber(
+          (ev: RmqEvent, rawMsg) => this.ntfEventHandler(ev, rawMsg),
+          {
+            exchange: process.env.RMQ_NOTIFICATION_TOPIC,
+            queue: this.userQ(user.user_id),
+            routingKey: this.userRK(user.user_id),
+            errorHandler: (c, m, e) => this.logger.error(e),
+            queueOptions: {
+              autoDelete: true,
+            },
           },
-        },
-        'ntfEventHandler',
-      );
+          'ntfEventHandler',
+        )
+        .catch((e) => console.log(e));
     }
 
     /* save connected socket per user */
@@ -95,7 +97,6 @@ export class NotificationGateway
       return;
     }
 
-    //BUG: Cannot read properties of undefined (reading 'user_id')
     this.logger.debug(`< ${user.user_id} > disconnected`);
     this.updateStatus(user.user_id, 'offline');
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'ntf_sock');

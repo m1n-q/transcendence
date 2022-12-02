@@ -19,7 +19,7 @@ export class AuthService {
     } catch (e) {
       throw new RmqError({
         code: 500,
-        message: 'Request Time Out (to auth-serivice)',
+        message: 'Request Time Out (to auth-service)',
         where: 'Websocket',
       });
     }

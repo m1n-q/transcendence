@@ -4,6 +4,8 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
+import { RmqError } from '../../common/rmq/types/rmq-error';
 import { RmqResponse } from '../../common/rmq/types/rmq-response';
 import { ChatRoomMessageDto } from '../dto/chat-room-message.dto';
 
@@ -23,8 +25,12 @@ export class ChatService {
         routingKey,
         payload,
       });
-    } catch (reqFail) {
-      throw new InternalServerErrorException('request to chat-service failed');
+    } catch (e) {
+      throw new RmqError({
+        code: 500,
+        message: 'Request Time Out (to chat-service)',
+        where: 'Websocket',
+      });
     }
     if (!response.success) throw response.error;
     return response.data;

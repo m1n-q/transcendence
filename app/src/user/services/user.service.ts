@@ -1,11 +1,8 @@
-import {
-  HttpException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RmqResponse } from '../../common/rmq/types/rmq-response';
 import { UserProfile } from '../types/user-profile';
+import { RmqError } from '../../common/rmq/types/rmq-error';
 
 @Injectable()
 export class UserService {
@@ -22,8 +19,12 @@ export class UserService {
         routingKey,
         payload,
       });
-    } catch (reqFail) {
-      throw new InternalServerErrorException('request to user-service failed');
+    } catch (e) {
+      throw new RmqError({
+        code: 500,
+        message: 'Request Time Out (to user-service)',
+        where: 'Websocket',
+      });
     }
     if (!response.success) throw response.error;
     return response.data;

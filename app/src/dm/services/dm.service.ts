@@ -6,6 +6,7 @@ import {
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RmqResponse } from '../../common/rmq/types/rmq-response';
 import { DmDto } from '../dto/dm.dto';
+import { RmqError } from '../../common/rmq/types/rmq-error';
 
 @Injectable()
 export class DmService {
@@ -22,8 +23,12 @@ export class DmService {
         routingKey,
         payload,
       });
-    } catch (reqFail) {
-      throw new InternalServerErrorException('request to dm-service failed');
+    } catch (e) {
+      throw new RmqError({
+        code: 500,
+        message: 'Request Time Out (to dm-service)',
+        where: 'Websocket',
+      });
     }
     if (!response.success) throw response.error;
     return response.data;

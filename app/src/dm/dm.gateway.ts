@@ -137,19 +137,21 @@ export class DMGateway
     );
     /* only one consumer(handler) per room */
     if (!roomQueue.consumerCount) {
-      await this.amqpConnection.createSubscriber(
-        (msg: RmqEvent, rawMsg) => this.dmEventHandler(msg, rawMsg),
-        {
-          exchange: this.dmTX(),
-          queue: this.dmRoomQ(dmRoomName) /* subscriber */,
-          routingKey: [this.dmRoomRK('message', dmRoomName)],
-          errorHandler: (c, m, e) => this.logger.error(e),
-          queueOptions: {
-            autoDelete: true,
+      await this.amqpConnection
+        .createSubscriber(
+          (msg: RmqEvent, rawMsg) => this.dmEventHandler(msg, rawMsg),
+          {
+            exchange: this.dmTX(),
+            queue: this.dmRoomQ(dmRoomName) /* subscriber */,
+            routingKey: [this.dmRoomRK('message', dmRoomName)],
+            errorHandler: (c, m, e) => this.logger.error(e),
+            queueOptions: {
+              autoDelete: true,
+            },
           },
-        },
-        'dmEventHandler',
-      );
+          'dmEventHandler',
+        )
+        .catch((e) => console.log(e));
     }
   }
 

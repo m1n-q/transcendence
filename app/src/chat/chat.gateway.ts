@@ -151,23 +151,27 @@ export class ChatGateway
     );
     /* only one consumer(handler) per room */
     if (!roomQueue.consumerCount) {
-      await this.amqpConnection.createSubscriber(
-        (msg: RmqEvent, rawMsg) => this.chatRoomEventHandler(msg, rawMsg), // to bind "this", need arrow function
-        {
-          exchange: this.roomTX(),
-          queue: this.roomQ(room) /* subscriber */,
-          routingKey: [
-            this.roomRK('message', room),
-            this.roomRK('announcement', room),
-            this.roomRK('ban', room),
-          ],
-          errorHandler: (c, m, e) => this.logger.error(e),
-          queueOptions: {
-            autoDelete: true,
+      await this.amqpConnection
+        .createSubscriber(
+          (msg: RmqEvent, rawMsg) => this.chatRoomEventHandler(msg, rawMsg), // to bind "this", need arrow function
+          {
+            exchange: this.roomTX(),
+            queue: this.roomQ(room) /* subscriber */,
+            routingKey: [
+              this.roomRK('message', room),
+              this.roomRK('announcement', room),
+              this.roomRK('ban', room),
+            ],
+            errorHandler: (c, m, e) => this.logger.error(e),
+            queueOptions: {
+              autoDelete: true,
+            },
           },
-        },
-        'chatRoomEventHandler',
-      );
+          'chatRoomEventHandler',
+        )
+        .catch((e) => {
+          console.log(e);
+        });
     }
   }
 
