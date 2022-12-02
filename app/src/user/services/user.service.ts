@@ -25,11 +25,7 @@ export class UserService {
     } catch (reqFail) {
       throw new InternalServerErrorException('request to user-service failed');
     }
-    if (!response.success)
-      throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
-      );
+    if (!response.success) throw response.error;
     return response.data;
   }
 
