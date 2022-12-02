@@ -18,6 +18,7 @@ import { ChatUserRoleDto } from '../dto/chat-user-role.dto';
 import { ChatRoomAdminCommandDto } from '../dto/chat-room-admin-command.dto';
 import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
 import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
+import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
 
 @Injectable()
 export class ChatService {
@@ -177,6 +178,13 @@ export class ChatService {
     return this.requestToChatService(
       this.RK('req', 'chat.get.room.members'),
       chatRoomIdDto,
+    );
+  }
+
+  async inviteUser(chatRoomInviteDto: ChatRoomInviteDto) {
+    return this.requestToChatService(
+      this.RK('req', 'chat.invite.user'),
+      chatRoomInviteDto,
     );
   }
 }

@@ -21,6 +21,7 @@ import { ChatUserRoleDto } from '../dto/chat-user-role.dto';
 import { AuthGuard } from '../../common/http/guard/auth.guard';
 import { ChatRoomAccessibilityDto } from '../dto/chat-room-accessibility.dto';
 import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
+import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
 
 //TODO: param uuid validation
 @UseGuards(AuthGuard)
@@ -181,6 +182,17 @@ export class ChatController {
     chatRoomAccessibilityDto.room_owner_id = req.user.user_id;
     chatRoomAccessibilityDto.room_id = roomId;
     return this.chatService.setRoomAccessibility(chatRoomAccessibilityDto);
+  }
+
+  @Post('room/:roomId/invite')
+  async inviteUser(
+    @Req() req,
+    @Param('roomId', new ParseUUIDPipe()) roomId,
+    @Body() chatRoomInviteDto: ChatRoomInviteDto,
+  ) {
+    chatRoomInviteDto.user_id = req.user.user_id;
+    chatRoomInviteDto.room_id = roomId;
+    return this.chatService.inviteUser(chatRoomInviteDto);
   }
 
   @Get('rooms')
