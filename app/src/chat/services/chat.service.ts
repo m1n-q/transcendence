@@ -160,10 +160,10 @@ export class ChatService {
     );
   }
 
-  async getAllRoomMessages(chatRoomIdDto: ChatRoomIdDto) {
+  async getAllRoomMessages(chatRoomUserDto: ChatRoomUserDto) {
     return this.requestToChatService(
       this.RK('req', 'chat.get.all.room.messages'),
-      chatRoomIdDto,
+      chatRoomUserDto,
     );
   }
 

@@ -170,7 +170,10 @@ export class ChatController {
     @Req() req,
     @Param('roomId', new ParseUUIDPipe()) roomId,
   ) {
-    return this.chatService.getAllRoomMessages({ room_id: roomId });
+    return this.chatService.getAllRoomMessages({
+      user_id: req.user.user_id,
+      room_id: roomId,
+    });
   }
 
   @Put('room/:roomId/access')
