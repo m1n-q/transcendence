@@ -184,7 +184,7 @@ export class DMGateway
   //'======================================================================'//
 
   /* handler for room queue */
-  async dmEventHandler(ev: RmqEvent, rawMsg: ConsumeMessage) {
+  async dmEventHandler(ev: RmqEvent<DMFromServer>, rawMsg: ConsumeMessage) {
     const re = /(?<=event.on.dm.)(.*)(?=.rk)/;
     const parsed = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const params = { evType: parsed[0], dmRoomName: parsed[1] };
@@ -195,14 +195,14 @@ export class DMGateway
       .fetchSockets();
 
     /* handle dm from other instances */
-    const senderId = ev.payload['sender']['user_id'];
+    const senderId = ev.data.sender.user_id;
     for (const clientSocket of clientSockets) {
       const receiver = await this.getUser(clientSocket);
       /* only two user can get message */
       if (!users.includes(receiver.nickname)) continue; // may warn
       const emit =
         receiver.user_id == senderId ? this.echoMessage : this.sendMessage;
-      emit(clientSocket, ev.payload);
+      emit(clientSocket, ev.data);
     }
   }
 
