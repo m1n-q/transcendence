@@ -30,16 +30,18 @@ import { RmqEvent } from '../../common/rmq/types/rmq-event';
 import { BannedUserError } from '../../common/rmq/errors/banned-user.error';
 import { MutedUserError } from '../../common/rmq/errors/muted-user.error';
 import { InvalidPasswordError } from '../../common/rmq/errors/invalid-password.error';
-import { ChatEventType } from '../types/chat-event.type';
+import { ChatRoomEventType } from '../types/chat-event.type';
 import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
 import { toUserProfile } from '../../common/utils/utils';
 import { ChatAnnouncementFromServer } from '../types/chat-message-format';
+import { RoomExistsGuard } from '../guards/room-exists.guard';
+import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
+import { UserProfile } from '../../user-info';
 
 /*  TODO:
  *
  * distributed DB?
  * cron-job on ban/mute list?
- * 초대 기능
  */
 
 @Injectable()
@@ -61,17 +63,21 @@ export class ChatService {
     private readonly chatRoomMuteListRepo: Repository<ChatRoomMuteList>,
   ) {}
 
+  chatTX() {
+    return process.env.RMQ_CHAT_TOPIC;
+  }
+
   roomTX() {
     return process.env.RMQ_CHAT_ROOM_TOPIC;
   }
 
   roomRK(eventName: string, roomId: string) {
-    return `event.on.chat.room.${eventName}.${roomId}.rk`;
+    return `event.on.chat-room.${eventName}.${roomId}.rk`;
   }
 
-  publishEvent(
+  publishRoomEvent(
     roomId: string,
-    evType: ChatEventType,
+    evType: ChatRoomEventType,
     recvUsers: string[],
     payload: string,
   ) {
@@ -83,6 +89,19 @@ export class ChatService {
     this.amqpConnection.publish(
       this.roomTX(),
       this.roomRK(evType, roomId),
+      event,
+    );
+  }
+
+  publishChatEvent(evType: string, recvUsers: string[], data: any) {
+    const event: RmqEvent = {
+      recvUsers,
+      data,
+      created: new Date(),
+    };
+    this.amqpConnection.publish(
+      this.chatTX(),
+      `event.on.chat.${evType}.rk`,
       event,
     );
   }
@@ -115,6 +134,25 @@ export class ChatService {
       });
     }
     return userInRoom !== null && userInRoom.role === 'admin';
+  }
+
+  async getMember(userId, roomOrId: ChatRoom | string) {
+    let room: ChatRoom;
+    if (typeof roomOrId === 'string') room = await this.findRoom(roomOrId);
+    else room = roomOrId;
+
+    let userInRoom = null;
+    if (room) {
+      userInRoom = await this.chatRoomUserRepo.find({
+        where: {
+          roomId: room.roomId,
+          userId,
+        },
+        relations: ['user'],
+      });
+    }
+
+    return userInRoom !== null ? toUserProfile(userInRoom.user) : null;
   }
 
   getExpiry(seconds) {
@@ -262,7 +300,6 @@ export class ChatService {
       room_password: roomPassword,
     } = chatRoomJoinDto;
 
-    /* TODO: if banned, reject TEST */
     const bannedUser = await this.chatRoomBanListRepo.findOneBy({
       roomId,
       userId,
@@ -388,7 +425,7 @@ export class ChatService {
     } catch (e) {
       throw toRmqError(e);
     }
-    this.publishEvent(
+    this.publishRoomEvent(
       room.roomId,
       'announcement',
       [],
@@ -466,7 +503,7 @@ export class ChatService {
       await q.release();
     }
 
-    this.publishEvent(roomId, 'ban', [userId], `You've been BANNED!`);
+    this.publishRoomEvent(roomId, 'ban', [userId], `You've been BANNED!`);
     return { affected: 1 };
   }
 
@@ -685,5 +722,41 @@ export class ChatService {
         };
       }),
     };
+  }
+
+  async inviteUser(
+    room: ChatRoom,
+    roomUser: UserProfile,
+    chatRoomInviteDto: ChatRoomInviteDto,
+  ) {
+    const {
+      room_id: roomId,
+      user_id: senderId,
+      receiver_id: receiverId,
+    } = chatRoomInviteDto;
+
+    const bannedUser = await this.chatRoomBanListRepo.findOneBy({
+      room,
+      userId: receiverId,
+    });
+    if (bannedUser) throw new BannedUserError();
+
+    try {
+      await this.chatRoomUserRepo.insert({ roomId, userId: receiverId });
+    } catch (e) {
+      throw toRmqError(e);
+    }
+
+    this.publishChatEvent('inivitation', [receiverId], {
+      sender: roomUser,
+      room_info: {
+        room_id: room.roomId,
+        room_name: room.roomName,
+        room_owner_id: room.roomOwnerId,
+        room_access: room.roomAccess,
+        created: room.created,
+      },
+    });
+    return { room_id: roomId, user_id: receiverId };
   }
 }

@@ -19,7 +19,7 @@ import {
 import { RmqErrorHandler } from '../../common/rmq/rmq-error.handler';
 import { RmqResponseInterceptor } from '../../common/rmq/interceptors/rmq-response.interceptor';
 import { RmqErrorFactory } from '../../common/rmq/rmq-error.factory';
-import { AdminGuard, OwnerGuard } from '../guards/role.guard';
+import { AdminGuard, OwnerGuard, RoomUserGuard } from '../guards/role.guard';
 import { ChatRoomSetPasswordDto } from '../dto/chat-room-set-password.dto';
 import { RoomExistsGuard } from '../guards/room-exists.guard';
 import { ChatRoomUserDto } from '../dto/chat-room-user.dto';
@@ -29,6 +29,7 @@ import { ChatRoomAccessibilityDto } from '../dto/chat-room-accessibility.dto';
 import { ChatRoomAdminCommandDto } from '../dto/chat-room-admin-command.dto';
 import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
 import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
+import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
 
 @UseInterceptors(RmqResponseInterceptor)
 @UsePipes(
@@ -278,6 +279,7 @@ export class ChatRmqController {
     return this.chatService.storeRoomMessage(chatRoomMessageDto);
   }
 
+  @UseGuards(RoomExistsGuard, RoomUserGuard)
   @RabbitRPC({
     exchange: 'chat.d.x',
     queue: 'chat.get.all.room.messages.q',
@@ -299,5 +301,23 @@ export class ChatRmqController {
   })
   async getJoinedRooms(userId: string) {
     return this.chatService.getJoinedRooms(userId);
+  }
+
+  @UseGuards(RoomExistsGuard, RoomUserGuard)
+  @RabbitRPC({
+    exchange: 'chat.d.x',
+    queue: 'chat.invite.user.q',
+    routingKey: 'req.to.chat.invite.user.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async inviteUser(
+    @RabbitRequest() req,
+    @RabbitPayload() chatRoomInviteDto: ChatRoomInviteDto,
+  ) {
+    return this.chatService.inviteUser(
+      req.room,
+      req.roomUser,
+      chatRoomInviteDto,
+    );
   }
 }
