@@ -141,9 +141,9 @@ export class ChatService {
     if (typeof roomOrId === 'string') room = await this.findRoom(roomOrId);
     else room = roomOrId;
 
-    let userInRoom = null;
+    let usersInRoom = null;
     if (room) {
-      userInRoom = await this.chatRoomUserRepo.find({
+      usersInRoom = await this.chatRoomUserRepo.find({
         where: {
           roomId: room.roomId,
           userId,
@@ -152,7 +152,7 @@ export class ChatService {
       });
     }
 
-    return userInRoom !== null ? toUserProfile(userInRoom.user) : null;
+    return usersInRoom !== null ? toUserProfile(usersInRoom[0].user) : null;
   }
 
   getExpiry(seconds) {
