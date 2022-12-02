@@ -17,6 +17,7 @@ import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { UserProfile } from '../user/types/user-profile';
 import { toUserProfile } from '../common/utils/utils';
 import { NotificationFromUser } from './types/notifiaction-from-user';
+import { NotificationFormat } from './types/notification.format';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(1234, { cors: true })
@@ -113,30 +114,22 @@ export class NotificationGateway
     const re = /(?<=event.on.notification.)(.*)(?=.rk)/;
     const params = re.exec(rawMsg.fields.routingKey)[0].split('.');
     const { 0: evType, 1: userId } = params;
+    const { 0: category, 1: type } = evType.split(':');
 
     const clientSock: Socket = this.getClientSocket(
       await this.redisService.hget(this.makeUserKey(userId), 'ntf_sock'),
     );
-
-    switch (evType) {
-      case 'message':
+    switch (category) {
+      case 'user':
         clientSock.emit(
-          'notification',
-          new NotificationFromUser(
-            evType,
-            ev.payload.sender,
-            ev.payload.payload,
-          ),
+          'notification-user',
+          new NotificationFromUser(type, ev.data['sender'], ev.data['payload']),
         );
         break;
-      case 'friend-request':
+      case 'dm':
         clientSock.emit(
-          'notification',
-          new NotificationFromUser(
-            evType,
-            ev.payload.sender,
-            ev.payload.payload,
-          ),
+          'notification-dm',
+          new NotificationFromUser(type, ev.data['sender'], ev.data['payload']),
         );
         break;
       default:
@@ -186,7 +179,7 @@ export class NotificationGateway
   updateStatus(userId: string, state: 'online' | 'offline') {
     const event: RmqEvent = {
       recvUsers: [],
-      payload: state,
+      data: state,
       created: new Date(),
     };
     this.amqpConnection.publish(
