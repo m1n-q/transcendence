@@ -253,7 +253,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     clientSocket['room_name'] = roomName;
-    clientSocket.emit('watch_game_ready_to_start', game.renderInfo());
+    const renderInfo = game.renderInfo();
+    const gameInfo = {
+      owner: game.lPlayerSocketId,
+      lPlayerInfo: game.lPlayerProfile,
+      rPlayerInfo: game.rPlayerProfile,
+    };
+    clientSocket.emit('watch_game_ready_to_start', { gameInfo, renderInfo });
   }
 
   @SubscribeMessage('client_ready_to_watch')
