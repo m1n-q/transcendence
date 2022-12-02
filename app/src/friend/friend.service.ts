@@ -243,7 +243,7 @@ export class FriendService {
         'event.on.user.friend-request.rk',
         {
           recvUsers: [payload.receiver],
-          payload: `${payload.requester} has requested a friend.`,
+          data: { sender: payload.requester, payload: '' },
           created: Date.now(),
         },
       );
