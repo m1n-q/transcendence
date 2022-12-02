@@ -288,9 +288,9 @@ export class ChatRmqController {
   })
   async getAllRoomMessages(
     @RabbitRequest() req,
-    @RabbitPayload() chatRoomIdDto: ChatRoomIdDto,
+    @RabbitPayload() chatRoomUserDto: ChatRoomUserDto,
   ) {
-    return this.chatService.getAllRoomMessages(chatRoomIdDto);
+    return this.chatService.getAllRoomMessages(chatRoomUserDto);
   }
 
   @RabbitRPC({

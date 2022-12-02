@@ -682,10 +682,10 @@ export class ChatService {
     };
   }
 
-  async getAllRoomMessages(chatRoomIdDto: ChatRoomIdDto) {
+  async getAllRoomMessages(chatRoomUserDto: ChatRoomUserDto) {
     const room = await this.chatRoomRepo.findOne({
       where: {
-        roomId: chatRoomIdDto.room_id,
+        roomId: chatRoomUserDto.room_id,
       },
       relations: ['messages', 'messages.sender'],
     });
