@@ -74,6 +74,13 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     /* only one consumer(handler) per subject-queue */
     for (const subject of subjects) {
+      /* observers' room */
+      try {
+        await clientSocket.join(`state-${subject}`);
+      } catch (e) {
+        console.log(e);
+      }
+
       /* queue per subject */
       const res = await this.amqpConnection.channel.assertQueue(
         this.subjectQ(subject),
@@ -99,12 +106,7 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
         )
         .catch((e) => console.log(e));
       if (!result) return;
-      /* observers' room */
-      try {
-        await clientSocket.join(`state-${subject}`);
-      } catch (e) {
-        console.log(e);
-      }
+
       clientSocket['consumer_tags'].push(result.consumerTag);
     }
   }
