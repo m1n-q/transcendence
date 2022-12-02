@@ -3,12 +3,19 @@ import { NotificationFormat } from './notification.format';
 
 export class NotificationFromUser implements NotificationFormat {
   type: string;
-  sender: UserProfile;
-  payload: string;
+  data: {
+    sender: UserProfile;
+    payload: any;
+  };
 
-  constructor(type: string, sender: UserProfile, payload: string) {
+  constructor(
+    type: string,
+    data: {
+      sender: UserProfile;
+      payload: any;
+    },
+  ) {
     this.type = type;
-    this.sender = sender;
-    this.payload = payload;
+    this.data = data;
   }
 }

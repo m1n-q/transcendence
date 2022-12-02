@@ -123,13 +123,13 @@ export class NotificationGateway
       case 'user':
         clientSock.emit(
           'notification-user',
-          new NotificationFromUser(type, ev.data['sender'], ev.data['payload']),
+          new NotificationFromUser(type, ev.data),
         );
         break;
       case 'dm':
         clientSock.emit(
           'notification-dm',
-          new NotificationFromUser(type, ev.data['sender'], ev.data['payload']),
+          new NotificationFromUser(type, ev.data),
         );
         break;
       default:
