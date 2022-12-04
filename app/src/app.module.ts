@@ -18,6 +18,8 @@ import { AwsModule } from './common/aws/aws.module';
 import { AwsService } from './common/aws/aws.service';
 import { DmService } from './dm/services/dm.service';
 import { DmController } from './dm/controllers/dm.controller';
+import { GameController } from './game/game.controller';
+import { GameService } from './game/game.service';
 
 @Module({
   imports: [
@@ -51,6 +53,7 @@ import { DmController } from './dm/controllers/dm.controller';
     ChatController,
     MatchHistoryController,
     DmController,
+    GameController,
   ],
   providers: [
     AuthService,
@@ -61,6 +64,7 @@ import { DmController } from './dm/controllers/dm.controller';
     ChatService,
     MatchHistoryService,
     DmService,
+    GameService,
   ],
 })
 export class AppModule {}
