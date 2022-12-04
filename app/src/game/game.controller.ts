@@ -13,13 +13,13 @@ export class GameController {
 
   @Get('invitation/:nickname')
   @UseGuards(AuthGuard)
-  async invitationByNickname(@Req() req, @Param('nickname') nickname: string) {
+  async inviteByNickname(@Req() req, @Param('nickname') nickname: string) {
     const recvUsers: UserProfile = await this.userService.getUserByNickname(
       nickname,
     );
     const userProfile: UserProfile = await this.userService.getUserByNickname(
       req.user.nickname,
     );
-    return this.gameService.invitationById(recvUsers.user_id, userProfile);
+    return this.gameService.inviteById(recvUsers.user_id, userProfile);
   }
 }
