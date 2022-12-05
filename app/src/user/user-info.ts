@@ -1,6 +1,12 @@
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsString } from 'class-validator';
 
+export enum UserState {
+  ONLINE = 'online',
+  INGAME = 'ingame',
+  OFFLINE = 'offline',
+}
+
 export class TwoFactorAuthenticationInfo {
   @IsNotEmpty()
   @IsString()
@@ -29,6 +35,7 @@ export class UserProfile {
 
   @Expose()
   deleted: Date;
+  state?: UserState;
 }
 
 export class UserInfo {
@@ -42,4 +49,5 @@ export class UserInfo {
   mmr: number;
   created: Date;
   deleted: Date;
+  state?: UserState;
 }
