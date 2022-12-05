@@ -34,7 +34,7 @@ export class AwsService {
           ContentType: file.mimetype,
         })
         .promise();
-      return `https://${bucketName}.s3-${region}.amazonaws.com/${key}`;
+      return `https://${bucketName}.s3.amazonaws.com/${key}`;
     } catch (e) {
       throw new InternalServerErrorException(
         `AWS-S3 upload fail: ${e.message}`,
