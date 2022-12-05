@@ -1,4 +1,5 @@
 import { Expose } from 'class-transformer';
+import { UserState } from './user-info';
 
 export class UserProfile {
   @Expose()
@@ -13,4 +14,6 @@ export class UserProfile {
   created: Date | string;
   @Expose()
   deleted: Date | string;
+  @Expose()
+  state?: UserState;
 }
