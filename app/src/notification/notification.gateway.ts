@@ -17,7 +17,8 @@ import { WsExceptionsFilter } from '../common/ws/ws-exceptions.filter';
 import { UserProfile } from '../user/types/user-profile';
 import { toUserProfile } from '../common/utils/utils';
 import { NotificationFromUser } from './types/notifiaction-from-user';
-import { NotificationFormat } from './types/notification.format';
+import { UserService } from '../user/services/user.service';
+import { UserState } from '../user/types/user-info';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(1234, { cors: true })
@@ -30,6 +31,7 @@ export class NotificationGateway
 
   constructor(
     private readonly authService: AuthService,
+    private readonly userService: UserService,
     private readonly redisService: RedisService,
     private readonly amqpConnection: AmqpConnection,
   ) {}
@@ -86,7 +88,10 @@ export class NotificationGateway
       ntf_sock: clientSocket.id,
     });
 
-    this.updateStatus(user.user_id, 'online');
+    await this.userService.setUserState({
+      user_id: user.user_id,
+      state: UserState.ONLINE,
+    });
   }
 
   async handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
@@ -98,14 +103,13 @@ export class NotificationGateway
     }
 
     this.logger.debug(`< ${user.user_id} > disconnected`);
-    this.updateStatus(user.user_id, 'offline');
+    await this.userService.setUserState({
+      user_id: user.user_id,
+      state: UserState.OFFLINE,
+    });
     await this.redisService.hdel(this.makeUserKey(user.user_id), 'ntf_sock');
     await this.amqpConnection.channel.deleteQueue(this.userQ(user.user_id));
   }
-
-  //*======================================================================*//
-  //*                           socket.io handler                          *//
-  //*======================================================================*//
 
   //'======================================================================'//
   //'                           RabbitMQ handler                           '//
@@ -172,18 +176,5 @@ export class NotificationGateway
     /* bind user info to socket */
     clientSocket['user_profile'] = toUserProfile(user);
     return user;
-  }
-
-  updateStatus(userId: string, state: 'online' | 'offline') {
-    const event: RmqEvent = {
-      recvUsers: [],
-      data: state,
-      created: new Date(),
-    };
-    this.amqpConnection.publish(
-      process.env.RMQ_STATE_TOPIC,
-      `event.on.state.update.${userId}.rk`,
-      event,
-    );
   }
 }

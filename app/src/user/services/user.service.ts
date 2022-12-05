@@ -3,6 +3,7 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RmqResponse } from '../../common/rmq/types/rmq-response';
 import { UserProfile } from '../types/user-profile';
 import { RmqError } from '../../common/rmq/types/rmq-error';
+import { UserState } from '../types/user-info';
 
 @Injectable()
 export class UserService {
@@ -36,9 +37,12 @@ export class UserService {
     });
   }
 
-  async getFriends(user_id: string): Promise<UserProfile[]> {
-    return this.requestToUserService(this.RK('req', 'user.read.friend'), {
-      user_id,
+  async setUserState(dto: {
+    user_id: string;
+    state: UserState;
+  }): Promise<UserState> {
+    return this.requestToUserService(this.RK('req', 'user.set.state'), {
+      dto,
     });
   }
 }
