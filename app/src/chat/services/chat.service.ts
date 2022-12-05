@@ -746,6 +746,14 @@ export class ChatService {
       receiver_id: receiverId,
     } = chatRoomInviteDto;
 
+    if (
+      await this.userService.isBlocked({
+        blocker: receiverId,
+        blocked: senderId,
+      })
+    )
+      return;
+
     const bannedUser = await this.chatRoomBanListRepo.findOneBy({
       room,
       userId: receiverId,
