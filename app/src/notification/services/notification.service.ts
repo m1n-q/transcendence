@@ -6,10 +6,7 @@ import { DMFromServer } from '../types/dm/dm-format';
 
 @Injectable()
 export class NotificationService {
-  constructor(
-    private readonly amqpConnection: AmqpConnection,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly amqpConnection: AmqpConnection) {}
 
   userEventHandler(ev: RmqEvent, rk: string) {
     const re = /(?<=event.on.user.)(.*)(?=.rk)/;
@@ -49,13 +46,6 @@ export class NotificationService {
     }
 
     for (const recvUser of ev.recvUsers) {
-      if (
-        await this.userService.isBlocked({
-          blocker: recvUser,
-          blocked: ev.data.sender.user_id,
-        })
-      )
-        continue;
       const userRk = `event.on.notification.dm:${params.evType}.${recvUser}.rk`;
       const event = new RmqEvent(ev.data, [recvUser]);
 
