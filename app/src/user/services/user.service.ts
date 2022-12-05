@@ -37,6 +37,12 @@ export class UserService {
     });
   }
 
+  async getFriends(user_id: string): Promise<UserProfile[]> {
+    return this.requestToUserService(this.RK('req', 'user.read.friend'), {
+      user_id,
+    });
+  }
+
   async setUserState(dto: {
     user_id: string;
     state: UserState;
