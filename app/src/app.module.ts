@@ -14,6 +14,7 @@ import { ChatRoomMuteList } from './common/entities/chat-room-mute-list.entity';
 import { DmService } from './dm/services/dm.service';
 import { DM } from './common/entities/dm.entity';
 import { DmRmqController } from './dm/controllers/dm.rmq.controller';
+import { UserService } from './user/services/user.service';
 
 @Module({
   imports: [
@@ -76,6 +77,12 @@ import { DmRmqController } from './dm/controllers/dm.rmq.controller';
     ]),
   ],
   controllers: [ChatRmqController, DmRmqController],
-  providers: [ChatService, ChatRmqController, DmService, DmRmqController],
+  providers: [
+    ChatService,
+    ChatRmqController,
+    DmService,
+    DmRmqController,
+    UserService,
+  ],
 })
 export class AppModule {}
