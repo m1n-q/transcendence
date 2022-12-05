@@ -3,7 +3,7 @@ import {
   GameMode,
   RmqRequestMatchHistoryGameInfoDto,
 } from 'src/match-history/dto/match-info.dto';
-import { UserProfile } from 'src/user/user.response.info';
+import { UserProfile } from '../user/types/user-profile';
 
 const REFERENCE_SCORE = +process.env.REFERENCE_SCORE || 20;
 const CANVARS_WIDTH = +process.env.CANVARS_WIDTH || 800;
