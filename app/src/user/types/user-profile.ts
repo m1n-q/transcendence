@@ -1,5 +1,11 @@
 import { Expose } from 'class-transformer';
 
+export enum UserState {
+  ONLINE = 'online',
+  INGAME = 'ingame',
+  OFFLINE = 'offline',
+}
+
 export class UserProfile {
   @Expose()
   user_id: string;
@@ -13,4 +19,6 @@ export class UserProfile {
   created: Date | string;
   @Expose()
   deleted: Date | string;
+  @Expose()
+  state?: UserState;
 }
