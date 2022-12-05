@@ -31,12 +31,11 @@ import { BannedUserError } from '../../common/rmq/errors/banned-user.error';
 import { MutedUserError } from '../../common/rmq/errors/muted-user.error';
 import { InvalidPasswordError } from '../../common/rmq/errors/invalid-password.error';
 import { ChatRoomEventType } from '../types/chat-event.type';
-import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
 import { toUserProfile } from '../../common/utils/utils';
 import { ChatAnnouncementFromServer } from '../types/chat-message-format';
-import { RoomExistsGuard } from '../guards/room-exists.guard';
 import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
 import { UserProfile } from '../../user-info';
+import { UserService } from '../../user/services/user.service';
 
 /*  TODO:
  *
@@ -51,6 +50,7 @@ export class ChatService {
   constructor(
     private readonly amqpConnection: AmqpConnection,
     private readonly dbConnection: DataSource,
+    private readonly userService: UserService,
     @InjectRepository(ChatRoom)
     private readonly chatRoomRepo: Repository<ChatRoom>,
     @InjectRepository(ChatRoomMessage)
@@ -689,16 +689,27 @@ export class ChatService {
       },
       relations: ['messages', 'messages.sender'],
     });
+
     return {
-      messages: room.messages.map((message) => {
-        return {
-          room_msg_id: message.roomMsgId,
-          sender: toUserProfile(message.sender),
-          room_id: message.roomId,
-          payload: message.payload,
-          created: message.created,
-        };
-      }),
+      messages: (
+        await Promise.all(
+          room.messages.map(async (message) => {
+            if (
+              !(await this.userService.isBlocked({
+                blocker: chatRoomUserDto.user_id,
+                blocked: message.sender.user_id,
+              }))
+            )
+              return {
+                room_msg_id: message.roomMsgId,
+                sender: toUserProfile(message.sender),
+                room_id: message.roomId,
+                payload: message.payload,
+                created: message.created,
+              };
+          }),
+        )
+      ).filter((message) => message),
     };
   }
 
