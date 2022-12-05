@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { NotificationRmqController } from './notification/controllers/notification.rmq.controller';
 import { NotificationService } from './notification/services/notification.service';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { UserService } from './user/services/user.service';
 
 @Module({
   imports: [
@@ -39,6 +40,6 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
     }),
   ],
   controllers: [NotificationRmqController],
-  providers: [NotificationService, NotificationRmqController],
+  providers: [NotificationService, NotificationRmqController, UserService],
 })
 export class AppModule {}
