@@ -56,7 +56,7 @@ export class BlockController {
     queue: 'user.is.blocked.q',
     errorHandler: RmqErrorHandler,
   })
-  async isBlocked(@RabbitPayload() msg: RmqDeleteBlock) {
-    return await this.blockService.deleteBlock(msg);
+  async isBlocked(@RabbitPayload() msg: RmqRequestBlock) {
+    return await this.blockService.isBlocked(msg);
   }
 }
