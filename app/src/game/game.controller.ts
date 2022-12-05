@@ -1,4 +1,4 @@
-import { UserProfile } from './../user/user-info';
+import { UserInfo, UserProfile } from './../user/user-info';
 import { GameService } from './game.service';
 import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/common/http/guard/auth.guard';
@@ -17,8 +17,8 @@ export class GameController {
     const recvUsers: UserProfile = await this.userService.getUserByNickname(
       nickname,
     );
-    const userProfile: UserProfile = await this.userService.getUserByNickname(
-      req.user.nickname,
+    const userProfile: UserInfo = await this.userService.getUserById(
+      req.user.user_id,
     );
     return this.gameService.inviteById(recvUsers.user_id, userProfile);
   }

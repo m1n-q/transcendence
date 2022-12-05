@@ -1,3 +1,4 @@
+import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class TwoFactorAuthenticationInfo {
@@ -11,11 +12,22 @@ export class TwoFactorAuthenticationInfo {
 }
 
 export class UserProfile {
+  @Expose()
   user_id: string;
+
+  @Expose()
   nickname: string;
+
+  @Expose()
   prof_img: string;
+
+  @Expose()
   mmr: number;
+
+  @Expose()
   created: Date;
+
+  @Expose()
   deleted: Date;
 }
 
