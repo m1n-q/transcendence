@@ -1,20 +1,32 @@
-import { Type } from 'class-transformer';
 import {
-  IsEmpty,
+  IsEnum,
   IsNotEmpty,
-  IsNumberString,
   IsOptional,
   IsString,
-  IsUrl,
   IsUUID,
-  ValidateNested,
 } from 'class-validator';
+
+export enum UserState {
+  ONLINE = 'online',
+  INGAME = 'ingame',
+  OFFLINE = 'offline',
+}
+
+export class RmqUserStateDto {
+  @IsNotEmpty()
+  @IsUUID()
+  user_id: string;
+
+  @IsEnum(UserState)
+  state: UserState;
+}
 
 export class RmqUserIdDto {
   @IsNotEmpty()
   @IsUUID()
   user_id: string;
 }
+
 export class RmqUserNicknameDto {
   @IsNotEmpty()
   @IsString()
