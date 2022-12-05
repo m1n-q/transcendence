@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { DM } from '../../common/entities/dm.entity';
 import { toRmqError } from '../../common/rmq/errors/to-rmq-error';
 import { toUserProfile } from '../../common/utils/utils';
+import { UserService } from '../../user/services/user.service';
 import { DmGetMessagesDto } from '../dto/dm-get-messages.dto';
 import { DmDto } from '../dto/dm.dto';
 
@@ -12,6 +13,7 @@ export class DmService {
   constructor(
     @InjectRepository(DM)
     private readonly dmRepository: Repository<DM>,
+    private readonly userService: UserService,
   ) {}
 
   async storeMessage(dmDto: DmDto) {
@@ -27,19 +29,29 @@ export class DmService {
   }
 
   async getAllMessages(data: DmGetMessagesDto) {
+    const where = [
+      { receiverId: data.receiver_id, senderId: data.sender_id },
+      { senderId: data.receiver_id, receiverId: data.sender_id },
+    ];
+    if (
+      await this.userService.isBlocked({
+        blocker: data.sender_id /* API requester */,
+        blocked: data.receiver_id,
+      })
+    ) {
+      where.pop();
+    }
+
     const messages = await this.dmRepository
       .find({
-        where: [
-          { receiverId: data.receiver_id, senderId: data.sender_id },
-          { senderId: data.receiver_id, receiverId: data.sender_id },
-        ],
-
+        where,
         order: { created: 'ASC' },
         relations: ['sender', 'receiver'],
       })
       .catch((e) => {
         throw toRmqError(e);
       });
+
     return {
       messages: messages.map((dm) => {
         return {
