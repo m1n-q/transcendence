@@ -34,6 +34,7 @@ import {
 } from './types/chat-message-format';
 import { UserProfile } from '../user/types/user-profile';
 import { toUserProfile } from '../common/utils/utils';
+import { UserService } from '../user/services/user.service';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway(9999, { cors: true })
@@ -50,6 +51,7 @@ export class ChatGateway
     private readonly amqpConnection: AmqpConnection,
     private readonly redisService: RedisService,
     private readonly chatService: ChatService,
+    private readonly userService: UserService,
     private readonly commandFactory: CommandFactory,
   ) {
     /* gen UUID to distinguish same roomId queue at other WS */
@@ -287,5 +289,9 @@ export class ChatGateway
 
   getServer() {
     return this.server;
+  }
+
+  async isBlocked(blocker, blocked) {
+    return this.userService.isBlocked({ blocker, blocked });
   }
 }

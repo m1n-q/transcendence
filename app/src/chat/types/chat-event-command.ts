@@ -64,9 +64,15 @@ export class MessageCommand implements EventCommand {
     /* handle room message from other instances */
     const senderId = this.ev.data.sender.user_id;
     for (const clientSocket of clientSockets) {
-      if ((await chatGateway.getUser(clientSocket)).user_id == senderId)
-        chatGateway.echoMessage(clientSocket, this.ev.data);
-      else chatGateway.sendMessage(clientSocket, this.ev.data);
+      const receiverId = (await chatGateway.getUser(clientSocket)).user_id;
+
+      if (await chatGateway.isBlocked(receiverId, senderId)) continue;
+
+      const emit =
+        receiverId === senderId
+          ? chatGateway.echoMessage
+          : chatGateway.sendMessage;
+      emit(clientSocket, this.ev.data);
     }
   }
 }
