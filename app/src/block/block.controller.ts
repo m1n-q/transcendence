@@ -49,4 +49,14 @@ export class BlockController {
   async deleteBlock(@RabbitPayload() msg: RmqDeleteBlock) {
     return await this.blockService.deleteBlock(msg);
   }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'req.to.user.is.blocked.rk',
+    queue: 'user.is.blocked.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async isBlocked(@RabbitPayload() msg: RmqDeleteBlock) {
+    return await this.blockService.deleteBlock(msg);
+  }
 }

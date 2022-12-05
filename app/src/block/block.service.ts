@@ -119,4 +119,20 @@ export class BlockService {
     }
     return;
   }
+
+  async isBlocked(payload: RmqRequestBlock) {
+    let block: Block;
+    try {
+      block = await this.blockRepository.findOne({
+        where: { blocker: payload.blocker, blocked: payload.blocked },
+      });
+    } catch (e) {
+      throw new RmqError({
+        code: 500,
+        message: `DB Error : ${e}`,
+        where: WHERE,
+      });
+    }
+    return block ? true : false;
+  }
 }
