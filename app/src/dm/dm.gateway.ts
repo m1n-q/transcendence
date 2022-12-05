@@ -202,6 +202,13 @@ export class DMGateway
       const receiver = await this.getUser(clientSocket);
       /* only two user can get message */
       if (!users.includes(receiver.user_id)) continue; // may warn
+      if (
+        await this.userService.isBlocked({
+          blocker: receiver.user_id,
+          blocked: senderId,
+        })
+      )
+        continue;
       const emit =
         receiver.user_id == senderId ? this.echoMessage : this.sendMessage;
       emit(clientSocket, ev.data);
