@@ -2,7 +2,7 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
 import { RmqError } from 'src/common/rmq-module/types/rmq-error';
 import { RmqResponse } from 'src/common/rmq-module/types/rmq-response';
-import { UserInfo } from './dto/user-info.dto';
+import { UserInfo } from '../user/types/user-info';
 
 @Injectable()
 export class AuthService {
