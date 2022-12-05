@@ -32,6 +32,10 @@ import { DmRmqController } from './dm/controllers/dm.rmq.controller';
           type: 'direct',
         },
         {
+          name: process.env.RMQ_USER_DIRECT,
+          type: 'direct',
+        },
+        {
           name: process.env.RMQ_CHAT_TOPIC,
           type: 'topic',
         },
