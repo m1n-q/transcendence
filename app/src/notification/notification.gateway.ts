@@ -129,6 +129,13 @@ export class NotificationGateway
       case 'chat':
       case 'game':
       case 'dm':
+        if (
+          await this.userService.isBlocked({
+            blocker: userId,
+            blocked: ev.data['sender']['user_id'],
+          })
+        )
+          return;
         clientSock.emit(
           `notification-${category}`,
           new NotificationFromUser(type, ev.data),
