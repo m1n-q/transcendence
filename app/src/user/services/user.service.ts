@@ -9,7 +9,7 @@ import { UserState } from '../types/user-info';
 export class UserService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
   RK(type: 'req' | 'event', name: string) {
-    return `${type === 'req' ? 'req.to' : 'event.from'}.${name}.rk`;
+    return `${type === 'req' ? 'req.to' : 'event.on'}.${name}.rk`;
   }
 
   async requestToUserService(routingKey: string, payload) {
@@ -48,5 +48,9 @@ export class UserService {
     state: UserState;
   }): Promise<UserState> {
     return this.requestToUserService(this.RK('req', 'user.set.state'), dto);
+  }
+
+  async isBlocked(dto: { blocker: string; blocked: string }): Promise<boolean> {
+    return this.requestToUserService(this.RK('req', 'user.is.blocked'), dto);
   }
 }
