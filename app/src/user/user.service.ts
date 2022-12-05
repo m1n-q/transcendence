@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { User } from 'src/common/entities/User';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserInfo, UserProfile } from './user-info';
+import { plainToClass } from 'class-transformer';
 
 const WHERE = 'user_service';
 @Injectable()
@@ -82,10 +83,7 @@ export class UserService {
         where: `${WHERE}#readUserByNickname()`,
       });
     }
-    delete user.provider;
-    delete user.third_party_id;
-    delete user.two_factor_authentication_key;
-    delete user.two_factor_authentication_type;
+    user = plainToClass(UserProfile, user, { excludeExtraneousValues: true });
     return user;
   }
 

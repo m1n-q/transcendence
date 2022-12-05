@@ -1,3 +1,5 @@
+import { UserProfile } from './../user/user-info';
+import { plainToClass } from 'class-transformer';
 import { RmqError } from 'src/common/rmq-module/types/rmq-error';
 import { Friend } from '../common/entities/Friend';
 import { FriendRequest } from '../common/entities/Friend_request';
@@ -13,7 +15,7 @@ import {
 } from './dto/rmq.friend.request';
 import { DataSource, Repository } from 'typeorm';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { FriendInfo } from './friend-info';
+import { FriendInfo, RequestInfo } from './friend-info';
 import { UserService } from 'src/user/user.service';
 
 const WHERE = 'user_service';
@@ -128,10 +130,13 @@ export class FriendService {
       });
     }
     const reFormattingList = friendRequestList.map((request) => {
-      const user_info = this.deleteUserInfo(request.receiver_info);
-      delete request.receiver_info;
-      delete request.receiver;
-      delete request.requester;
+      const user_info = plainToClass(UserProfile, request.receiver_info, {
+        excludeExtraneousValues: true,
+      });
+      request = plainToClass(RequestInfo, request, {
+        excludeExtraneousValues: true,
+      });
+      user_info.created = user_info.created.toString();
       request['user_info'] = user_info;
       return request;
     });
@@ -160,10 +165,13 @@ export class FriendService {
       });
     }
     const reFormattingList = friendRequestList.map((request) => {
-      const user_info = this.deleteUserInfo(request.requester_info);
-      delete request.requester_info;
-      delete request.receiver;
-      delete request.requester;
+      const user_info = plainToClass(UserProfile, request.requester_info, {
+        excludeExtraneousValues: true,
+      });
+      request = plainToClass(RequestInfo, request, {
+        excludeExtraneousValues: true,
+      });
+      user_info.created = user_info.created.toString();
       request['user_info'] = user_info;
       return request;
     });
@@ -371,15 +379,5 @@ export class FriendService {
         where: WHERE,
       });
     }
-  }
-
-  deleteUserInfo(user) {
-    delete user.provider;
-    delete user.third_party_id;
-    delete user.two_factor_authentication_key;
-    delete user.two_factor_authentication_type;
-    delete user.deleted;
-    user.created = user.created.toString();
-    return user;
   }
 }
