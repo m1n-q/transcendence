@@ -12,7 +12,7 @@ import { RmqError } from '../../common/rmq/types/rmq-error';
 export class DmService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
   RK(type: 'req' | 'event', name: string) {
-    return `${type === 'req' ? 'req.to' : 'event.from'}.${name}.rk`;
+    return `${type === 'req' ? 'req.to' : 'event.on'}.${name}.rk`;
   }
 
   async requestToDmService(routingKey: string, payload) {
