@@ -3,8 +3,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   process.on('unhandledRejection', (error) => {
-    console.error(error); // This prints error with stack included (as for normal errors)
-    throw error; // Following best practices re-throw error and let the process exit with error code
+    console.error('unhandled rejection => ', error); // This prints error with stack included (as for normal errors)
   });
 
   const app = await NestFactory.create(AppModule);

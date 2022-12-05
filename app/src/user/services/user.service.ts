@@ -27,7 +27,7 @@ export class UserService {
         where: 'Websocket',
       });
     }
-    if (!response.success) throw response.error;
+    if (!response.success) throw response.error as RmqError;
     return response.data;
   }
 
@@ -47,8 +47,6 @@ export class UserService {
     user_id: string;
     state: UserState;
   }): Promise<UserState> {
-    return this.requestToUserService(this.RK('req', 'user.set.state'), {
-      dto,
-    });
+    return this.requestToUserService(this.RK('req', 'user.set.state'), dto);
   }
 }
