@@ -13,6 +13,7 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { BlockController } from './block/block.controller';
 import { BlockService } from './block/block.service';
+import { RedisModule } from './redis-module/redis.module';
 
 @Module({
   imports: [
@@ -35,8 +36,12 @@ import { BlockService } from './block/block.service';
     RabbitMQModule.forRoot(RabbitMQModule, {
       exchanges: [
         {
-          name: 'user.d.x',
+          name: process.env.RMQ_USER_DIRECT,
           type: 'direct',
+        },
+        {
+          name: process.env.RMQ_STATE_TOPIC,
+          type: 'topic',
         },
       ],
       uri: process.env.RMQ_URI,
@@ -44,6 +49,7 @@ import { BlockService } from './block/block.service';
       connectionInitOptions: { timeout: 20000 },
       defaultRpcTimeout: 20000,
     }),
+    RedisModule,
   ],
   controllers: [UserController, FriendController, BlockController],
   providers: [UserService, FriendService, BlockService],

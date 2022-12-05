@@ -4,6 +4,7 @@ import {
   RmqUserCreateDto,
   RmqUserUpdateNicknameDto,
   RmqUserNicknameDto,
+  RmqUserStateDto,
 } from './dto/rmq.user.request.dto';
 import { UserService } from './user.service';
 import { Controller, UseInterceptors } from '@nestjs/common';
@@ -110,5 +111,25 @@ export class UserController {
   })
   async readUserList() {
     return await this.userService.readUserList();
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'req.to.user.get.state.rk',
+    queue: 'user.get.state.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async getUserState(@RabbitPayload() payload: RmqUserIdDto) {
+    return await this.userService.getUserState(payload);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'req.to.user.set.state.rk',
+    queue: 'user.set.state.q',
+    errorHandler: RmqErrorHandler,
+  })
+  setUserState(@RabbitPayload() payload: RmqUserStateDto): any {
+    return this.userService.setUserState(payload);
   }
 }

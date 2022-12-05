@@ -12,7 +12,7 @@ export class RmqEvent<T = any> {
   data: T;
 
   @IsDateString()
-  created: string;
+  created: Date | string;
 
   constructor(data: T, recvUsers: string[] = null) {
     this.data = data;
