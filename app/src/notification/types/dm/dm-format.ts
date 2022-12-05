@@ -1,3 +1,5 @@
+import { UserProfile } from '../../../user/types/user-profile';
+
 export interface DMFormat {
   payload: string;
 }
@@ -8,5 +10,5 @@ export class DMFromClient implements DMFormat {
 }
 
 export class DMFromServer implements DMFormat {
-  constructor(readonly sender, readonly payload: string) {}
+  constructor(readonly sender: UserProfile, readonly payload: string) {}
 }

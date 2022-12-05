@@ -13,6 +13,10 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
       uri: process.env.RMQ_HOST,
       exchanges: [
         {
+          name: process.env.RMQ_USER_DIRECT,
+          type: 'direct',
+        },
+        {
           name: process.env.RMQ_USER_TOPIC,
           type: 'topic',
         },

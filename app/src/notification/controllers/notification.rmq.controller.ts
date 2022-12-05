@@ -48,10 +48,10 @@ export class NotificationRmqController {
     queue: 'event.on.dm.q',
     errorHandler: RmqErrorHandler,
   })
-  handleDmEvent(
+  async handleDmEvent(
     @RabbitRequest() req: ConsumeMessage,
     @RabbitPayload() msg: RmqEvent,
-  ): void {
+  ): Promise<void> {
     return this.notificationService.dmEventHandler(msg, req.fields.routingKey);
   }
 

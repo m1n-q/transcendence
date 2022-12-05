@@ -1,11 +1,15 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
 import { RmqEvent } from '../../common/rmq/types/rmq-event';
+import { UserService } from '../../user/services/user.service';
 import { DMFromServer } from '../types/dm/dm-format';
 
 @Injectable()
 export class NotificationService {
-  constructor(private readonly amqpConnection: AmqpConnection) {}
+  constructor(
+    private readonly amqpConnection: AmqpConnection,
+    private readonly userService: UserService,
+  ) {}
 
   userEventHandler(ev: RmqEvent, rk: string) {
     const re = /(?<=event.on.user.)(.*)(?=.rk)/;
@@ -31,7 +35,7 @@ export class NotificationService {
     }
   }
 
-  dmEventHandler(ev: RmqEvent<DMFromServer>, rk: string) {
+  async dmEventHandler(ev: RmqEvent<DMFromServer>, rk: string) {
     const re = /(?<=event.on.dm.)(.*)(?=.rk)/;
     const parsed = re.exec(rk)[0].split('.');
     const params = { evType: parsed[0], dmRoomName: parsed[1] };
@@ -45,6 +49,13 @@ export class NotificationService {
     }
 
     for (const recvUser of ev.recvUsers) {
+      if (
+        await this.userService.isBlocked({
+          blocker: recvUser,
+          blocked: ev.data.sender.user_id,
+        })
+      )
+        continue;
       const userRk = `event.on.notification.dm:${params.evType}.${recvUser}.rk`;
       const event = new RmqEvent(ev.data, [recvUser]);
 
