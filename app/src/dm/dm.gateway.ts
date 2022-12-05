@@ -122,10 +122,10 @@ export class DMGateway
     await this.setConnSocketId(user.user_id, clientSocket.id);
     /* FIXME */
 
-    const oppoName = message.opponent;
-    const userName = (await this.getUser(clientSocket))
-      .nickname; /* or user_id */
-    const dmRoomName = this.makeDmRoomName(userName, oppoName);
+    const oppoId = (await this.userService.getUserProfile(message.opponent))
+      .user_id;
+    const userId = (await this.getUser(clientSocket)).user_id;
+    const dmRoomName = this.makeDmRoomName(userId, oppoId);
     await clientSocket.join(dmRoomName);
 
     /* queue per room-event */
@@ -161,8 +161,8 @@ export class DMGateway
     @ConnectedSocket() clientSocket: Socket,
   ) {
     const sender = await this.getUser(clientSocket);
-    const dmRoomName = this.makeDmRoomName(sender.nickname, message.opponent);
     const receiver = await this.userService.getUserProfile(message.opponent);
+    const dmRoomName = this.makeDmRoomName(sender.user_id, receiver.user_id);
 
     /* To Database */
     await this.dmService.storeMessage({
@@ -201,7 +201,7 @@ export class DMGateway
     for (const clientSocket of clientSockets) {
       const receiver = await this.getUser(clientSocket);
       /* only two user can get message */
-      if (!users.includes(receiver.nickname)) continue; // may warn
+      if (!users.includes(receiver.user_id)) continue; // may warn
       const emit =
         receiver.user_id == senderId ? this.echoMessage : this.sendMessage;
       emit(clientSocket, ev.data);
@@ -245,10 +245,8 @@ export class DMGateway
     return `event.on.dm.${eventName}.${dmRoomId}.rk`;
   }
 
-  makeDmRoomName(userName: string, oppoName: string) {
-    return userName > oppoName
-      ? `${userName}:${oppoName}`
-      : `${oppoName}:${userName}`;
+  makeDmRoomName(userId: string, oppoId: string) {
+    return userId > oppoId ? `${userId}:${oppoId}` : `${oppoId}:${userId}`;
   }
 
   async bindUser(clientSocket: Socket) {
