@@ -39,6 +39,7 @@ export class TwoFactorAuthenticationService {
     is_two_factor_authentication_enable: boolean,
   ) {
     if (
+      user.two_factor_authentication_key === null ||
       !this.isTwoFactorAuthenticationCodeValid(
         twoFactorAuthenticationCode,
         user.two_factor_authentication_key,
@@ -66,6 +67,7 @@ export class TwoFactorAuthenticationService {
     user: UserInfo,
   ) {
     if (
+      user.two_factor_authentication_key === null ||
       !this.isTwoFactorAuthenticationCodeValid(
         twoFactorAuthenticationCode,
         user.two_factor_authentication_key,
