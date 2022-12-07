@@ -27,6 +27,20 @@ export class TwoFactorAuthenticationRmqController {
 
   @RabbitRPC({
     exchange: 'auth.d.x',
+    queue: 'auth.2fa.set.q',
+    routingKey: 'req.to.auth.2fa.set.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async set2FA(msg: { user_id: string; secret: string; code: string }) {
+    return await this.twoFactorAuthenticationService.set2FA(
+      msg.user_id,
+      msg.secret,
+      msg.code,
+    );
+  }
+
+  @RabbitRPC({
+    exchange: 'auth.d.x',
     queue: 'auth.update.2fa.enable.q',
     routingKey: 'req.to.auth.update.2fa.enable.rk',
     errorHandler: RmqErrorHandler,

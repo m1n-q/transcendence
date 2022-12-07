@@ -13,14 +13,25 @@ export class TwoFactorAuthenticationService {
   async generateTwoFactorAuthenticationSecret(userId: string) {
     const secret = authenticator.generateSecret();
     const otpauthUrl = authenticator.keyuri(
-      process.env.ACCOUNT_NAME,
-      process.env.TWO_FACTOR_AUTHENTICATION_APP_NAME,
+      'google-Authenticator',
+      'transcendence',
       secret,
     );
+    return { otpauthUrl, secret };
+  }
+
+  async set2FA(userId: string, secret: string, code: string) {
+    if (!this.isTwoFactorAuthenticationCodeValid(code, secret)) {
+      throw new RmqError({
+        code: 401,
+        message: 'Unauthorized 2fa code',
+        where: `${WHERE} #isTwoFactorAuthenticationCodeValid`,
+      });
+    }
     try {
       await this.userService.updateUser2FAByID({
         user_id: userId,
-        type: process.env.TWO_FACTOR_AUTHENTICATION_TYPE,
+        type: 'google',
         key: secret,
       });
     } catch (e) {
@@ -30,7 +41,7 @@ export class TwoFactorAuthenticationService {
         where: e.where,
       });
     }
-    return otpauthUrl;
+    return;
   }
 
   updateTwoFactorAuthentication(
