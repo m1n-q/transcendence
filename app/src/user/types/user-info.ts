@@ -20,6 +20,8 @@ export class UserInfo {
   @Expose()
   two_factor_authentication_type: string;
   @Expose()
+  is_two_factor_authentication_enable: boolean;
+  @Expose()
   prof_img: string;
   @Expose()
   mmr: number;

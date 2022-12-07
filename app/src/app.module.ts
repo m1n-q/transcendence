@@ -1,3 +1,5 @@
+import { TwoFactorAuthenticationRmqController } from './auth/controllers/two-factor-authentication.rmq.controller';
+import { TwoFactorAuthenticationService } from './auth/services/two-factor-authentication.service';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -40,8 +42,13 @@ import { AuthRmqController } from './auth/controllers/auth.rmq.controller';
     UserService,
     AuthRmqController,
     RmqResponseInterceptor,
+    TwoFactorAuthenticationService,
   ],
   exports: [],
-  controllers: [AuthHttpController, AuthRmqController],
+  controllers: [
+    AuthHttpController,
+    AuthRmqController,
+    TwoFactorAuthenticationRmqController,
+  ],
 })
 export class AppModule {}
