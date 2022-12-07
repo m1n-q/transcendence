@@ -82,6 +82,9 @@ export class AuthService {
     is_two_factor_authentication_enable: boolean,
   ) {
     const user: UserInfo = await this.userService.getUserById(user_id);
+    if (user.two_factor_authentication_key === null) {
+      throw new HttpException('not register 2fa', 409);
+    }
     if (
       user.is_two_factor_authentication_enable ===
       is_two_factor_authentication_enable
@@ -115,6 +118,9 @@ export class AuthService {
     twoFactorAuthenticationCode: string,
   ) {
     const user: UserInfo = await this.userService.getUserById(user_id);
+    if (user.two_factor_authentication_key === null) {
+      throw new HttpException('not register 2fa', 409);
+    }
     let response: RmqResponse;
     try {
       response = await this.amqpConnection.request<RmqResponse>({
