@@ -26,11 +26,11 @@ export class Block {
   })
   created: Date;
 
-  @ManyToOne(() => User, (user) => user.user_id)
+  @ManyToOne(() => User, (user) => user.user_id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'blocker' })
   user_blocker: User;
 
-  @ManyToOne(() => User, (user) => user.user_id)
+  @ManyToOne(() => User, (user) => user.user_id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'blocked' })
   user_blocked: User;
 }

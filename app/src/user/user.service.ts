@@ -8,7 +8,7 @@ import {
   RmqUserStateDto,
 } from './dto/rmq.user.request.dto';
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { LessThan, MoreThan, Repository } from 'typeorm';
 import { User } from 'src/common/entities/User';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
@@ -35,6 +35,7 @@ export class UserService {
   async createUser(payload: RmqUserCreateDto) {
     const user: UserInfo = this.userRepository.create(payload);
     user.mmr = 1000;
+    user.is_two_factor_authentication_enable = false;
     try {
       await this.userRepository.save(user);
     } catch (e) {
@@ -259,6 +260,40 @@ export class UserService {
     };
   }
 
+  async updateUser2FAEnableById(payload) {
+    const user = await this.readUserById(payload.user_id);
+    user.is_two_factor_authentication_enable =
+      payload.is_two_factor_authentication_enable;
+
+    try {
+      await this.userRepository.save(user);
+    } catch (e) {
+      throw new RmqError({
+        code: 500,
+        message: `DB Error : ${e}`,
+        where: WHERE,
+      });
+    }
+    return;
+  }
+
+  async deleteUser2FAById(payload) {
+    const user: UserInfo = await this.readUserById(payload);
+    user.two_factor_authentication_type = null;
+    user.two_factor_authentication_key = null;
+    user.is_two_factor_authentication_enable = false;
+    try {
+      await this.userRepository.save(user);
+    } catch (e) {
+      throw new RmqError({
+        code: 500,
+        message: `DB Error : ${e}`,
+        where: WHERE,
+      });
+    }
+    return;
+  }
+
   async readUserBy3pId(payload: RmqUSer3pIDDto): Promise<UserInfo> {
     let user;
     try {
@@ -321,5 +356,38 @@ export class UserService {
       });
     }
     return list;
+  }
+
+  async deleteOldWithdrawalUser() {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - 1);
+    let list;
+    try {
+      list = await this.userRepository.find({
+        where: { deleted: LessThan(date) },
+        withDeleted: true,
+      });
+    } catch (e) {
+      throw new RmqError({
+        code: 500,
+        message: `DB Error : ${e}`,
+        where: WHERE,
+      });
+    }
+    const deleteList = [];
+    list.map((user) => {
+      try {
+        this.userRepository.delete(user.user_id);
+        console.log(`${user.user_id} hard delete`);
+        deleteList.push(user.user_id);
+      } catch (e) {
+        throw new RmqError({
+          code: 500,
+          message: `DB Error : ${e}`,
+          where: WHERE,
+        });
+      }
+    });
+    return deleteList;
   }
 }

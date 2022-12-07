@@ -93,6 +93,26 @@ export class UserController {
 
   @RabbitRPC({
     exchange: 'user.d.x',
+    routingKey: 'req.to.user.update.2FA.enable.rk',
+    queue: 'user.update.2FA.enable.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async updateUser2FAEnableById(@RabbitPayload() msg) {
+    return await this.userService.updateUser2FAEnableById(msg);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'req.to.user.delete.2FA.rk',
+    queue: 'user.delete.2FA.q',
+    errorHandler: RmqErrorHandler,
+  })
+  async deleteUser2FAEnableById(@RabbitPayload() msg) {
+    return await this.userService.deleteUser2FAById(msg);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
     routingKey: 'req.to.user.read.by.3pId.rk',
     queue: 'user.read.by.3pId.q',
     errorHandler: RmqErrorHandler,
@@ -131,5 +151,15 @@ export class UserController {
   })
   setUserState(@RabbitPayload() payload: RmqUserStateDto): any {
     return this.userService.setUserState(payload);
+  }
+
+  @RabbitRPC({
+    exchange: 'user.d.x',
+    routingKey: 'req.to.user.delete.withdrawal.user.rk',
+    queue: 'user.delete.withdrawal.user.q',
+    errorHandler: RmqErrorHandler,
+  })
+  deleteOldWithdrawalUser() {
+    return this.userService.deleteOldWithdrawalUser();
   }
 }

@@ -24,11 +24,11 @@ export class FriendRequest {
   })
   created: Date;
 
-  @ManyToOne(() => User, (user) => user.user_id)
+  @ManyToOne(() => User, (user) => user.user_id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'requester' })
   requester_info: User;
 
-  @ManyToOne(() => User, (user) => user.user_id)
+  @ManyToOne(() => User, (user) => user.user_id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'receiver' })
   receiver_info: User;
 }
