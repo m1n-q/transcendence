@@ -187,4 +187,23 @@ export class UserService {
       );
     return response.data;
   }
+
+  async deleteOldWithdrawalUser() {
+    let response;
+    try {
+      response = await this.amqpConnection.request<RmqResponse>({
+        exchange: process.env.RMQ_USER_DIRECT,
+        routingKey: 'req.to.user.delete.withdrawal.user.rk',
+      });
+    } catch (e) {
+      throw new InternalServerErrorException('request to user-serivce failed');
+    }
+    if (!response.success)
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
+    console.log(response.data);
+    return;
+  }
 }

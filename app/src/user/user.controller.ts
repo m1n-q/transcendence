@@ -79,4 +79,11 @@ export class UserController {
   async getUserByNickname(@Param('nickname') nickname: string) {
     return this.userService.getUserByNickname(nickname);
   }
+
+  @HttpCode(204)
+  @Delete('/withdrawal')
+  @UseGuards(AuthGuard)
+  async deleteWithdrawalUser() {
+    return this.userService.deleteOldWithdrawalUser();
+  }
 }
