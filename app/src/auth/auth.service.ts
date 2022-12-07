@@ -7,6 +7,7 @@ import {
 import { UserInfo } from 'src/user/user-info';
 import { UserService } from 'src/user/user.service';
 import { RmqResponse } from '../common/rmq/types/rmq-response';
+import { TwoFactorAuthenticationGenerate } from './2fa-info';
 @Injectable()
 export class AuthService {
   constructor(
@@ -53,17 +54,43 @@ export class AuthService {
       );
     return response.data;
   }
+
   async register2FA(user_id: string) {
     const user = await this.userService.getUserById(user_id);
     if (user.two_factor_authentication_key !== null) {
       throw new HttpException('already register 2fa', 409);
     }
-    let response: RmqResponse<string>;
+    let response: RmqResponse<TwoFactorAuthenticationGenerate>;
     try {
-      response = await this.amqpConnection.request<RmqResponse<string>>({
+      response = await this.amqpConnection.request<
+        RmqResponse<TwoFactorAuthenticationGenerate>
+      >({
         exchange: process.env.RMQ_AUTH_DIRECT,
         routingKey: 'req.to.auth.2fa.generate.rk',
         payload: { user_id },
+      });
+    } catch (reqFail) {
+      throw new InternalServerErrorException('request to auth-service failed');
+    }
+    if (!response.success)
+      throw new HttpException(
+        `${response.error.message} / where: ${response.error.where}`,
+        response.error.code,
+      );
+    return response.data;
+  }
+
+  async set2FA(user_id: string, secret: string, code: string) {
+    const user = await this.userService.getUserById(user_id);
+    if (user.two_factor_authentication_key !== null) {
+      throw new HttpException('already register 2fa', 409);
+    }
+    let response: RmqResponse;
+    try {
+      response = await this.amqpConnection.request<RmqResponse>({
+        exchange: process.env.RMQ_AUTH_DIRECT,
+        routingKey: 'req.to.auth.2fa.set.rk',
+        payload: { user_id, secret, code },
       });
     } catch (reqFail) {
       throw new InternalServerErrorException('request to auth-service failed');

@@ -1,5 +1,15 @@
 import { AuthService } from './auth.service';
-import { Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from 'src/common/http/guard/auth.guard';
 
 type Provider = 'kakao' | '42' | 'google';
@@ -17,13 +27,23 @@ export class AuthController {
   async refresh(@Body('refresh_token') token) {
     return this.authService.requestRefresh(token);
   }
-  @Post('/2fa/generate')
+  @Get('/2fa/generate')
   @UseGuards(AuthGuard)
   async register2FA(@Req() req) {
     return await this.authService.register2FA(req.user.user_id);
   }
 
-  @Post('/2fa/turn-on')
+  @Post('/2fa/generate')
+  @UseGuards(AuthGuard)
+  async set2FA(
+    @Req() req,
+    @Body('secret') secret: string,
+    @Body('two_factor_authentication_code') code: string,
+  ) {
+    return await this.authService.set2FA(req.user.user_id, secret, code);
+  }
+
+  @Put('/2fa/turn-on')
   @UseGuards(AuthGuard)
   async turnOnTwoFactorAuthentication(
     @Req() req,
@@ -36,7 +56,7 @@ export class AuthController {
     );
   }
 
-  @Post('/2fa/turn-off')
+  @Put('/2fa/turn-off')
   @UseGuards(AuthGuard)
   async turnOffTwoFactorAuthentication(
     @Req() req,
@@ -49,6 +69,7 @@ export class AuthController {
     );
   }
 
+  @HttpCode(204)
   @Post('/2fa/delete')
   @UseGuards(AuthGuard)
   async removeTwoFactorAuthentication(
