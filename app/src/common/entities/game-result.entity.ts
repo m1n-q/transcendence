@@ -21,7 +21,7 @@ export class GameResult {
   @Column()
   r_player_score: number;
 
-  @Column()
+  @Column({ nullable: true })
   winner_id: string;
 
   @Column({
@@ -30,11 +30,13 @@ export class GameResult {
   })
   end_time: Date;
 
-  @ManyToOne(() => User, (user) => user.user_id)
+  @ManyToOne(() => User, (user) => user.user_id, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'winner_id' })
   user: User;
 
-  @OneToOne(() => GameInfo, (gameInfo) => gameInfo.game_id)
+  @OneToOne(() => GameInfo, (gameInfo) => gameInfo.game_id, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'game_id' })
   game_info: GameInfo;
 }

@@ -22,11 +22,13 @@ export class RankHistory {
   @Column()
   delta: number;
 
-  @ManyToOne(() => User, (user) => user.user_id)
+  @ManyToOne(() => User, (user) => user.user_id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => GameInfo, (gameInfo) => gameInfo.game_id)
+  @ManyToOne(() => GameInfo, (gameInfo) => gameInfo.game_id, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'game_id' })
   game_info: GameInfo;
 }

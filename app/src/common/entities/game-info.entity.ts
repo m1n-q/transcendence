@@ -26,10 +26,10 @@ export class GameInfo {
   @PrimaryGeneratedColumn('uuid')
   game_id: string;
 
-  @Column()
+  @Column({ nullable: true })
   l_player_id: string;
 
-  @Column()
+  @Column({ nullable: true })
   r_player_id: string;
 
   @Column({
@@ -52,11 +52,11 @@ export class GameInfo {
   })
   start_time: Date;
 
-  @ManyToOne(() => User, (user) => user.user_id)
+  @ManyToOne(() => User, (user) => user.user_id, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'l_player_id' })
   l_player: User;
 
-  @ManyToOne(() => User, (user) => user.user_id)
+  @ManyToOne(() => User, (user) => user.user_id, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'r_player_id' })
   r_player: User;
 }
