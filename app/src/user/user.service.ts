@@ -24,7 +24,7 @@ export class UserService {
         where: 'gameWebsocket',
       });
     }
-    if (!response.success) throw response.error;
+    if (!response.success) throw new RmqError(response.error);
     return response.data;
   }
 
