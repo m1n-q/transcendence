@@ -33,7 +33,7 @@ export class User {
   two_factor_authentication_type: string;
 
   @Column()
-  is_two_factor_authentication_enable: boolean;
+  is_two_factor_authentication_enabled: boolean;
 
   @Expose()
   @Column({ nullable: true })
