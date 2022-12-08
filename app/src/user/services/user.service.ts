@@ -24,10 +24,10 @@ export class UserService {
       throw new RmqError({
         code: 500,
         message: 'Request Time Out (to user-service)',
-        where: 'Websocket',
+        where: 'chat-service',
       });
     }
-    if (!response.success) throw response.error as RmqError;
+    if (!response.success) throw new RmqError(response.error);
     return response.data;
   }
 
