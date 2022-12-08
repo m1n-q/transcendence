@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TwoFactorAuthenticationOtpDto } from './dto/2fa-otp.dto';
-import { TwoFactorAuthenticationUpdateWithCodeDto } from './dto/2fa-update-with-otp.dto';
+import { TwoFactorAuthenticationUpdateWithOtpDto } from './dto/2fa-update-with-otp.dto';
 import * as qrcode from 'qrcode';
 import { AuthGuard, PendingAuthGuard } from '../common/http/guard/auth.guard';
 import { TwoFactorAuthenticationGenerateDto } from './dto/2fa-generate.dto';
@@ -43,7 +43,7 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/2fa/enable')
+  @Put('/2fa/enable')
   async enable2FA(@Req() req, @Body() body: TwoFactorAuthenticationOtpDto) {
     return this.authService.requestEnable2FA({
       user_id: req.user.user_id,
@@ -52,7 +52,7 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/2fa/disable')
+  @Put('/2fa/disable')
   async disable2FA(@Req() req, @Body() body: TwoFactorAuthenticationOtpDto) {
     return this.authService.requestDisable2FA({
       user_id: req.user.user_id,
@@ -64,7 +64,7 @@ export class AuthController {
   @Put('/2fa/info')
   async update2FAInfo(
     @Req() req,
-    @Body() body: TwoFactorAuthenticationUpdateWithCodeDto,
+    @Body() body: TwoFactorAuthenticationUpdateWithOtpDto,
   ) {
     return this.authService.requestUpdate2FAInfo({
       user_id: req.user.user_id,

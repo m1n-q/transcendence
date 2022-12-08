@@ -9,7 +9,7 @@ import { UserService } from 'src/user/user.service';
 import { RmqResponse } from '../common/rmq/types/rmq-response';
 import { TwoFactorAuthenticationOtpDto } from './dto/2fa-otp.dto';
 import { TwoFactorAuthenticationGenerateDto } from './dto/2fa-generate.dto';
-import { TwoFactorAuthenticationUpdateWithCodeDto } from './dto/2fa-update-with-otp.dto';
+import { TwoFactorAuthenticationUpdateWithOtpDto } from './dto/2fa-update-with-otp.dto';
 import { JwtUserInfo } from './jwt-user-info';
 
 type Tokens = { access_token?: string; refresh_token?: string };
@@ -70,7 +70,7 @@ export class AuthService {
       dto,
     );
   }
-  async requestUpdate2FAInfo(dto: TwoFactorAuthenticationUpdateWithCodeDto) {
+  async requestUpdate2FAInfo(dto: TwoFactorAuthenticationUpdateWithOtpDto) {
     return this.requestToAuthService(
       this.RK('req', `auth.update.2FA.info`),
       dto,
