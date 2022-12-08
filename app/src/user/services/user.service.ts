@@ -36,9 +36,10 @@ export class UserService {
 
   /* after get user's info by oauth provider */
   async requestUserInfoBy3pId(thirdPartyInfo: ThirdPartyInfo) {
-    return this.requestToUserService(this.RK('req', 'user.read.by.3pId'), {
+    return this.requestToUserService(
+      this.RK('req', 'user.read.by.3pId'),
       thirdPartyInfo,
-    });
+    );
   }
 
   async requestUserInfoById(user_id: string) {
@@ -48,9 +49,7 @@ export class UserService {
   }
 
   async requestCreateUser(data: CreateUserDto) {
-    return this.requestToUserService(this.RK('req', 'user.create'), {
-      data,
-    });
+    return this.requestToUserService(this.RK('req', 'user.create'), data);
   }
 
   async update2FAInfo(data: TwoFactorAuthenticationUpdateDto) {

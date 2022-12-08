@@ -17,16 +17,15 @@ import { TwoFactorAuthenticationGenerateDto } from '../dto/2fa-generate.dto';
 import { TwoFactorAuthenticationOtpDto } from '../dto/2fa-otp.dto';
 import { TwoFactorAuthenticationUpdateWithOtpDto } from '../dto/2fa-update-with-otp.dto';
 
-@UseInterceptors(RmqResponseInterceptor)
-@UsePipes(
-  new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
+const pipeOption = {
+  whitelist: true,
+  forbidNonWhitelisted: true,
+  transform: true,
 
-    exceptionFactory: RmqErrorFactory('auth-service'),
-  }),
-)
+  exceptionFactory: RmqErrorFactory('auth-service'),
+};
+@UseInterceptors(RmqResponseInterceptor)
+@UsePipes(new ValidationPipe(pipeOption))
 @Controller('auth-rmq')
 export class AuthRmqController {
   constructor(private readonly authService: AuthService) {}
