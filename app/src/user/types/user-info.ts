@@ -20,7 +20,7 @@ export class UserInfo {
   @Expose()
   two_factor_authentication_type: string;
   @Expose()
-  is_two_factor_authentication_enable: boolean;
+  is_two_factor_authentication_enabled: boolean;
   @Expose()
   prof_img: string;
   @Expose()
@@ -31,4 +31,21 @@ export class UserInfo {
   deleted: Date | string;
   @Expose()
   state?: UserState;
+}
+
+export class JwtUserInfo {
+  @Expose()
+  user_id: string;
+  @Expose()
+  nickname: string;
+  @Expose()
+  prof_img: string;
+  @Expose()
+  mmr: number;
+  @Expose()
+  created: Date | string;
+  @Expose()
+  state?: UserState;
+  @Expose()
+  grant?: boolean;
 }

@@ -3,15 +3,20 @@ import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '../../redis-module/services/redis.service';
 import { ThirdPartyInfo } from '../dto/third-party-info';
 import {
-  Tokens,
   VerifyAccessJwtRequestDto,
   VerifyRefreshJwtRequestDto,
 } from '../dto/verify-jwt-request.dto';
 import { RmqError } from '../../common/rmq/types/rmq-error';
-import { plainToInstance } from 'class-transformer';
+import { plainToClass, plainToInstance } from 'class-transformer';
 import { UserService } from '../../user/services/user.service';
 import { URLSearchParams } from 'url';
-import { UserInfo } from '../../user/types/user-info';
+import { JwtUserInfo, UserInfo } from '../../user/types/user-info';
+import { authenticator } from 'otplib';
+import { TwoFactorAuthenticationUpdateDto } from '../../user/dto/2fa-update.dto';
+import { TwoFactorAuthenticationInfo } from '../2fa-info';
+import { TwoFactorAuthenticationOtpDto } from '../dto/2fa-otp.dto';
+import { TwoFactorAuthenticationGenerateDto } from '../dto/2fa-generate.dto';
+import { TwoFactorAuthenticationUpdateWithCodeDto } from '../dto/2fa-update-with-otp.dto';
 
 const WHERE = 'auth-service';
 // const AT_EXPIRES_IN = 60 * 15;
@@ -47,12 +52,19 @@ export class AuthService {
       throw e;
     }
 
-    return this.signIn(userInfo);
+    const _2fa = userInfo.is_two_factor_authentication_enabled;
+    const jwtPayload = plainToInstance(JwtUserInfo, userInfo, {
+      excludeExtraneousValues: true,
+    });
+
+    jwtPayload.grant = _2fa ? false : true;
+
+    return this.signIn(jwtPayload);
   }
 
   //TODO: check redis response
   /* issue access_token and refresh_token */
-  async signIn(userInfo: UserInfo) {
+  async signIn(userInfo: JwtUserInfo) {
     const access_token = this.issueAccessToken(userInfo);
     const refresh_token = this.issueRefreshToken(userInfo);
 
@@ -68,7 +80,7 @@ export class AuthService {
 
   /* remove refresh_token mapping from redis */
   async signOut(refreshToken) {
-    let userInfo: UserInfo;
+    let userInfo: JwtUserInfo;
     try {
       userInfo = await this.verifyJwt(
         { refresh_token: refreshToken },
@@ -94,14 +106,14 @@ export class AuthService {
     return res;
   }
 
-  issueAccessToken(payload: UserInfo) {
+  issueAccessToken(payload: JwtUserInfo) {
     return this.jwtService.sign(Object.assign({}, payload), {
       secret: process.env.JWT_ACCESS_SECRET,
       expiresIn: AT_EXPIRES_IN,
     });
   }
 
-  issueRefreshToken(payload: UserInfo) {
+  issueRefreshToken(payload: JwtUserInfo) {
     const refreshToken = this.jwtService.sign(Object.assign({}, payload), {
       secret: process.env.JWT_REFRESH_SECRET,
       expiresIn: RT_EXPIRES_IN,
@@ -150,7 +162,7 @@ export class AuthService {
       throw e;
     }
 
-    const userInfo = plainToInstance(UserInfo, payload, {
+    const userInfo = plainToInstance(JwtUserInfo, payload, {
       excludeExtraneousValues: true,
     });
 
@@ -384,5 +396,130 @@ export class AuthService {
 
       throw e;
     }
+  }
+
+  //====== 2FA
+
+  async generateSecret(dto: TwoFactorAuthenticationGenerateDto) {
+    const info = new TwoFactorAuthenticationInfo();
+    const { type, user_id } = dto;
+
+    switch (type) {
+      case 'google':
+        info.type = type;
+        info.key = authenticator.generateSecret();
+        const otpAuthUrl = authenticator.keyuri(
+          'google-Authenticator',
+          'transcendence',
+          info.key, // will be 2fa key
+        );
+
+        await this.userService.update2FAInfo({
+          user_id,
+          info,
+        });
+
+        /* NOTE: not enabled */
+        return { info, otp_auth_url: otpAuthUrl };
+      default:
+        throw new RmqError({
+          code: 400,
+          message: 'Unknown 2FA type',
+          where: `${WHERE}#verify`,
+        });
+    }
+  }
+
+  async updateInfo(dto: TwoFactorAuthenticationUpdateWithCodeDto) {
+    const { user_id, otp } = dto;
+
+    const oldInfo: TwoFactorAuthenticationInfo =
+      await this.userService.get2FAInfo({ user_id });
+
+    this.verifyOtp(otp, oldInfo);
+
+    const updateDto = plainToClass(TwoFactorAuthenticationUpdateDto, dto, {
+      excludeExtraneousValues: true,
+    });
+
+    return this.userService.update2FAInfo(updateDto);
+  }
+
+  async enable(dto: TwoFactorAuthenticationOtpDto) {
+    const { otp, user_id } = dto;
+    const info: TwoFactorAuthenticationInfo = await this.userService.get2FAInfo(
+      { user_id },
+    );
+
+    this.verifyOtp(otp, info);
+
+    return this.userService.enable2FA({ user_id: dto.user_id });
+  }
+
+  /* just turn off, do not delete 2fa info */
+  async disable(dto: TwoFactorAuthenticationOtpDto) {
+    const { otp, user_id } = dto;
+    const info: TwoFactorAuthenticationInfo = await this.userService.get2FAInfo(
+      { user_id },
+    );
+
+    this.verifyOtp(otp, info);
+
+    return this.userService.disable2FA({ user_id: dto.user_id });
+  }
+
+  async deleteInfo(dto: TwoFactorAuthenticationOtpDto) {
+    const { otp, user_id } = dto;
+    const info: TwoFactorAuthenticationInfo = await this.userService.get2FAInfo(
+      { user_id },
+    );
+
+    this.verifyOtp(otp, info);
+
+    await this.userService.delete2FAInfo({ user_id: dto.user_id });
+  }
+
+  async verify2FA(dto: TwoFactorAuthenticationOtpDto) {
+    const { otp, user_id } = dto;
+    const info: TwoFactorAuthenticationInfo = await this.userService.get2FAInfo(
+      { user_id },
+    );
+
+    this.verifyOtp(otp, info);
+    const userInfo = await this.userService.requestUserInfoById(user_id);
+    const jwtUserInfo = plainToClass(JwtUserInfo, userInfo, {
+      excludeExtraneousValues: true,
+    });
+
+    jwtUserInfo.grant = true;
+
+    return this.signIn(jwtUserInfo);
+  }
+
+  verifyOtp(otp: string, info: TwoFactorAuthenticationInfo) {
+    switch (info.type) {
+      case 'google':
+        if (
+          info.key === null ||
+          !authenticator.verify({
+            token: otp,
+            secret: info.key,
+          })
+        )
+          throw new RmqError({
+            code: 401,
+            message: 'Invalid 2FA otp',
+            where: `${WHERE}#verify`,
+          });
+        break;
+      default:
+        throw new RmqError({
+          code: 400,
+          message: 'Unknown 2FA type',
+          where: `${WHERE}#verify`,
+        });
+    }
+
+    return true;
   }
 }

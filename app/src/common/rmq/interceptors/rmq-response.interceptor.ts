@@ -22,8 +22,11 @@ export class RmqResponseInterceptor<T>
 
     return next.handle().pipe(
       map((data: T | RmqError) => {
-        if (data instanceof RmqError) return new RmqResponse(data, false);
-        return new RmqResponse(data);
+        let res;
+        if (data instanceof RmqError) res = new RmqResponse(data, false);
+        else res = new RmqResponse(data);
+        // console.log('IN RmqResponseInterceptor: ', res);
+        return res;
       }),
     );
   }

@@ -7,13 +7,15 @@ import {
 } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import {
-  Tokens,
   VerifyAccessJwtRequestDto,
   VerifyRefreshJwtRequestDto,
 } from '../dto/verify-jwt-request.dto';
 import { RmqResponseInterceptor } from '../../common/rmq/interceptors/rmq-response.interceptor';
 import { RmqErrorFactory } from '../../common/rmq/rmq-error.factory';
 import { RmqErrorHandler } from '../../common/rmq/rmq-error.handler';
+import { TwoFactorAuthenticationGenerateDto } from '../dto/2fa-generate.dto';
+import { TwoFactorAuthenticationOtpDto } from '../dto/2fa-otp.dto';
+import { TwoFactorAuthenticationUpdateWithCodeDto } from '../dto/2fa-update-with-otp.dto';
 
 @UseInterceptors(RmqResponseInterceptor)
 @UsePipes(
@@ -90,5 +92,65 @@ export class AuthRmqController {
   })
   async signOut(msg: VerifyRefreshJwtRequestDto) {
     return this.authService.signOut(msg.refresh_token);
+  }
+
+  @RabbitRPC({
+    exchange: 'auth.d.x',
+    queue: 'auth.verify.2FA.q',
+    routingKey: 'req.to.auth.verify.2FA.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async verify2FA(dto: TwoFactorAuthenticationUpdateWithCodeDto) {
+    return await this.authService.verify2FA(dto);
+  }
+
+  @RabbitRPC({
+    exchange: 'auth.d.x',
+    queue: 'auth.generate.2FA.key.q',
+    routingKey: 'req.to.auth.generate.2FA.key.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async generateSecret(dto: TwoFactorAuthenticationGenerateDto) {
+    return await this.authService.generateSecret(dto);
+  }
+
+  @RabbitRPC({
+    exchange: 'auth.d.x',
+    queue: 'auth.update.2FA.info.q',
+    routingKey: 'req.to.auth.update.2FA.info.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async update2FAInfo(dto: TwoFactorAuthenticationUpdateWithCodeDto) {
+    return await this.authService.updateInfo(dto);
+  }
+
+  @RabbitRPC({
+    exchange: 'auth.d.x',
+    queue: 'auth.enable.2FA.q',
+    routingKey: 'req.to.auth.enable.2FA.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async enable2FA(dto: TwoFactorAuthenticationOtpDto) {
+    return await this.authService.enable(dto);
+  }
+
+  @RabbitRPC({
+    exchange: 'auth.d.x',
+    queue: 'auth.disable.2FA.q',
+    routingKey: 'req.to.auth.disable.2FA.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async disable2FA(dto: TwoFactorAuthenticationOtpDto) {
+    return await this.authService.disable(dto);
+  }
+
+  @RabbitRPC({
+    exchange: 'auth.d.x',
+    queue: 'auth.delete.2FA.info.q',
+    routingKey: 'req.to.auth.delete.2FA.info.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async delete2FAInfo(dto: TwoFactorAuthenticationOtpDto) {
+    return await this.authService.deleteInfo(dto);
   }
 }
