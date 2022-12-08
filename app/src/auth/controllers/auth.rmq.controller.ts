@@ -15,7 +15,7 @@ import { RmqErrorFactory } from '../../common/rmq/rmq-error.factory';
 import { RmqErrorHandler } from '../../common/rmq/rmq-error.handler';
 import { TwoFactorAuthenticationGenerateDto } from '../dto/2fa-generate.dto';
 import { TwoFactorAuthenticationOtpDto } from '../dto/2fa-otp.dto';
-import { TwoFactorAuthenticationUpdateWithCodeDto } from '../dto/2fa-update-with-otp.dto';
+import { TwoFactorAuthenticationUpdateWithOtpDto } from '../dto/2fa-update-with-otp.dto';
 
 @UseInterceptors(RmqResponseInterceptor)
 @UsePipes(
@@ -100,7 +100,7 @@ export class AuthRmqController {
     routingKey: 'req.to.auth.verify.2FA.rk',
     errorHandler: RmqErrorHandler,
   })
-  async verify2FA(dto: TwoFactorAuthenticationUpdateWithCodeDto) {
+  async verify2FA(dto: TwoFactorAuthenticationUpdateWithOtpDto) {
     return await this.authService.verify2FA(dto);
   }
 
@@ -120,7 +120,7 @@ export class AuthRmqController {
     routingKey: 'req.to.auth.update.2FA.info.rk',
     errorHandler: RmqErrorHandler,
   })
-  async update2FAInfo(dto: TwoFactorAuthenticationUpdateWithCodeDto) {
+  async update2FAInfo(dto: TwoFactorAuthenticationUpdateWithOtpDto) {
     return await this.authService.updateInfo(dto);
   }
 

@@ -16,7 +16,7 @@ import { TwoFactorAuthenticationUpdateDto } from '../../user/dto/2fa-update.dto'
 import { TwoFactorAuthenticationInfo } from '../2fa-info';
 import { TwoFactorAuthenticationOtpDto } from '../dto/2fa-otp.dto';
 import { TwoFactorAuthenticationGenerateDto } from '../dto/2fa-generate.dto';
-import { TwoFactorAuthenticationUpdateWithCodeDto } from '../dto/2fa-update-with-otp.dto';
+import { TwoFactorAuthenticationUpdateWithOtpDto } from '../dto/2fa-update-with-otp.dto';
 
 const WHERE = 'auth-service';
 // const AT_EXPIRES_IN = 60 * 15;
@@ -430,7 +430,7 @@ export class AuthService {
     }
   }
 
-  async updateInfo(dto: TwoFactorAuthenticationUpdateWithCodeDto) {
+  async updateInfo(dto: TwoFactorAuthenticationUpdateWithOtpDto) {
     const { user_id, otp } = dto;
 
     const oldInfo: TwoFactorAuthenticationInfo =
