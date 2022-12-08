@@ -55,8 +55,8 @@ export class DmService {
     return {
       messages: messages.map((dm) => {
         return {
-          sender: toUserProfile(dm.sender),
-          receiver: toUserProfile(dm.receiver),
+          sender: dm.sender ? toUserProfile(dm.sender) : null,
+          receiver: dm.receiver ? toUserProfile(dm.receiver) : null,
           payload: dm.payload,
           created: dm.created,
         };

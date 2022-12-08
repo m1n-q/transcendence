@@ -702,7 +702,7 @@ export class ChatService {
             )
               return {
                 room_msg_id: message.roomMsgId,
-                sender: toUserProfile(message.sender),
+                sender: message.sender ? toUserProfile(message.sender) : null,
                 room_id: message.roomId,
                 payload: message.payload,
                 created: message.created,
