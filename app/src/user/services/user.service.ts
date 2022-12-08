@@ -27,7 +27,7 @@ export class UserService {
         where: 'Websocket',
       });
     }
-    if (!response.success) throw response.error as RmqError;
+    if (!response.success) throw new RmqError(response.error);
     return response.data;
   }
 

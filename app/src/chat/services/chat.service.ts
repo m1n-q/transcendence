@@ -32,7 +32,7 @@ export class ChatService {
         where: 'Websocket',
       });
     }
-    if (!response.success) throw response.error;
+    if (!response.success) throw new RmqError(response.error);
     return response.data;
   }
 
