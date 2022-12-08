@@ -2,13 +2,13 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
 import { RmqError } from 'src/common/rmq-module/types/rmq-error';
 import { RmqResponse } from 'src/common/rmq-module/types/rmq-response';
-import { UserInfo } from '../user/types/user-info';
+import { JwtUserInfo, UserInfo } from '../user/types/user-info';
 
 @Injectable()
 export class AuthService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
-  async verifyJwt(accessToken): Promise<UserInfo> {
+  async verifyJwt(accessToken): Promise<JwtUserInfo> {
     let response: RmqResponse<UserInfo>;
     try {
       response = await this.amqpConnection.request<RmqResponse<UserInfo>>({
@@ -23,7 +23,7 @@ export class AuthService {
         where: 'gameWebsocket',
       });
     }
-    if (!response.success) throw response.error;
+    if (!response.success) throw new RmqError(response.error);
     return response.data;
   }
 }
