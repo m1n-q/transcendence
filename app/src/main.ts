@@ -1,4 +1,4 @@
-import { HttpExceptionFilter } from './common/http/guard/exception/http-exception.filter';
+import { HttpExceptionFilter } from './common/http/exception/http-exception.filter';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';

@@ -6,13 +6,12 @@ export enum UserState {
   INGAME = 'ingame',
   OFFLINE = 'offline',
 }
+export type TwoFactorAuthenticationType = 'google';
 
 export class TwoFactorAuthenticationInfo {
-  @IsNotEmpty()
   @IsString()
   type: string;
 
-  @IsNotEmpty()
   @IsString()
   key: string;
 }
@@ -45,7 +44,7 @@ export class UserInfo {
   third_party_id: string;
   two_factor_authentication_key: string;
   two_factor_authentication_type: string;
-  is_two_factor_authentication_enable: boolean;
+  is_two_factor_authentication_enabled: boolean;
   prof_img: string;
   mmr: number;
   created: Date;

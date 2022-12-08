@@ -3,11 +3,16 @@ import {
   HttpException,
   Injectable,
   InternalServerErrorException,
+  UseInterceptors,
 } from '@nestjs/common';
-import { UserInfo } from 'src/user/user-info';
 import { UserService } from 'src/user/user.service';
 import { RmqResponse } from '../common/rmq/types/rmq-response';
-import { TwoFactorAuthenticationGenerate } from './2fa-info';
+import { TwoFactorAuthenticationOtpDto } from './dto/2fa-otp.dto';
+import { TwoFactorAuthenticationGenerateDto } from './dto/2fa-generate.dto';
+import { TwoFactorAuthenticationUpdateWithCodeDto } from './dto/2fa-update-with-otp.dto';
+import { JwtUserInfo } from './jwt-user-info';
+
+type Tokens = { access_token?: string; refresh_token?: string };
 @Injectable()
 export class AuthService {
   constructor(
@@ -15,85 +20,20 @@ export class AuthService {
     private readonly userService: UserService,
   ) {}
 
-  async requestSignIn(provider: string, code: string) {
-    let response: RmqResponse<Tokens>;
-    type Tokens = { access_token: string; refresh_token: string };
-    try {
-      response = await this.amqpConnection.request<RmqResponse<Tokens>>({
-        exchange: process.env.RMQ_AUTH_DIRECT,
-        routingKey: `req.to.auth.signin.${provider}.rk`,
-        payload: { authorization_code: code },
-      });
-    } catch (reqFail) {
-      throw new InternalServerErrorException('request to auth-service failed');
-    }
-    if (!response.success)
-      throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
-      );
-    return response.data;
+  RK(type: 'req' | 'event', name: string) {
+    return `${type === 'req' ? 'req.to' : 'event.on'}.${name}.rk`;
   }
 
-  async requestRefresh(token) {
-    let response: RmqResponse<Tokens>;
-    type Tokens = { access_token: string; refresh_token: string };
-    try {
-      response = await this.amqpConnection.request<RmqResponse<Tokens>>({
-        exchange: process.env.RMQ_AUTH_DIRECT,
-        routingKey: 'req.to.auth.refresh.jwt.rk',
-        payload: { refresh_token: token },
-      });
-    } catch (reqFail) {
-      throw new InternalServerErrorException('request to auth-service failed');
-    }
-    if (!response.success)
-      throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
-      );
-    return response.data;
-  }
-
-  async register2FA(user_id: string) {
-    const user = await this.userService.getUserById(user_id);
-    if (user.two_factor_authentication_key !== null) {
-      throw new HttpException('already register 2fa', 409);
-    }
-    let response: RmqResponse<TwoFactorAuthenticationGenerate>;
-    try {
-      response = await this.amqpConnection.request<
-        RmqResponse<TwoFactorAuthenticationGenerate>
-      >({
-        exchange: process.env.RMQ_AUTH_DIRECT,
-        routingKey: 'req.to.auth.2fa.generate.rk',
-        payload: { user_id },
-      });
-    } catch (reqFail) {
-      throw new InternalServerErrorException('request to auth-service failed');
-    }
-    if (!response.success)
-      throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
-      );
-    return response.data;
-  }
-
-  async set2FA(user_id: string, secret: string, code: string) {
-    const user = await this.userService.getUserById(user_id);
-    if (user.two_factor_authentication_key !== null) {
-      throw new HttpException('already register 2fa', 409);
-    }
+  async requestToAuthService(routingKey: string, payload): Promise<any> {
     let response: RmqResponse;
     try {
       response = await this.amqpConnection.request<RmqResponse>({
         exchange: process.env.RMQ_AUTH_DIRECT,
-        routingKey: 'req.to.auth.2fa.set.rk',
-        payload: { user_id, secret, code },
+        routingKey,
+        payload,
       });
     } catch (reqFail) {
-      throw new InternalServerErrorException('request to auth-service failed');
+      throw new InternalServerErrorException('request to chat-service failed');
     }
     if (!response.success)
       throw new HttpException(
@@ -103,69 +43,51 @@ export class AuthService {
     return response.data;
   }
 
-  async updateTwoFactorAuthenticationEnable(
-    user_id: string,
-    twoFactorAuthenticationCode: string,
-    is_two_factor_authentication_enable: boolean,
-  ) {
-    const user: UserInfo = await this.userService.getUserById(user_id);
-    if (user.two_factor_authentication_key === null) {
-      throw new HttpException('not register 2fa', 409);
-    }
-    if (
-      user.is_two_factor_authentication_enable ===
-      is_two_factor_authentication_enable
-    ) {
-      throw new HttpException('already changed 2fa on/off', 409);
-    }
-    let response: RmqResponse;
-    try {
-      response = await this.amqpConnection.request<RmqResponse>({
-        exchange: process.env.RMQ_AUTH_DIRECT,
-        routingKey: 'req.to.auth.update.2fa.enable.rk',
-        payload: {
-          twoFactorAuthenticationCode,
-          user,
-          is_two_factor_authentication_enable,
-        },
-      });
-    } catch (reqFail) {
-      throw new InternalServerErrorException('request to auth-service failed');
-    }
-    if (!response.success)
-      throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
-      );
-    return;
+  async requestVerifyJwt(token: Tokens): Promise<JwtUserInfo> {
+    return this.requestToAuthService(this.RK('req', `auth.verify.jwt`), token);
   }
 
-  async deleteTwoFactorAuthenticationEnable(
-    user_id: string,
-    twoFactorAuthenticationCode: string,
-  ) {
-    const user: UserInfo = await this.userService.getUserById(user_id);
-    if (user.two_factor_authentication_key === null) {
-      throw new HttpException('not register 2fa', 409);
-    }
-    let response: RmqResponse;
-    try {
-      response = await this.amqpConnection.request<RmqResponse>({
-        exchange: process.env.RMQ_AUTH_DIRECT,
-        routingKey: 'req.to.auth.delete.2fa.rk',
-        payload: {
-          twoFactorAuthenticationCode,
-          user,
-        },
-      });
-    } catch (reqFail) {
-      throw new InternalServerErrorException('request to auth-service failed');
-    }
-    if (!response.success)
-      throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
-      );
-    return;
+  async requestVerify2FA(dto: TwoFactorAuthenticationOtpDto): Promise<Tokens> {
+    return this.requestToAuthService(this.RK('req', `auth.verify.2FA`), dto);
+  }
+
+  async requestSignIn(provider: string, code: string): Promise<Tokens> {
+    return this.requestToAuthService(
+      this.RK('req', `auth.signin.${provider}`),
+      { authorization_code: code },
+    );
+  }
+
+  async requestRefresh(token): Promise<Tokens> {
+    return this.requestToAuthService(this.RK('req', `auth.refresh.jwt`), {
+      refresh_token: token,
+    });
+  }
+
+  async requestGenerate2FASecret(dto: TwoFactorAuthenticationGenerateDto) {
+    return this.requestToAuthService(
+      this.RK('req', `auth.generate.2FA.key`),
+      dto,
+    );
+  }
+  async requestUpdate2FAInfo(dto: TwoFactorAuthenticationUpdateWithCodeDto) {
+    return this.requestToAuthService(
+      this.RK('req', `auth.update.2FA.info`),
+      dto,
+    );
+  }
+  async requestEnable2FA(dto: TwoFactorAuthenticationOtpDto) {
+    return this.requestToAuthService(this.RK('req', `auth.enable.2FA`), dto);
+  }
+
+  async requestDisable2FA(dto: TwoFactorAuthenticationOtpDto) {
+    return this.requestToAuthService(this.RK('req', `auth.disable.2FA`), dto);
+  }
+
+  async requestDelete2FAInfo(dto: TwoFactorAuthenticationOtpDto) {
+    return this.requestToAuthService(
+      this.RK('req', `auth.delete.2FA.info`),
+      dto,
+    );
   }
 }

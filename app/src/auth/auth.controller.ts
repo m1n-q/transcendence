@@ -2,15 +2,18 @@ import { AuthService } from './auth.service';
 import {
   Body,
   Controller,
-  Get,
-  HttpCode,
+  Delete,
   Param,
   Post,
   Put,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from 'src/common/http/guard/auth.guard';
+import { TwoFactorAuthenticationOtpDto } from './dto/2fa-otp.dto';
+import { TwoFactorAuthenticationUpdateWithCodeDto } from './dto/2fa-update-with-otp.dto';
+import * as qrcode from 'qrcode';
+import { AuthGuard, PendingAuthGuard } from '../common/http/guard/auth.guard';
+import { TwoFactorAuthenticationGenerateDto } from './dto/2fa-generate.dto';
 
 type Provider = 'kakao' | '42' | 'google';
 @Controller('auth')
@@ -27,58 +30,72 @@ export class AuthController {
   async refresh(@Body('refresh_token') token) {
     return this.authService.requestRefresh(token);
   }
-  @Get('/2fa/generate')
-  @UseGuards(AuthGuard)
-  async register2FA(@Req() req) {
-    return await this.authService.register2FA(req.user.user_id);
+
+  //======== 2fa
+
+  @UseGuards(PendingAuthGuard)
+  @Post('/2fa/verify')
+  async verify2FA(@Req() req, @Body() body: TwoFactorAuthenticationOtpDto) {
+    return this.authService.requestVerify2FA({
+      user_id: req.user.user_id,
+      otp: body.otp,
+    });
   }
 
+  @UseGuards(AuthGuard)
+  @Post('/2fa/enable')
+  async enable2FA(@Req() req, @Body() body: TwoFactorAuthenticationOtpDto) {
+    return this.authService.requestEnable2FA({
+      user_id: req.user.user_id,
+      otp: body.otp,
+    });
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/2fa/disable')
+  async disable2FA(@Req() req, @Body() body: TwoFactorAuthenticationOtpDto) {
+    return this.authService.requestDisable2FA({
+      user_id: req.user.user_id,
+      otp: body.otp,
+    });
+  }
+
+  @UseGuards(AuthGuard)
+  @Put('/2fa/info')
+  async update2FAInfo(
+    @Req() req,
+    @Body() body: TwoFactorAuthenticationUpdateWithCodeDto,
+  ) {
+    return this.authService.requestUpdate2FAInfo({
+      user_id: req.user.user_id,
+      otp: body.otp,
+      info: body.info,
+    });
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete('/2fa/info')
+  async delete2FAInfo(@Req() req, @Body() body: TwoFactorAuthenticationOtpDto) {
+    return this.authService.requestDelete2FAInfo({
+      user_id: req.user.user_id,
+      otp: body.otp,
+    });
+  }
+
+  @UseGuards(AuthGuard)
   @Post('/2fa/generate')
-  @UseGuards(AuthGuard)
-  async set2FA(
+  async generateSecret(
     @Req() req,
-    @Body('secret') secret: string,
-    @Body('two_factor_authentication_code') code: string,
+    @Body() body: TwoFactorAuthenticationGenerateDto,
   ) {
-    return await this.authService.set2FA(req.user.user_id, secret, code);
-  }
+    //TODO : 2FA type , gen result typing
+    const { otp_auth_url } = await this.authService.requestGenerate2FASecret({
+      type: body.type,
+      user_id: req.user.user_id,
+    });
 
-  @Put('/2fa/turn-on')
-  @UseGuards(AuthGuard)
-  async turnOnTwoFactorAuthentication(
-    @Req() req,
-    @Body('two_factor_authentication_code') twoFactorAuthenticationCode: string,
-  ) {
-    return await this.authService.updateTwoFactorAuthenticationEnable(
-      req.user.user_id,
-      twoFactorAuthenticationCode,
-      true,
-    );
-  }
-
-  @Put('/2fa/turn-off')
-  @UseGuards(AuthGuard)
-  async turnOffTwoFactorAuthentication(
-    @Req() req,
-    @Body('two_factor_authentication_code') twoFactorAuthenticationCode: string,
-  ) {
-    return await this.authService.updateTwoFactorAuthenticationEnable(
-      req.user.user_id,
-      twoFactorAuthenticationCode,
-      false,
-    );
-  }
-
-  @HttpCode(204)
-  @Post('/2fa/delete')
-  @UseGuards(AuthGuard)
-  async removeTwoFactorAuthentication(
-    @Req() req,
-    @Body('two_factor_authentication_code') twoFactorAuthenticationCode: string,
-  ) {
-    return await this.authService.deleteTwoFactorAuthenticationEnable(
-      req.user.user_id,
-      twoFactorAuthenticationCode,
-    );
+    const qrString = await qrcode.toString(otp_auth_url);
+    console.log(qrString);
+    return qrString;
   }
 }
