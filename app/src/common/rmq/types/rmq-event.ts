@@ -1,4 +1,9 @@
-import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 /*
  @ routing key will be event type
@@ -11,7 +16,7 @@ export class RmqEvent<T = any> {
   @IsNotEmpty()
   data: T;
 
-  @IsDateString()
+  @IsOptional()
   created: Date;
 
   constructor(data: T, recvUsers: string[] = null) {
