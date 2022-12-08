@@ -8,7 +8,7 @@ import {
   RmqUserStateDto,
 } from './dto/rmq.user.request.dto';
 import { Injectable } from '@nestjs/common';
-import { LessThan, MoreThan, Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { User } from 'src/common/entities/User';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
@@ -17,6 +17,8 @@ import { RedisService } from '../redis-module/services/redis.service';
 import { RmqEvent } from '../common/rmq-module/types/rmq-event';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { plainToInstance } from 'class-transformer';
+import { TwoFactorAuthenticationInfo } from './2fa-info';
+import { TwoFactorAuthenticationUpdateDto } from './dto/2fa-update.dto';
 
 const WHERE = 'user_service';
 @Injectable()
@@ -35,7 +37,7 @@ export class UserService {
   async createUser(payload: RmqUserCreateDto) {
     const user: UserInfo = this.userRepository.create(payload);
     user.mmr = 1000;
-    user.is_two_factor_authentication_enable = false;
+    user.is_two_factor_authentication_enabled = false;
     try {
       await this.userRepository.save(user);
     } catch (e) {
@@ -135,7 +137,7 @@ export class UserService {
     return state ? (state as UserState) : UserState.OFFLINE;
   }
 
-  setUserState(payload: RmqUserStateDto): UserState {
+  async setUserState(payload: RmqUserStateDto): Promise<UserState> {
     const { user_id, state } = payload;
     const event: RmqEvent = {
       recvUsers: [],
@@ -146,12 +148,12 @@ export class UserService {
       switch (state) {
         case UserState.ONLINE:
         case UserState.INGAME:
-          this.redisService.hsetJson(this.makeUserKey(user_id), {
+          await this.redisService.hsetJson(this.makeUserKey(user_id), {
             state,
           });
           break;
         case UserState.OFFLINE:
-          this.redisService.hdel(this.makeUserKey(user_id), 'state');
+          await this.redisService.hdel(this.makeUserKey(user_id), 'state');
       }
     } catch (e) {
       throw new RmqError({
@@ -232,10 +234,12 @@ export class UserService {
     return { prof_img: user.prof_img };
   }
 
-  async updateUser2FAById(payload) {
-    const user = await this.readUserById(payload);
-    user.two_factor_authentication_type = payload.type;
-    user.two_factor_authentication_key = payload.key;
+  async update2FAInfo(payload: TwoFactorAuthenticationUpdateDto) {
+    const { user_id, info } = payload;
+
+    const user = await this.readUserById({ user_id });
+    user.two_factor_authentication_type = info.type;
+    user.two_factor_authentication_key = info.key;
 
     try {
       await this.userRepository.save(user);
@@ -244,7 +248,7 @@ export class UserService {
         throw new RmqError({
           code: 409,
           message: 'duplicate key violates unique constraint',
-          where: `${WHERE}#updateUser2FAById()`,
+          where: `${WHERE}#update2FAInfo()`,
         });
       } else {
         throw new RmqError({
@@ -255,15 +259,14 @@ export class UserService {
       }
     }
     return {
-      type: user.two_factor_authentication_type,
-      key: user.two_factor_authentication_key,
+      info,
     };
   }
 
-  async updateUser2FAEnableById(payload) {
-    const user = await this.readUserById(payload.user_id);
-    user.is_two_factor_authentication_enable =
-      payload.is_two_factor_authentication_enable;
+  async toggle2FA(payload: RmqUserIdDto, value: boolean) {
+    const { user_id } = payload;
+    const user = await this.readUserById({ user_id });
+    user.is_two_factor_authentication_enabled = value;
 
     try {
       await this.userRepository.save(user);
@@ -271,17 +274,18 @@ export class UserService {
       throw new RmqError({
         code: 500,
         message: `DB Error : ${e}`,
-        where: WHERE,
+        where: `${WHERE}#toggle2FA`,
       });
     }
     return;
   }
 
-  async deleteUser2FAById(payload) {
-    const user: UserInfo = await this.readUserById(payload);
+  async delete2FAInfo(payload: RmqUserIdDto) {
+    const { user_id } = payload;
+    const user: UserInfo = await this.readUserById({ user_id });
     user.two_factor_authentication_type = null;
     user.two_factor_authentication_key = null;
-    user.is_two_factor_authentication_enable = false;
+    user.is_two_factor_authentication_enabled = false;
     try {
       await this.userRepository.save(user);
     } catch (e) {
@@ -389,5 +393,21 @@ export class UserService {
       }
     });
     return deleteList;
+  }
+
+  async get2FAInfo(dto: RmqUserIdDto) {
+    const user = await this.userRepository.findOneBy(dto).catch((e) => {
+      throw new RmqError({
+        code: 500,
+        message: `DB Error : ${e}`,
+        where: WHERE,
+      });
+    });
+
+    const info = new TwoFactorAuthenticationInfo();
+    info.type = user.two_factor_authentication_type;
+    info.key = user.two_factor_authentication_key;
+
+    return info;
   }
 }
