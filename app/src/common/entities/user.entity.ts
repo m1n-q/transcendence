@@ -28,6 +28,9 @@ export class User {
   @Column({ nullable: true })
   two_factor_authentication_type: string;
 
+  @Column()
+  is_two_factor_authentication_enabled: boolean;
+
   @Column({ nullable: true })
   prof_img: string;
 
