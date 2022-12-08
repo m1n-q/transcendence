@@ -9,9 +9,9 @@ export class AuthService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
   async verifyJwt(accessToken): Promise<JwtUserInfo> {
-    let response: RmqResponse<UserInfo>;
+    let response: RmqResponse<JwtUserInfo>;
     try {
-      response = await this.amqpConnection.request<RmqResponse<UserInfo>>({
+      response = await this.amqpConnection.request<RmqResponse<JwtUserInfo>>({
         exchange: 'auth.d.x',
         routingKey: 'req.to.auth.verify.jwt.rk',
         payload: { access_token: accessToken },
