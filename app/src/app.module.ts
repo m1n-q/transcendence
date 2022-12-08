@@ -52,6 +52,6 @@ import { RedisModule } from './redis-module/redis.module';
     RedisModule,
   ],
   controllers: [UserController, FriendController, BlockController],
-  providers: [UserService, FriendService, BlockService],
+  providers: [UserController, UserService, FriendService, BlockService],
 })
 export class AppModule {}
