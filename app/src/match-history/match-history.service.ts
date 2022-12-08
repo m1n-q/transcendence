@@ -1,3 +1,5 @@
+import { UserProfile } from './user-info';
+import { plainToClass } from 'class-transformer';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GameInfo } from 'src/common/entities/game-info.entity';
@@ -111,30 +113,28 @@ export class MatchHistoryService {
     return response;
   }
 
-  deleteUserInfo(user, score: number) {
-    delete user.provider;
-    delete user.third_party_id;
-    delete user.two_factor_authentication_key;
-    delete user.two_factor_authentication_type;
-    delete user.deleted;
-    delete user.created;
-    user['score'] = score;
-    return user;
-  }
-
   formattingGameResult(result) {
-    const lPlayer = this.deleteUserInfo(
-      result.game_info.l_player,
-      result.l_player_score,
-    );
-    const rPlayer = this.deleteUserInfo(
-      result.game_info.r_player,
-      result.r_player_score,
-    );
-    const winner =
-      result.winner_id === lPlayer.user_id
-        ? lPlayer.nickname
-        : rPlayer.nickname;
+    const lPlayer = plainToClass(UserProfile, result.game_info.l_player);
+    if (lPlayer !== null) {
+      lPlayer['score'] = result.l_player_score;
+      delete lPlayer.mmr;
+    }
+    const rPlayer = plainToClass(UserProfile, result.game_info.r_player);
+    if (rPlayer !== null) {
+      rPlayer['score'] = result.r_player_score;
+      delete rPlayer.mmr;
+    }
+    let winner;
+    if (lPlayer === null && result.winner_id === rPlayer.user_id) {
+      winner = rPlayer.nickname;
+    } else if (rPlayer === null && result.winner_id === lPlayer.user_id) {
+      winner = lPlayer.nickname;
+    } else if (lPlayer !== null && rPlayer !== null) {
+      winner =
+        result.winner_id === lPlayer.user_id
+          ? lPlayer.nickname
+          : rPlayer.nickname;
+    } else winner = null;
     return {
       game_id: result.game_id,
       winner,
@@ -147,9 +147,7 @@ export class MatchHistoryService {
     };
   }
 
-  async readGameResult(
-    payload: RmqMatchHistoryGameIdDto,
-  ): Promise<RmqMatchHistoryGame> {
+  async readGameResult(payload: RmqMatchHistoryGameIdDto) {
     let result;
     try {
       result = await this.gameResultRepository.findOne({
@@ -209,8 +207,6 @@ export class MatchHistoryService {
     }
     const reFormattedMatchHistory = matchHistory.map((result) => {
       const reFormatted = this.formattingGameResult(result);
-      delete reFormatted.l_player.mmr;
-      delete reFormatted.r_player.mmr;
       return reFormatted;
     });
     return reFormattedMatchHistory;
