@@ -258,9 +258,7 @@ export class UserService {
         });
       }
     }
-    return {
-      info,
-    };
+    return info;
   }
 
   async toggle2FA(payload: RmqUserIdDto, value: boolean) {
