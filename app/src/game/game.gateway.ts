@@ -16,6 +16,7 @@ import { MatchMaking } from './match-making';
 import { Body, UseFilters } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { WsExceptionsFilter } from 'src/common/ws/ws-exceptions.filter';
+import { UserState } from 'src/user/types/user-info';
 
 const FPS = +process.env.FPS || 60;
 const WAITING = 10;
@@ -101,14 +102,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('user_left_queue')
-  async userLeftQueue(@ConnectedSocket() clientSocket: Socket) {
+  userLeftQueue(@ConnectedSocket() clientSocket: Socket) {
     clearInterval(this.matchingInterval.get(clientSocket.id));
     this.matchingInterval.delete(clientSocket.id);
     this.matchMaking.leaveMatchingQueue(clientSocket.id);
   }
 
   @SubscribeMessage('user_checkout_room')
-  async userCheckoutRoom(@ConnectedSocket() clientSocket: Socket) {
+  userCheckoutRoom(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
     clientSocket.leave(roomName);
     this.games.delete(roomName);
@@ -163,9 +164,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       clientSocket['waiting'] = 0;
       const interval: any = setInterval(() => {
         if (clientSocket['waiting'] === WAITING) {
+          clearInterval(this.waitingInterval.get(roomName));
           clientSocket.leave(roomName);
           clientSocket.emit('user_exit_room');
-          clearInterval(this.waitingInterval.get(roomName));
           this.waitingInterval.delete(roomName);
         }
         clientSocket['waiting']++;
@@ -198,9 +199,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     clientSocket['waiting'] = 0;
     const interval: any = setInterval(() => {
       if (clientSocket['waiting'] === WAITING) {
+        clearInterval(this.waitingInterval.get(roomName));
         clientSocket.leave(roomName);
         clientSocket.emit('user_exit_room');
-        clearInterval(this.waitingInterval.get(roomName));
         this.waitingInterval.delete(roomName);
       }
       clientSocket['waiting']++;
@@ -213,8 +214,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() clientSocket: Socket,
     @Body() nickname,
   ) {
-    await this.updateUser(clientSocket);
-    const user = await this.userService.readUserByNickname(nickname);
+    let user;
+    try {
+      await this.updateUser(clientSocket);
+      user = await this.userService.readUserByNickname(nickname);
+    } catch (e) {
+      clientSocket.emit('game_error', e);
+      clientSocket.disconnect(true);
+      return;
+    }
     const roomName: string = this.friendlyRoom.get(user.user_id);
     const game = this.games.get(roomName);
     if (roomName === undefined || game === undefined) {
@@ -440,20 +448,47 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  async setStateUser(userId: string, roomName: string) {
+    this.playUserList.set(userId, roomName);
+    try {
+      await this.userService.setUserState(userId, UserState.INGAME);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async deleteStateUser(userId: string) {
+    this.playUserList.delete(userId);
+    try {
+      await this.userService.setUserState(userId, UserState.ONLINE);
+    } catch (e) {
+      throw e;
+    }
+  }
+
   async startGame(roomName: string) {
     const game: Game = this.games.get(roomName);
     if (game === undefined) return;
-    this.playUserList.set(game.lPlayerProfile.user_id, roomName);
-    this.playUserList.set(game.rPlayerProfile.user_id, roomName);
+    try {
+      await this.setStateUser(game.lPlayerProfile.user_id, roomName);
+      await this.setStateUser(game.rPlayerProfile.user_id, roomName);
+    } catch (e) {
+      throw e;
+    }
+
     game.userCount += 2;
     const interval: any = setInterval(async () => {
       game.update();
       this.server.to(`${roomName}`).emit('game_render_data', game.renderData());
       if (game.isFinished === true) {
-        this.server.to(`${roomName}`).emit('game_finished');
-        this.playUserList.delete(game.lPlayerProfile.user_id);
-        this.playUserList.delete(game.rPlayerProfile.user_id);
         clearInterval(this.renderInterval.get(roomName));
+        this.server.to(`${roomName}`).emit('game_finished');
+        try {
+          await this.deleteStateUser(game.lPlayerProfile.user_id);
+          await this.deleteStateUser(game.rPlayerProfile.user_id);
+        } catch (e) {
+          throw e;
+        }
         this.renderInterval.delete(roomName);
       }
     }, (1 / FPS) * 1000);
