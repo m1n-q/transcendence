@@ -245,13 +245,24 @@ export class FriendService {
       });
     }
     //notification
+
+    const requester = await this.userService.readUserById({
+      user_id: payload.requester,
+    });
+    const requesterProfile = plainToClass(UserProfile, requester, {
+      excludeExtraneousValues: true,
+    });
+
     try {
       this.amqpConnection.publish(
         'user.t.x',
         'event.on.user.friend-request.rk',
         {
           recvUsers: [payload.receiver],
-          data: { sender: payload.requester, payload: '' },
+          data: {
+            sender: requesterProfile,
+            payload: '',
+          },
           created: Date.now(),
         },
       );
