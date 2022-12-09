@@ -261,7 +261,7 @@ export class FriendService {
           recvUsers: [payload.receiver],
           data: {
             sender: requesterProfile,
-            payload: '',
+            payload: friendRequest.request_id,
           },
           created: Date.now(),
         },
