@@ -4,7 +4,7 @@ import {
   RabbitRPC,
 } from '@golevelup/nestjs-rabbitmq';
 import { ChatService } from '../services/chat.service';
-import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
+import { ChatRoomPenaltyWithTimeDto } from '../dto/chat-room-penalty-with-time.dto';
 import { ChatRoomJoinDto } from '../dto/chat-room-join.dto';
 import { ChatRoomMessageDto } from '../dto/chat-room-message.dto';
 import { ChatRoomCreationDto } from '../dto/chat-room-creation.dto';
@@ -30,6 +30,7 @@ import { ChatRoomAdminCommandDto } from '../dto/chat-room-admin-command.dto';
 import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
 import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
 import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
+import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
 
 @UseInterceptors(RmqResponseInterceptor)
 @UsePipes(
@@ -145,15 +146,29 @@ export class ChatRmqController {
   @UseGuards(RoomExistsGuard, AdminGuard)
   @RabbitRPC({
     exchange: 'chat.d.x',
+    queue: 'chat.kick.user.q',
+    routingKey: 'req.to.chat.kick.user.rk',
+    errorHandler: RmqErrorHandler,
+  })
+  async kickUser(
+    @RabbitRequest() req,
+    @RabbitPayload() chatRoomPenaltyDto: ChatRoomPenaltyDto,
+  ) {
+    return this.chatService.kickUser(req.room, chatRoomPenaltyDto);
+  }
+
+  @UseGuards(RoomExistsGuard, AdminGuard)
+  @RabbitRPC({
+    exchange: 'chat.d.x',
     queue: 'chat.ban.user.q',
     routingKey: 'req.to.chat.ban.user.rk',
     errorHandler: RmqErrorHandler,
   })
   async banUser(
     @RabbitRequest() req,
-    @RabbitPayload() chatRoomPenaltyDto: ChatRoomPenaltyDto,
+    @RabbitPayload() chatRoomPenaltyWithTimeDto: ChatRoomPenaltyWithTimeDto,
   ) {
-    return this.chatService.banUser(req.room, chatRoomPenaltyDto);
+    return this.chatService.banUser(req.room, chatRoomPenaltyWithTimeDto);
   }
 
   @UseGuards(RoomExistsGuard, AdminGuard)
@@ -193,9 +208,9 @@ export class ChatRmqController {
   })
   async muteUser(
     @RabbitRequest() req,
-    @RabbitPayload() chatRoomPenaltyDto: ChatRoomPenaltyDto,
+    @RabbitPayload() ChatRoomPenaltyWithTimeDto: ChatRoomPenaltyWithTimeDto,
   ) {
-    return this.chatService.muteUser(req.room, chatRoomPenaltyDto);
+    return this.chatService.muteUser(req.room, ChatRoomPenaltyWithTimeDto);
   }
 
   @UseGuards(RoomExistsGuard, AdminGuard)

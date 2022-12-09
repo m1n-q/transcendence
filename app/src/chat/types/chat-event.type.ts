@@ -1,1 +1,1 @@
-export type ChatRoomEventType = 'ban' | 'announcement' | 'message';
+export type ChatRoomEventType = 'ban' | 'announcement' | 'message' | 'kick';

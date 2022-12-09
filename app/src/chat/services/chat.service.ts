@@ -7,7 +7,7 @@ import {
   ChatRoomAccess,
 } from '../../common/entities/chat-room.entity';
 import { ChatRoomUser } from '../../common/entities/chat-room-user.entity';
-import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
+import { ChatRoomPenaltyWithTimeDto } from '../dto/chat-room-penalty-with-time.dto';
 import { ChatRoomJoinDto } from '../dto/chat-room-join.dto';
 import { ChatRoomCreationDto } from '../dto/chat-room-creation.dto';
 import { ChatRoomMessageDto } from '../dto/chat-room-message.dto';
@@ -36,6 +36,7 @@ import { ChatAnnouncementFromServer } from '../types/chat-message-format';
 import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
 import { UserProfile } from '../../user-info';
 import { UserService } from '../../user/services/user.service';
+import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
 
 /*  TODO:
  *
@@ -461,13 +462,48 @@ export class ChatService {
   }
 
   //XXX: RoomExistsGuard, AdminGuard
-  async banUser(room: ChatRoom, chatRoomPenaltyDto: ChatRoomPenaltyDto) {
+  async kickUser(room: ChatRoom, ChatRoomPenaltyDto: ChatRoomPenaltyDto) {
+    const {
+      user_id: userId,
+      room_admin_id: roomAdminId,
+      room_id: roomId,
+    } = ChatRoomPenaltyDto;
+
+    try {
+      /* if user not in room, reject */
+      const userInRoom = await this.chatRoomUserRepo.findOneBy({
+        roomId: room.roomId,
+        userId,
+      });
+
+      if (!userInRoom) throw new UserNotInScopeError();
+
+      /* if user is admin, only owner is able to ban */
+      const userRole = userInRoom.role;
+      if (userRole == 'admin' && roomAdminId !== room.roomOwnerId)
+        throw new OwnerPrivileageError();
+
+      /* remove from room-user */
+      await this.chatRoomUserRepo.remove(userInRoom);
+    } catch (e) {
+      throw e instanceof RmqError ? e : toRmqError(e);
+    }
+
+    this.publishRoomEvent(roomId, 'kick', [userId], `You've been KICKED!`);
+    return { affected: 1 };
+  }
+
+  //XXX: RoomExistsGuard, AdminGuard
+  async banUser(
+    room: ChatRoom,
+    ChatRoomPenaltyWithTimeDto: ChatRoomPenaltyWithTimeDto,
+  ) {
     const {
       user_id: userId,
       room_admin_id: roomAdminId,
       room_id: roomId,
       time_amount_in_seconds,
-    } = chatRoomPenaltyDto;
+    } = ChatRoomPenaltyWithTimeDto;
 
     const q = this.dbConnection.createQueryRunner();
     await q.startTransaction();
@@ -562,13 +598,16 @@ export class ChatService {
   }
 
   //XXX: RoomExistsGuard, AdminGuard
-  async muteUser(room: ChatRoom, chatRoomPenaltyDto: ChatRoomPenaltyDto) {
+  async muteUser(
+    room: ChatRoom,
+    ChatRoomPenaltyWithTimeDto: ChatRoomPenaltyWithTimeDto,
+  ) {
     const {
       user_id: userId,
       room_admin_id: roomAdminId,
       room_id: roomId,
       time_amount_in_seconds,
-    } = chatRoomPenaltyDto;
+    } = ChatRoomPenaltyWithTimeDto;
 
     const q = this.dbConnection.createQueryRunner();
     await q.startTransaction();
