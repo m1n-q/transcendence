@@ -89,13 +89,9 @@ export class AuthController {
     @Body() body: TwoFactorAuthenticationGenerateDto,
   ) {
     //TODO : 2FA type , gen result typing
-    const { otp_auth_url } = await this.authService.requestGenerate2FASecret({
+    return await this.authService.requestGenerate2FASecret({
       type: body.type,
       user_id: req.user.user_id,
     });
-
-    const qrString = await qrcode.toString(otp_auth_url);
-    console.log(qrString);
-    return qrString;
   }
 }
