@@ -29,7 +29,10 @@ export class FriendController {
   @Delete('/:nickname')
   async deleteFriend(@Param('nickname') nickname: string, @Req() req) {
     const userProfile = await this.userService.getUserByNickname(nickname);
-    this.friendService.deleteFriend(req.user.user_id, userProfile.user_id);
+    return this.friendService.deleteFriend(
+      req.user.user_id,
+      userProfile.user_id,
+    );
   }
 
   //request=======================================================================//
