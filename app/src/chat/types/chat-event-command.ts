@@ -85,6 +85,7 @@ export class CommandFactory {
       case 'announcement':
         return new AnnouncementCommand(ev, params);
       case 'ban':
+      case 'kick':
         return new BanCommand(ev, params);
       default:
         return null;
