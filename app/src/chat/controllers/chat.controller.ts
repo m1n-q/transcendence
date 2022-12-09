@@ -15,13 +15,14 @@ import { ChatService } from '../services/chat.service';
 import { ChatRoomCreationDto } from '../dto/chat-room-creation.dto';
 import { ChatRoomJoinDto } from '../dto/chat-room-join.dto';
 import { ChatRoomMessageDto } from '../dto/chat-room-message.dto';
-import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
+import { ChatRoomPenaltyWithTimeDto } from '../dto/chat-room-penalty-with-time.dto';
 import { ChatRoomSetPasswordDto } from '../dto/chat-room-set-password.dto';
 import { ChatUserRoleDto } from '../dto/chat-user-role.dto';
 import { AuthGuard } from '../../common/http/guard/auth.guard';
 import { ChatRoomAccessibilityDto } from '../dto/chat-room-accessibility.dto';
 import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
 import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
+import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
 
 //TODO: param uuid validation
 @UseGuards(AuthGuard)
@@ -95,15 +96,26 @@ export class ChatController {
     return this.chatService.setRole(chatUserRoleDto);
   }
 
-  @Post('room/:roomId/ban')
-  async banUser(
+  @Post('room/:roomId/kick')
+  async kickUser(
     @Req() req,
     @Param('roomId', new ParseUUIDPipe()) roomId,
     @Body() chatRoomPenaltyDto: ChatRoomPenaltyDto,
   ) {
     chatRoomPenaltyDto.room_admin_id = req.user.user_id;
     chatRoomPenaltyDto.room_id = roomId;
-    return this.chatService.banUser(chatRoomPenaltyDto);
+    return this.chatService.kickUser(chatRoomPenaltyDto);
+  }
+
+  @Post('room/:roomId/ban')
+  async banUser(
+    @Req() req,
+    @Param('roomId', new ParseUUIDPipe()) roomId,
+    @Body() chatRoomPenaltyWithTimeDto: ChatRoomPenaltyWithTimeDto,
+  ) {
+    chatRoomPenaltyWithTimeDto.room_admin_id = req.user.user_id;
+    chatRoomPenaltyWithTimeDto.room_id = roomId;
+    return this.chatService.banUser(chatRoomPenaltyWithTimeDto);
   }
 
   @Delete('room/:roomId/ban')
@@ -129,11 +141,11 @@ export class ChatController {
   async muteUser(
     @Req() req,
     @Param('roomId', new ParseUUIDPipe()) roomId,
-    @Body() chatRoomPenaltyDto: ChatRoomPenaltyDto,
+    @Body() ChatRoomPenaltyWithTimeDto: ChatRoomPenaltyWithTimeDto,
   ) {
-    chatRoomPenaltyDto.room_admin_id = req.user.user_id;
-    chatRoomPenaltyDto.room_id = roomId;
-    return this.chatService.muteUser(chatRoomPenaltyDto);
+    ChatRoomPenaltyWithTimeDto.room_admin_id = req.user.user_id;
+    ChatRoomPenaltyWithTimeDto.room_id = roomId;
+    return this.chatService.muteUser(ChatRoomPenaltyWithTimeDto);
   }
 
   @Delete('room/:roomId/mute')

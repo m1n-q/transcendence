@@ -10,8 +10,7 @@ import { ChatRoomCreationDto } from '../dto/chat-room-creation.dto';
 import { ChatRoomOwnerCommandDto } from '../dto/chat-room-owner-command.dto';
 import { ChatRoomJoinDto } from '../dto/chat-room-join.dto';
 import { ChatRoomMessageDto } from '../dto/chat-room-message.dto';
-import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
-import { ChatRoomSearchDto } from '../dto/chat-room-search.dto';
+import { ChatRoomPenaltyWithTimeDto } from '../dto/chat-room-penalty-with-time.dto';
 import { ChatRoomSetPasswordDto } from '../dto/chat-room-set-password.dto';
 import { ChatRoomUserDto } from '../dto/chat-room-user.dto';
 import { ChatUserRoleDto } from '../dto/chat-user-role.dto';
@@ -19,6 +18,7 @@ import { ChatRoomAdminCommandDto } from '../dto/chat-room-admin-command.dto';
 import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
 import { ChatRoomIdDto } from '../dto/chat-room-id.dto';
 import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
+import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
 
 @Injectable()
 export class ChatService {
@@ -89,9 +89,16 @@ export class ChatService {
     );
   }
 
-  async banUser(chatRoomPenaltyDto: ChatRoomPenaltyDto) {
+  async banUser(ChatRoomPenaltyWithTimeDto: ChatRoomPenaltyWithTimeDto) {
     return this.requestToChatService(
       this.RK('req', 'chat.ban.user'),
+      ChatRoomPenaltyWithTimeDto,
+    );
+  }
+
+  async kickUser(chatRoomPenaltyDto: ChatRoomPenaltyDto) {
+    return this.requestToChatService(
+      this.RK('req', 'chat.kick.user'),
       chatRoomPenaltyDto,
     );
   }
@@ -110,10 +117,10 @@ export class ChatService {
     );
   }
 
-  async muteUser(chatRoomPenaltyDto: ChatRoomPenaltyDto) {
+  async muteUser(ChatRoomPenaltyWithTimeDto: ChatRoomPenaltyWithTimeDto) {
     return this.requestToChatService(
       this.RK('req', 'chat.mute.user'),
-      chatRoomPenaltyDto,
+      ChatRoomPenaltyWithTimeDto,
     );
   }
 
