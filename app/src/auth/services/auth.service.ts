@@ -75,7 +75,7 @@ export class AuthService {
       RT_EXPIRES_IN,
     );
 
-    return { access_token, refresh_token };
+    return { grant: userInfo.grant, access_token, refresh_token };
   }
 
   /* remove refresh_token mapping from redis */
