@@ -420,7 +420,7 @@ export class AuthService {
         });
 
         /* NOTE: not enabled */
-        return { info, otp_auth_url: otpAuthUrl };
+        return { otp_auth_url: otpAuthUrl };
       default:
         throw new RmqError({
           code: 400,
