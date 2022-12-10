@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Like, Not, Repository } from 'typeorm';
+import { DataSource, Like, MoreThan, Not, Repository } from 'typeorm';
 import { ChatRoomMessage } from '../../common/entities/chat-room-message.entity';
 import {
   ChatRoom,
@@ -301,9 +301,12 @@ export class ChatService {
       room_password: roomPassword,
     } = chatRoomJoinDto;
 
-    const bannedUser = await this.chatRoomBanListRepo.findOneBy({
-      roomId,
-      userId,
+    const bannedUser = await this.chatRoomBanListRepo.findOne({
+      where: {
+        roomId,
+        userId,
+        expiry: MoreThan(new Date()),
+      },
     });
     if (bannedUser) throw new BannedUserError();
 
@@ -524,13 +527,17 @@ export class ChatService {
       /* remove from room-user */
       await q.manager.remove(ChatRoomUser, userInRoom);
 
-      /* add to ban-list */
-      await q.manager.insert(ChatRoomBanList, {
-        roomId,
-        userId,
-        role: userRole,
-        expiry: this.getExpiry(time_amount_in_seconds),
-      });
+      /* upsert: avoid confilct when ban user whose ban-time expired, but not removed from mute-list yet */
+      await q.manager.upsert(
+        ChatRoomBanList,
+        {
+          roomId,
+          userId,
+          role: userRole,
+          expiry: this.getExpiry(time_amount_in_seconds),
+        },
+        ['roomId', 'userId'],
+      );
       await q.commitTransaction();
     } catch (e) {
       await q.rollbackTransaction();
@@ -557,9 +564,11 @@ export class ChatService {
     const q = this.dbConnection.createQueryRunner();
     await q.startTransaction();
     try {
+      /* except expired: will be managed by cron-job */
       const bannedUser = await q.manager.findOneBy(ChatRoomBanList, {
         roomId,
         userId,
+        expiry: MoreThan(new Date()),
       });
       if (!bannedUser) throw new UserNotInScopeError();
 
@@ -586,6 +595,7 @@ export class ChatService {
     try {
       list = await this.chatRoomBanListRepo.findBy({
         roomId: room.roomId,
+        expiry: MoreThan(new Date()),
       });
     } catch (e) {
       throw toRmqError(e);
@@ -624,13 +634,17 @@ export class ChatService {
       if (userRole == 'admin' && roomAdminId !== room.roomOwnerId)
         throw new OwnerPrivileageError();
 
-      /* add to mute-list */
-      await q.manager.insert(ChatRoomMuteList, {
-        roomId,
-        userId,
-        role: userRole,
-        expiry: this.getExpiry(time_amount_in_seconds),
-      });
+      /* upsert: avoid confilct when re-mute user whose mute-time expired, but not removed from mute-list yet */
+      await q.manager.upsert(
+        ChatRoomMuteList,
+        {
+          roomId,
+          userId,
+          role: userRole,
+          expiry: this.getExpiry(time_amount_in_seconds),
+        },
+        ['userId', 'roomId'],
+      );
       await q.commitTransaction();
     } catch (e) {
       await q.rollbackTransaction();
@@ -655,14 +669,15 @@ export class ChatService {
     const q = this.dbConnection.createQueryRunner();
     await q.startTransaction();
     try {
-      /* if user not in mute-list, reject */
+      /* except expired: will be managed by cron-job */
       const mutedUser = await q.manager.findOneBy(ChatRoomMuteList, {
         roomId: roomId,
         userId: userId,
+        expiry: MoreThan(new Date()),
       });
       if (!mutedUser) throw new UserNotInScopeError();
 
-      /* only owner is able to unban admin  */
+      /* only owner is able to unmute admin  */
       if (mutedUser.role == 'admin' && roomAdminId !== room.roomOwnerId)
         throw new OwnerPrivileageError();
 
@@ -684,6 +699,7 @@ export class ChatService {
     try {
       list = await this.chatRoomMuteListRepo.findBy({
         roomId: room.roomId,
+        expiry: MoreThan(new Date()),
       });
     } catch (e) {
       throw toRmqError(e);
@@ -702,7 +718,15 @@ export class ChatService {
       userId: message.sender_id,
     });
     if (!userInRoom) throw new UserNotInScopeError();
-    if (await this.chatRoomMuteListRepo.findOneBy(userInRoom))
+    if (
+      await this.chatRoomMuteListRepo.findOne({
+        where: {
+          userId: userInRoom.userId,
+          roomId: userInRoom.roomId,
+          expiry: MoreThan(new Date()),
+        },
+      })
+    )
       throw new MutedUserError();
 
     const result = await this.chatRoomMessageRepo.save({
@@ -796,6 +820,7 @@ export class ChatService {
     const bannedUser = await this.chatRoomBanListRepo.findOneBy({
       room,
       userId: receiverId,
+      expiry: MoreThan(new Date()),
     });
     if (bannedUser) throw new BannedUserError();
 
