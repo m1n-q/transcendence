@@ -1,6 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Like, MoreThan, Not, Repository } from 'typeorm';
+import {
+  DataSource,
+  LessThan,
+  LessThanOrEqual,
+  Like,
+  MoreThan,
+  Not,
+  Repository,
+} from 'typeorm';
 import { ChatRoomMessage } from '../../common/entities/chat-room-message.entity';
 import {
   ChatRoom,
@@ -37,6 +45,7 @@ import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
 import { UserProfile } from '../../user-info';
 import { UserService } from '../../user/services/user.service';
 import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
+import { Cron } from '@nestjs/schedule';
 
 /*  TODO:
  *
@@ -48,6 +57,7 @@ import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
 export class ChatService {
   static readonly SALT = 10;
 
+  private readonly logger = new Logger(ChatService.name);
   constructor(
     private readonly amqpConnection: AmqpConnection,
     private readonly dbConnection: DataSource,
@@ -841,5 +851,29 @@ export class ChatService {
       },
     });
     return { room_id: roomId, user_id: receiverId };
+  }
+
+  //@--------------------------------Cron Job------------------------------@//
+  /*
+    * * * * * *
+    | | | | | |
+    | | | | | day of week
+    | | | | months
+    | | | day of month
+    | | hours
+    | minutes
+    seconds (optional)
+  */
+  @Cron('0 0 * * * *')
+  async purgeExpired() {
+    const banResult = await this.chatRoomBanListRepo.delete({
+      expiry: LessThanOrEqual(new Date()),
+    });
+    const muteResult = await this.chatRoomMuteListRepo.delete({
+      expiry: LessThanOrEqual(new Date()),
+    });
+    this.logger.log(
+      `purge ${banResult.affected} ban-list, ${muteResult.affected} mute-list`,
+    );
   }
 }

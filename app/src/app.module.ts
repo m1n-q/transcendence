@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ChatService } from './chat/services/chat.service';
 import { ChatRmqController } from './chat/controllers/chat.rmq.controller';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
@@ -21,6 +22,7 @@ import { UserService } from './user/services/user.service';
     ConfigModule.forRoot({
       envFilePath: ['.env'],
     }),
+    ScheduleModule.forRoot(),
     RabbitMQModule.forRoot(RabbitMQModule, {
       uri: process.env.RMQ_HOST,
       exchanges: [
