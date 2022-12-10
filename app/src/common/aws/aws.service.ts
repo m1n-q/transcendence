@@ -1,4 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import * as sharp from 'sharp';
 import * as AWS from 'aws-sdk';
 
 @Injectable()
@@ -19,7 +20,9 @@ export class AwsService {
     bucketName: string,
     region: string,
   ) {
-    // console.log(bucketName);
+    const wasSVG = file.mimetype === 'image/svg+xml';
+
+    const resized = await sharp(file.buffer).resize(180, 180).toBuffer();
     const key = `${filepath}/${Date.now()}_${file.originalname.replace(
       / /g,
       '',
@@ -29,9 +32,9 @@ export class AwsService {
         .putObject({
           Bucket: bucketName,
           Key: key,
-          Body: file.buffer,
+          Body: resized,
           // ACL: 'public-read',
-          ContentType: file.mimetype,
+          ContentType: wasSVG ? 'image/png' : file.mimetype,
         })
         .promise();
       return `https://${bucketName}.s3.amazonaws.com/${key}`;
