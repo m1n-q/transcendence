@@ -414,13 +414,8 @@ export class AuthService {
           info.key, // will be 2fa key
         );
 
-        await this.userService.update2FAInfo({
-          user_id,
-          info,
-        });
-
-        /* NOTE: not enabled */
-        return { otp_auth_url: otpAuthUrl };
+        /* NOTE: just generate, not register */
+        return { info, otp_auth_url: otpAuthUrl };
       default:
         throw new RmqError({
           code: 400,
@@ -431,12 +426,12 @@ export class AuthService {
   }
 
   async updateInfo(dto: TwoFactorAuthenticationUpdateWithOtpDto) {
-    const { user_id, otp } = dto;
+    const { user_id, otp, info } = dto;
 
     const oldInfo: TwoFactorAuthenticationInfo =
       await this.userService.get2FAInfo({ user_id });
-
-    this.verifyOtp(otp, oldInfo);
+    if (oldInfo.type && oldInfo.key) this.verifyOtp(otp, oldInfo);
+    else this.verifyOtp(otp, info); // initial registration: verify before save
 
     const updateDto = plainToClass(TwoFactorAuthenticationUpdateDto, dto, {
       excludeExtraneousValues: true,
