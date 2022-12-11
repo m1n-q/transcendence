@@ -7,7 +7,7 @@ import {
   VerifyRefreshJwtRequestDto,
 } from '../dto/verify-jwt-request.dto';
 import { RmqError } from '../../common/rmq/types/rmq-error';
-import { plainToClass, plainToInstance } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { UserService } from '../../user/services/user.service';
 import { URLSearchParams } from 'url';
 import { JwtUserInfo, UserInfo } from '../../user/types/user-info';
@@ -433,11 +433,11 @@ export class AuthService {
     if (oldInfo.type && oldInfo.key) this.verifyOtp(otp, oldInfo);
     else this.verifyOtp(otp, info); // initial registration: verify before save
 
-    const updateDto = plainToClass(TwoFactorAuthenticationUpdateDto, dto, {
+    const updateDto = plainToInstance(TwoFactorAuthenticationUpdateDto, dto, {
       excludeExtraneousValues: true,
     });
 
-    return this.userService.update2FAInfo(updateDto);
+    return await this.userService.update2FAInfo(updateDto);
   }
 
   async enable(dto: TwoFactorAuthenticationOtpDto) {
@@ -482,7 +482,7 @@ export class AuthService {
 
     this.verifyOtp(otp, info);
     const userInfo = await this.userService.requestUserInfoById(user_id);
-    const jwtUserInfo = plainToClass(JwtUserInfo, userInfo, {
+    const jwtUserInfo = plainToInstance(JwtUserInfo, userInfo, {
       excludeExtraneousValues: true,
     });
 
