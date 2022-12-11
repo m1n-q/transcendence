@@ -13,10 +13,10 @@ export class DM {
   @PrimaryGeneratedColumn('uuid')
   dmId: string;
 
-  @Column('text')
+  @Column('text', { nullable: true })
   senderId: string;
 
-  @Column('text')
+  @Column('text', { nullable: true })
   receiverId: string;
 
   @Column('text')

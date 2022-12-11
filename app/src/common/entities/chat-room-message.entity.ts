@@ -15,10 +15,10 @@ export class ChatRoomMessage {
   @PrimaryGeneratedColumn()
   roomMsgId: number;
 
-  @Column('text')
+  @Column('text', { nullable: true })
   senderId: Date;
 
-  @Column('text')
+  @Column('text', { nullable: true })
   roomId: Date;
 
   @Column('text')
