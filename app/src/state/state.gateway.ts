@@ -63,7 +63,10 @@ export class StateGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const friends = await this.userService.getFriends(user.user_id);
+    //BUG: unhandled rejection - Exception filter does not catch?!
+    const friends = await this.userService
+      .getFriends(user.user_id)
+      .catch((e) => console.log(e));
     if (!friends) return;
 
     const subjects = friends.map((friend) => {
