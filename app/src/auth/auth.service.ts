@@ -33,12 +33,12 @@ export class AuthService {
         payload,
       });
     } catch (reqFail) {
-      throw new InternalServerErrorException('request to chat-service failed');
+      throw new InternalServerErrorException('request to auth-service failed');
     }
     if (!response.success)
       throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
+        `${response?.error?.message} / where: ${response?.error?.where}`,
+        response?.error?.code,
       );
     return response.data;
   }

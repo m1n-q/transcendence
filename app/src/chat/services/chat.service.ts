@@ -41,8 +41,8 @@ export class ChatService {
     }
     if (!response.success)
       throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
+        `${response?.error?.message} / where: ${response?.error?.where}`,
+        response?.error?.code,
       );
     return response.data;
   }

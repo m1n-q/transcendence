@@ -24,8 +24,8 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
+        `${response?.error?.message} / where: ${response?.error?.where}`,
+        response?.error?.code,
       );
     return response.data;
   }
@@ -46,8 +46,8 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
+        `${response?.error?.message} / where: ${response?.error?.where}`,
+        response?.error?.code,
       );
     return;
   }
@@ -67,8 +67,8 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
+        `${response?.error?.message} / where: ${response?.error?.where}`,
+        response?.error?.code,
       );
     return response.data;
   }
@@ -88,8 +88,8 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
+        `${response?.error?.message} / where: ${response?.error?.where}`,
+        response?.error?.code,
       );
     return response.data;
   }
@@ -110,8 +110,8 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
+        `${response?.error?.message} / where: ${response?.error?.where}`,
+        response?.error?.code,
       );
     return response.data;
   }
@@ -132,8 +132,8 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
+        `${response?.error?.message} / where: ${response?.error?.where}`,
+        response?.error?.code,
       );
     return;
   }
@@ -154,8 +154,8 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
+        `${response?.error?.message} / where: ${response?.error?.where}`,
+        response?.error?.code,
       );
     return {
       statusCode: 201,
@@ -179,8 +179,8 @@ export class FriendService {
     }
     if (!response.success)
       throw new HttpException(
-        `${response.error.message} / where: ${response.error.where}`,
-        response.error.code,
+        `${response?.error?.message} / where: ${response?.error?.where}`,
+        response?.error?.code,
       );
     return;
   }
