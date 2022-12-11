@@ -26,7 +26,7 @@ export class MatchHistoryService {
     if (!response.success)
       throw new HttpException(
         `${response?.error?.message} / where: ${response?.error?.where}`,
-        response?.error?.code,
+        response?.error?.code ? response.error.code : 500,
       );
     return response.data;
   }
