@@ -430,8 +430,8 @@ export class AuthService {
 
     const oldInfo: TwoFactorAuthenticationInfo =
       await this.userService.get2FAInfo({ user_id });
-    if (oldInfo.type && oldInfo.key) this.verifyOtp(otp, oldInfo);
-    else this.verifyOtp(otp, info); // initial registration: verify before save
+    this.verifyOtp(otp, oldInfo ? oldInfo : info);
+    // if initial registration: verify before save
 
     const updateDto = plainToInstance(TwoFactorAuthenticationUpdateDto, dto, {
       excludeExtraneousValues: true,
