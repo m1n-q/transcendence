@@ -1,29 +1,39 @@
 import { UserProfile } from '../../user/types/user-profile';
 
 export interface ChatRoomMessage {
-  room_msg_id: number;
-  room_id: Date;
-  sender_id: Date;
+  room_msg_id: string;
+  room_id: string;
+  sender_id: string;
   payload: string;
   created: Date;
 }
 
-export interface ChatMessageFormat {
-  message: ChatRoomMessage;
+export interface ChatPayloadFormat {
+  payload: string;
 }
 
-export class ChatMessageFromClient implements ChatMessageFormat {
+export interface ChatRoomMessageFormat {
+  message: {
+    room_msg_id: string;
+    room_id: string;
+    sender_id: string;
+    payload: string;
+    created: Date;
+  };
+}
+
+export class ChatPayloadFromClient implements ChatPayloadFormat {
   room: string;
-  message: ChatRoomMessage;
+  payload: string;
 }
 
-export class ChatMessageFromServer implements ChatMessageFormat {
+export class ChatMessageFromServer implements ChatRoomMessageFormat {
   constructor(
     readonly sender: UserProfile,
     readonly message: ChatRoomMessage,
   ) {}
 }
 
-export class ChatAnnouncementFromServer implements ChatMessageFormat {
-  constructor(readonly message: ChatRoomMessage) {}
+export class ChatAnnouncementFromServer implements ChatPayloadFormat {
+  constructor(readonly payload: string) {}
 }

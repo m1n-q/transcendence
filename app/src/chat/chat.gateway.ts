@@ -28,8 +28,8 @@ import {
 } from './types/chat-event-command';
 import {
   ChatAnnouncementFromServer,
-  ChatMessageFormat,
-  ChatMessageFromClient,
+  ChatPayloadFormat,
+  ChatPayloadFromClient,
   ChatMessageFromServer,
 } from './types/chat-message-format';
 import { UserProfile } from '../user/types/user-profile';
@@ -95,7 +95,7 @@ export class ChatGateway
   send(
     evName: string,
     socket: Socket | BroadcastOperator<DefaultEventsMap, null>,
-    payload: ChatMessageFormat,
+    payload: ChatPayloadFormat,
   ) {
     socket.emit(evName, payload);
   }
@@ -179,7 +179,7 @@ export class ChatGateway
 
   @SubscribeMessage('publish')
   async publish(
-    @MessageBody() message: ChatMessageFromClient,
+    @MessageBody() message: ChatPayloadFromClient,
     @ConnectedSocket() clientSocket: Socket,
   ) {
     const sender = await this.getUser(clientSocket);
@@ -192,8 +192,9 @@ export class ChatGateway
     };
 
     /* NOTE: sync or async? */
+    let stored;
     try {
-      await this.chatService.storeRoomMessage({
+      stored = await this.chatService.storeRoomMessage({
         room_id: message.room,
         message: toStore,
       });
@@ -211,7 +212,7 @@ export class ChatGateway
     this.amqpConnection.publish(
       this.roomTX(),
       this.roomRK('message', message.room),
-      new RmqEvent(new ChatMessageFromServer(sender, message.payload)),
+      new RmqEvent(new ChatMessageFromServer(sender, stored)),
     );
   }
 
@@ -221,7 +222,7 @@ export class ChatGateway
 
   /* handler for room queue */
   async chatRoomEventHandler(
-    ev: RmqEvent<ChatMessageFormat>,
+    ev: RmqEvent<ChatPayloadFormat>,
     rawMsg: ConsumeMessage,
   ) {
     const re = /(?<=event.on.chat-room.)(.*)(?=.rk)/;

@@ -2,13 +2,14 @@ import { RmqEvent } from '../../common/rmq/types/rmq-event';
 import { ChatGateway } from '../chat.gateway';
 import {
   ChatAnnouncementFromServer,
-  ChatMessageFormat,
+  ChatPayloadFormat,
   ChatMessageFromServer,
+  ChatRoomMessageFormat,
 } from './chat-message-format';
 
 export type RoutingKeyParams = { evType: string; roomId: string };
 export interface EventCommand {
-  ev: RmqEvent<ChatMessageFormat>;
+  ev: RmqEvent<ChatPayloadFormat | ChatRoomMessageFormat>;
   params: RoutingKeyParams;
 
   execute(chatGateway: ChatGateway);
