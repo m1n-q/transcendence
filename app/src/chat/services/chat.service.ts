@@ -828,7 +828,7 @@ export class ChatService {
       return;
 
     const bannedUser = await this.chatRoomBanListRepo.findOneBy({
-      room,
+      roomId,
       userId: receiverId,
       expiry: MoreThan(new Date()),
     });
