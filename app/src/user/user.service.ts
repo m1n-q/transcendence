@@ -38,6 +38,9 @@ export class UserService {
     const user: UserInfo = this.userRepository.create(payload);
     user.mmr = 1000;
     user.is_two_factor_authentication_enabled = false;
+    if (!user.prof_img)
+      user.prof_img =
+        'https://transcendence.s3.amazonaws.com/media/prof-img/default-1.png';
     try {
       await this.userRepository.save(user);
     } catch (e) {
