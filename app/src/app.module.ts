@@ -23,7 +23,7 @@ import { MatchHistoryService } from './match-history/match-history.service';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       entities: [User, GameInfo, GameResult, RankHistory],
-      // synchronize: true,
+      synchronize: true,
       // dropSchema: true,
       namingStrategy: new SnakeNamingStrategy(),
       // logging: ['query'],
