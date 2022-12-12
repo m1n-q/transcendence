@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   DataSource,
-  LessThan,
   LessThanOrEqual,
   Like,
   MoreThan,
@@ -46,6 +45,7 @@ import { UserProfile } from '../../user-info';
 import { UserService } from '../../user/services/user.service';
 import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
 import { Cron } from '@nestjs/schedule';
+import { SelfPenalizeError } from '../../common/rmq/errors/self-penalize-error.dto';
 
 /*  TODO:
  *
@@ -482,6 +482,7 @@ export class ChatService {
       room_id: roomId,
     } = ChatRoomPenaltyDto;
 
+    if (roomAdminId === userId) throw new SelfPenalizeError();
     try {
       /* if user not in room, reject */
       const userInRoom = await this.chatRoomUserRepo.findOneBy({
@@ -518,6 +519,7 @@ export class ChatService {
       time_amount_in_seconds,
     } = ChatRoomPenaltyWithTimeDto;
 
+    if (roomAdminId === userId) throw new SelfPenalizeError();
     const q = this.dbConnection.createQueryRunner();
     await q.startTransaction();
     try {
@@ -629,6 +631,7 @@ export class ChatService {
       time_amount_in_seconds,
     } = ChatRoomPenaltyWithTimeDto;
 
+    if (roomAdminId === userId) throw new SelfPenalizeError();
     const q = this.dbConnection.createQueryRunner();
     await q.startTransaction();
     try {
