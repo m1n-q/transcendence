@@ -21,14 +21,21 @@ import { ChatUserRoleDto } from '../dto/chat-user-role.dto';
 import { AuthGuard } from '../../common/http/guard/auth.guard';
 import { ChatRoomAccessibilityDto } from '../dto/chat-room-accessibility.dto';
 import { ChatRoomUnpenalizeDto } from '../dto/chat-room-unpenalize.dto';
-import { ChatRoomInviteDto } from '../dto/chat-room-invite.dto';
+import {
+  ChatRoomInviteByNicknameDto,
+  ChatRoomInviteDto,
+} from '../dto/chat-room-invite.dto';
 import { ChatRoomPenaltyDto } from '../dto/chat-room-penalty.dto';
+import { UserService } from '../../user/user.service';
 
 //TODO: param uuid validation
 @UseGuards(AuthGuard)
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly userService: UserService,
+  ) {}
 
   @Post('room')
   async createRoom(
@@ -203,10 +210,16 @@ export class ChatController {
   async inviteUser(
     @Req() req,
     @Param('roomId', new ParseUUIDPipe()) roomId,
-    @Body() chatRoomInviteDto: ChatRoomInviteDto,
+    @Body() chatRoomInviteByNicknameDto: ChatRoomInviteByNicknameDto,
   ) {
-    chatRoomInviteDto.user_id = req.user.user_id;
-    chatRoomInviteDto.room_id = roomId;
+    const { user_id: receiver_id } = await this.userService.getUserByNickname(
+      chatRoomInviteByNicknameDto.receiver_nickname,
+    );
+    const chatRoomInviteDto: ChatRoomInviteDto = {
+      user_id: req.user.user_id,
+      room_id: roomId,
+      receiver_id,
+    };
     return this.chatService.inviteUser(chatRoomInviteDto);
   }
 

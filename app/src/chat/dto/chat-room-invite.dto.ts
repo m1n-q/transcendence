@@ -1,10 +1,16 @@
 import { Expose } from 'class-transformer';
-import { IsUUID } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class ChatRoomInviteDto {
-  @Expose()
-  @IsUUID()
   receiver_id: string;
+  room_id: string;
+  user_id: string;
+}
+
+export class ChatRoomInviteByNicknameDto {
+  @Expose()
+  @IsString()
+  receiver_nickname: string;
 
   room_id: string;
   user_id: string;
