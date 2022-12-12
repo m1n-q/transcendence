@@ -762,6 +762,11 @@ export class ChatService {
       where: {
         roomId: chatRoomUserDto.room_id,
       },
+      order: {
+        messages: {
+          created: 'ASC',
+        },
+      },
       relations: ['messages', 'messages.sender'],
     });
 

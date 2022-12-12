@@ -29,6 +29,7 @@ export class DmService {
   }
 
   async getAllMessages(data: DmGetMessagesDto) {
+    //NOTE: 현재는 null-user와의 dm을 불러오는 요청은 Validation Fail될 것
     const where = [
       { receiverId: data.receiver_id, senderId: data.sender_id },
       { senderId: data.receiver_id, receiverId: data.sender_id },
