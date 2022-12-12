@@ -22,7 +22,10 @@ export class AwsService {
   ) {
     const wasSVG = file.mimetype === 'image/svg+xml';
 
-    const resized = await sharp(file.buffer).resize(180, 180).toBuffer();
+    const resized = await sharp(file.buffer)
+      .resize(180, 180)
+      .withMetadata()
+      .toBuffer();
     const key = `${filepath}/${Date.now()}_${file.originalname.replace(
       / /g,
       '',
