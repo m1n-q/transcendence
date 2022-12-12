@@ -840,7 +840,7 @@ export class ChatService {
       throw toRmqError(e);
     }
 
-    this.publishChatEvent('inivitation', [receiverId], {
+    this.publishChatEvent('invitation', [receiverId], {
       sender: roomUser,
       room_info: {
         room_id: room.roomId,
