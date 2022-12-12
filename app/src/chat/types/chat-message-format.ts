@@ -1,18 +1,29 @@
-import { UserProfile } from '../../user-info';
+import { UserProfile } from '../../user/types/user-profile';
+
+export interface ChatRoomMessage {
+  room_msg_id: number;
+  room_id: Date;
+  sender_id: Date;
+  payload: string;
+  created: Date;
+}
 
 export interface ChatMessageFormat {
-  payload: string;
+  message: ChatRoomMessage;
 }
 
 export class ChatMessageFromClient implements ChatMessageFormat {
   room: string;
-  payload: string;
+  message: ChatRoomMessage;
 }
 
 export class ChatMessageFromServer implements ChatMessageFormat {
-  constructor(readonly sender: UserProfile, readonly payload: string) {}
+  constructor(
+    readonly sender: UserProfile,
+    readonly message: ChatRoomMessage,
+  ) {}
 }
 
 export class ChatAnnouncementFromServer implements ChatMessageFormat {
-  constructor(readonly payload: string) {}
+  constructor(readonly message: ChatRoomMessage) {}
 }
