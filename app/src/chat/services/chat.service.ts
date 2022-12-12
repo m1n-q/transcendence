@@ -162,8 +162,6 @@ export class ChatService {
         relations: ['user'],
       });
     }
-
-    console.log('users in room: ', usersInRoom);
     return usersInRoom !== null ? toUserProfile(usersInRoom[0].user) : null;
   }
 
@@ -227,7 +225,6 @@ export class ChatService {
     });
 
     const userProfiles = usersInRoom.map((userInRoom) => {
-      console.log('get Room Member: ', userInRoom);
       const userProfile = toUserProfile(userInRoom.user);
       if (room.roomOwnerId === userProfile.user_id) userInRoom.role = 'owner';
 
@@ -772,23 +769,28 @@ export class ChatService {
       messages: (
         await Promise.all(
           room.messages.map(async (message) => {
+            if (!message.sender)
+              return {
+                room_msg_id: message.roomMsgId,
+                sender: null,
+                room_id: message.roomId,
+                payload: message.payload,
+                created: message.created,
+              };
+
             if (
               !(await this.userService.isBlocked({
                 blocker: chatRoomUserDto.user_id,
                 blocked: message.sender.user_id,
               }))
             )
-              try {
-                return {
-                  room_msg_id: message.roomMsgId,
-                  sender: message.sender ? toUserProfile(message.sender) : null,
-                  room_id: message.roomId,
-                  payload: message.payload,
-                  created: message.created,
-                };
-              } catch {
-                console.log(message.sender);
-              }
+              return {
+                room_msg_id: message.roomMsgId,
+                sender: toUserProfile(message.sender),
+                room_id: message.roomId,
+                payload: message.payload,
+                created: message.created,
+              };
           }),
         )
       ).filter((message) => message),
