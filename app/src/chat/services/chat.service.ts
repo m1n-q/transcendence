@@ -163,6 +163,7 @@ export class ChatService {
       });
     }
 
+    console.log('users in room: ', usersInRoom);
     return usersInRoom !== null ? toUserProfile(usersInRoom[0].user) : null;
   }
 
@@ -226,6 +227,7 @@ export class ChatService {
     });
 
     const userProfiles = usersInRoom.map((userInRoom) => {
+      console.log('get Room Member: ', userInRoom);
       const userProfile = toUserProfile(userInRoom.user);
       if (room.roomOwnerId === userProfile.user_id) userInRoom.role = 'owner';
 
@@ -776,13 +778,17 @@ export class ChatService {
                 blocked: message.sender.user_id,
               }))
             )
-              return {
-                room_msg_id: message.roomMsgId,
-                sender: message.sender ? toUserProfile(message.sender) : null,
-                room_id: message.roomId,
-                payload: message.payload,
-                created: message.created,
-              };
+              try {
+                return {
+                  room_msg_id: message.roomMsgId,
+                  sender: message.sender ? toUserProfile(message.sender) : null,
+                  room_id: message.roomId,
+                  payload: message.payload,
+                  created: message.created,
+                };
+              } catch {
+                console.log(message.sender);
+              }
           }),
         )
       ).filter((message) => message),
