@@ -237,7 +237,21 @@ export class UserService {
   async update2FAInfo(payload: TwoFactorAuthenticationUpdateDto) {
     const { user_id, info } = payload;
 
-    const user = await this.readUserById({ user_id });
+    const user = await this.userRepository.findOneBy({ user_id }).catch((e) => {
+      throw new RmqError({
+        code: 500,
+        message: `DB Error : ${e}`,
+        where: WHERE,
+      });
+    });
+
+    if (!user)
+      throw new RmqError({
+        code: 404,
+        message: `User not found`,
+        where: `${WHERE}#update2FAInfo()`,
+      });
+
     user.two_factor_authentication_type = info.type;
     user.two_factor_authentication_key = info.key;
 
@@ -254,7 +268,7 @@ export class UserService {
         throw new RmqError({
           code: 500,
           message: `DB Error : ${e}`,
-          where: WHERE,
+          where: `${WHERE}#update2FAInfo()`,
         });
       }
     }
