@@ -212,7 +212,7 @@ export class ChatGateway
     this.amqpConnection.publish(
       this.roomTX(),
       this.roomRK('message', message.room),
-      new RmqEvent(new ChatMessageFromServer(sender, stored)),
+      new RmqEvent(new ChatMessageFromServer(sender, stored.message)),
     );
   }
 
