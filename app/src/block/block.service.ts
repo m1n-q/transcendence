@@ -10,6 +10,14 @@ import {
   RmqDeleteBlock,
 } from './dto/rmq.block.request';
 import { RmqError } from 'src/common/rmq-module/types/rmq-error';
+import { plainToInstance } from 'class-transformer';
+import { UserInfo, UserProfile } from '../user/user-info';
+
+function toUserProfile(user: UserInfo): UserProfile {
+  return plainToInstance(UserProfile, user, {
+    excludeExtraneousValues: true,
+  });
+}
 
 const WHERE = 'user_service';
 
@@ -26,6 +34,7 @@ export class BlockService {
     try {
       blackList = await this.blockRepository.find({
         where: { blocker: payload.user_id },
+        relations: ['user_blocker', 'user_blocked'],
       });
     } catch (e) {
       throw new RmqError({
@@ -34,6 +43,7 @@ export class BlockService {
         where: WHERE,
       });
     }
+
     if (blackList.length === 0) {
       throw new RmqError({
         code: 404,
@@ -41,7 +51,16 @@ export class BlockService {
         where: `${WHERE}#readBlockList()`,
       });
     }
-    return blackList;
+
+    return {
+      block_list: blackList.map((b) => {
+        return {
+          block_id: b.block_id,
+          blocker: toUserProfile(b.user_blocker),
+          blocked: toUserProfile(b.user_blocked),
+        };
+      }),
+    };
   }
 
   async createBlock(payload: RmqRequestBlock) {
