@@ -122,8 +122,9 @@ export class DMGateway
     await this.setConnSocketId(user.user_id, clientSocket.id);
     /* FIXME */
 
-    const oppoId = (await this.userService.getUserProfile(message.opponent))
-      .user_id;
+    const oppoId = (
+      await this.userService.getUserProfileByNickname(message.opponent)
+    ).user_id;
     const userId = (await this.getUser(clientSocket)).user_id;
     const dmRoomName = this.makeDmRoomName(userId, oppoId);
     await clientSocket.join(dmRoomName);
@@ -161,7 +162,9 @@ export class DMGateway
     @ConnectedSocket() clientSocket: Socket,
   ) {
     const sender = await this.getUser(clientSocket);
-    const receiver = await this.userService.getUserProfile(message.opponent);
+    const receiver = await this.userService.getUserProfileByNickname(
+      message.opponent,
+    );
     const dmRoomName = this.makeDmRoomName(sender.user_id, receiver.user_id);
 
     /* To Database */
@@ -259,9 +262,11 @@ export class DMGateway
   async bindUser(clientSocket: Socket) {
     /* get user info */
     const access_token = clientSocket.handshake.auth['access_token'];
+    let payload;
     let user;
     try {
-      user = await this.authService.verifyJwt(access_token);
+      payload = await this.authService.verifyJwt(access_token);
+      user = await this.userService.getUserProfileById(payload.user_id);
     } catch (e) {
       throw new WsException(e);
     }

@@ -173,9 +173,11 @@ export class NotificationGateway
   async bindUser(clientSocket: Socket) {
     /* get user info */
     const access_token = clientSocket.handshake.auth['access_token'];
+    let payload;
     let user;
     try {
-      user = await this.authService.verifyJwt(access_token);
+      payload = await this.authService.verifyJwt(access_token);
+      user = await this.userService.getUserProfileById(payload.user_id);
     } catch (e) {
       throw new WsException(e);
     }
