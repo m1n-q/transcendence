@@ -86,6 +86,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       clientSocket.leave(roomName);
       if (game.gameResult().game_id === undefined) {
         this.server.to(`${roomName}`).emit('user_exit_room');
+        this.games.delete(roomName);
         return;
       }
       game.userCount--;
@@ -124,7 +125,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('user_join_queue')
   async userJoinQueue(@ConnectedSocket() clientSocket: Socket) {
     const roomName: string = clientSocket['room_name'];
-    if (roomName !== undefined && this.games.get(roomName) !== undefined) {
+    if (
+      roomName !== undefined &&
+      roomName !== null &&
+      this.games.get(roomName) !== undefined
+    ) {
       return;
     }
     this.matchMaking.leaveMatchingQueue(clientSocket.id);
@@ -173,6 +178,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           clearInterval(this.waitingInterval.get(roomName));
           clientSocket.leave(roomName);
           clientSocket.emit('user_exit_room');
+          this.games.delete(roomName);
+          clientSocket['room_name'] = null;
           this.waitingInterval.delete(roomName);
         }
         clientSocket['waiting']++;
@@ -208,6 +215,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         clearInterval(this.waitingInterval.get(roomName));
         clientSocket.leave(roomName);
         clientSocket.emit('user_exit_room');
+        this.games.delete(roomName);
+        clientSocket['room_name'] = null;
         this.waitingInterval.delete(roomName);
       }
       clientSocket['waiting']++;
@@ -553,6 +562,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       try {
         findUserSocket.emit('game_error', 'The same user logged in.');
         findUserSocket.disconnect(true);
+        /*
+        
+        */
       } catch (e) {}
       this.clients.delete(userId);
     }
