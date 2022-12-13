@@ -58,6 +58,7 @@ export class BlockService {
           block_id: b.block_id,
           blocker: toUserProfile(b.user_blocker),
           blocked: toUserProfile(b.user_blocked),
+          created: b.created.toString(),
         };
       }),
     };

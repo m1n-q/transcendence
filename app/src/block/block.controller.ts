@@ -22,9 +22,6 @@ export class BlockController {
   })
   async readBlockList(@RabbitPayload() msg: RmqUserId) {
     const list = await this.blockService.readBlockList(msg);
-    Object.values(list).map((item: any) => {
-      item.created = item.created.toString();
-    });
     return list;
   }
 
