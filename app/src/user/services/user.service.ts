@@ -37,9 +37,9 @@ export class UserService {
     });
   }
 
-  async getUserProfileById(nickname: string): Promise<UserProfile> {
+  async getUserProfileById(user_id: string): Promise<UserProfile> {
     return this.requestToUserService(this.RK('req', 'user.read.by.id'), {
-      nickname,
+      user_id,
     });
   }
 
