@@ -144,9 +144,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const interval: any = setInterval(() => {
       const matchedId: string = this.matchMaking.matchMaking(clientSocket);
       if (matchedId !== clientSocket.id) {
-        console.log(clientSocket.id);
-        console.log(matchedId);
         const newRoomName: string = v4();
+        console.log(this.clients);
+        console.log(
+          `room name : ${newRoomName} / connect socket : ${clientSocket.id}/ matched id : ${matchedId}`,
+        );
         clientSocket.emit('player_matched', newRoomName);
         this.server.to(`${matchedId}`).emit('player_matched', newRoomName);
 
