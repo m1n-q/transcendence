@@ -66,12 +66,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     clientSocket.emit('websocket_connected');
     console.log(clientSocket.id, ' : game websocket connected');
-    setInterval(() => {
-      const mq = this.matchMaking.getMatchingQueue();
-      clientSocket.emit('matching_queue', mq.size);
-      clientSocket.emit('clients', this.clients.size);
-      console.log('test');
-    }, 2000);
   }
 
   handleDisconnect(@ConnectedSocket() clientSocket: Socket) {
@@ -150,9 +144,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const interval: any = setInterval(() => {
       const matchedId: string = this.matchMaking.matchMaking(clientSocket);
       if (matchedId !== clientSocket.id) {
+        console.log(clientSocket.id);
+        console.log(matchedId);
         const newRoomName: string = v4();
         clientSocket.emit('player_matched', newRoomName);
         this.server.to(`${matchedId}`).emit('player_matched', newRoomName);
+
         clearInterval(this.matchingInterval.get(clientSocket.id));
         clearInterval(this.matchingInterval.get(matchedId));
         this.matchingInterval.delete(clientSocket.id);
