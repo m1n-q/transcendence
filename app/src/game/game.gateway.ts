@@ -141,23 +141,23 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       clientSocket.id,
       clientSocket['user_info'].user.mmr,
     );
-    const interval: any = setInterval(() => {
-      const matchedId: string = this.matchMaking.matchMaking(clientSocket);
-      if (matchedId !== clientSocket.id) {
-        const newRoomName: string = v4();
-        console.log(this.clients);
-        console.log(
-          `room name : ${newRoomName} / connect socket : ${clientSocket.id}/ matched id : ${matchedId}`,
-        );
-        clientSocket.emit('player_matched', newRoomName);
-        this.server.to(`${matchedId}`).emit('player_matched', newRoomName);
+    const interval: any = setInterval(
+      () => {
+        const matchedId: string = this.matchMaking.matchMaking(clientSocket);
+        if (matchedId !== clientSocket.id) {
+          const newRoomName: string = v4();
+          clientSocket.emit('player_matched', newRoomName);
+          this.server.to(`${matchedId}`).emit('player_matched', newRoomName);
 
-        clearInterval(this.matchingInterval.get(clientSocket.id));
-        clearInterval(this.matchingInterval.get(matchedId));
-        this.matchingInterval.delete(clientSocket.id);
-        this.matchingInterval.delete(matchedId);
-      }
-    }, 1000);
+          clearInterval(this.matchingInterval.get(clientSocket.id));
+          clearInterval(this.matchingInterval.get(matchedId));
+          this.matchingInterval.delete(clientSocket.id);
+          this.matchingInterval.delete(matchedId);
+        }
+      },
+      1000,
+      clientSocket,
+    );
     this.matchingInterval.set(clientSocket.id, interval);
   }
 
