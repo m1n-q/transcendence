@@ -162,9 +162,13 @@ export class AuthService {
       throw e;
     }
 
-    const userInfo = plainToInstance(JwtUserInfo, payload, {
-      excludeExtraneousValues: true,
-    });
+    const userInfo = plainToInstance(
+      JwtUserInfo,
+      await this.userService.requestUserInfoById(payload.user_id),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
 
     const hashed = await this.redisService.hget(
       this.makeUserKey(userInfo.user_id),
