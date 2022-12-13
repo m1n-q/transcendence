@@ -28,8 +28,6 @@ import { RedisModule } from './redis-module/redis.module';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       entities: [User, Block, Friend, FriendRequest],
-      synchronize: true,
-      // dropSchema: true,
       namingStrategy: new SnakeNamingStrategy(),
     }),
     TypeOrmModule.forFeature([User, FriendRequest, Friend, Block]),
