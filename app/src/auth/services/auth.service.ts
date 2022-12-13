@@ -166,6 +166,7 @@ export class AuthService {
     const userInfo = await this.userService.requestUserInfoById(
       payload.user_id,
     );
+
     const newPayload = plainToInstance(JwtUserInfo, userInfo, {
       excludeExtraneousValues: true,
     });
@@ -183,7 +184,7 @@ export class AuthService {
         message: 'Refresh token not matches',
         where: WHERE,
       });
-    return this.signIn(userInfo);
+    return this.signIn(newPayload);
   }
 
   /* get access_token, refresh_token of resource server */
