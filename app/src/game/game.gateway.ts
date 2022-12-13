@@ -66,6 +66,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     clientSocket.emit('websocket_connected');
     console.log(clientSocket.id, ' : game websocket connected');
+    setInterval(() => {
+      const mq = this.matchMaking.getMatchingQueue();
+      clientSocket.emit('matching_queue', mq);
+      clientSocket.emit('clients', this.clients);
+    }, 2000);
   }
 
   handleDisconnect(@ConnectedSocket() clientSocket: Socket) {

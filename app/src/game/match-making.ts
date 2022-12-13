@@ -83,4 +83,7 @@ export class MatchMaking {
       }
     }
   }
+  getMatchingQueue() {
+    return this.matchingQueue;
+  }
 }
