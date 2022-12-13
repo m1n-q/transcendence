@@ -70,6 +70,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const mq = this.matchMaking.getMatchingQueue();
       clientSocket.emit('matching_queue', mq.size);
       clientSocket.emit('clients', this.clients.size);
+      console.log('test');
     }, 2000);
   }
 
