@@ -64,8 +64,6 @@ import { UserService } from './user/services/user.service';
         ChatRoomMuteList,
       ],
       namingStrategy: new SnakeNamingStrategy(),
-      synchronize: true,
-      // dropSchema: true,
       poolSize: 20,
     }),
     TypeOrmModule.forFeature([
