@@ -99,7 +99,6 @@ export class Game {
     this.lPlayerMmr = 0;
     this.rPlayerMmr = 0;
     this.isRank = rank;
-    this.renderReady = false;
     this.isSaveData = false;
     this.saveDone = false;
     this.ballSpeed = BALL_SPEED;
@@ -131,7 +130,7 @@ export class Game {
 
   //* GAME CHECK DATA
   playerReady: string;
-  renderReady: boolean;
+  renderReady: string;
   isFinished: boolean;
   isSaveData: boolean;
   saveDone: boolean;

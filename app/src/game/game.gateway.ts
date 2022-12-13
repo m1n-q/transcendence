@@ -304,9 +304,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const roomName: string = clientSocket['room_name'];
     const game: Game = this.games.get(roomName);
     if (game === undefined) return;
-    if (game.renderReady === false) {
-      game.renderReady = true;
-    } else {
+    if (game.renderReady === undefined) {
+      game.renderReady = clientSocket.id;
+    } else if (
+      game.renderReady !== undefined &&
+      game.renderReady !== clientSocket.id &&
+      game.renderReady !== roomName
+    ) {
+      game.renderReady = roomName;
       this.server.to(`${roomName}`).emit('game_started');
       try {
         await this.startGame(roomName);

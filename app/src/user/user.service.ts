@@ -31,7 +31,6 @@ export class UserService {
   async setUserState(user_id: string, state: UserState) {
     let response;
     try {
-      console.log('here3');
       response = await this.amqpConnection.request<RmqResponse<UserProfile>>({
         exchange: 'user.d.x',
         routingKey: 'req.to.user.set.state.rk',
